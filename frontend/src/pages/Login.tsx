@@ -1,4 +1,5 @@
 import { useState, FormEvent } from 'react'
+import logo from '../assets/logo.png'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
@@ -42,7 +43,7 @@ export default function Login() {
     <div style={s.page}>
       <div style={s.card}>
         <div style={s.logo}>
-          <div style={s.title}>🐄 BovIA</div>
+          <img src={logo} alt="BovIA" style={{ width: 120, marginBottom: 8 }} />
           <div style={s.sub}>Gestão pecuária inteligente</div>
         </div>
         {erro && <div style={s.error}>{erro}</div>}
