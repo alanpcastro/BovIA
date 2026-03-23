@@ -37,7 +37,7 @@ export default function Layout() {
         overflowY: 'auto',
       }}>
         <div style={{ padding: '24px 20px 16px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-          <div style={{ fontSize: 18, fontWeight: 700 }}>🐄 Gado System</div>
+          <div style={{ fontSize: 18, fontWeight: 700 }}>🐄 BovIA</div>
           <div style={{ fontSize: 12, color: '#74c69d', marginTop: 4 }}>{user?.fazenda_nome}</div>
         </div>
 

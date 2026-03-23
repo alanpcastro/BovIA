@@ -44,7 +44,7 @@ export default function Register() {
     <div style={s.page}>
       <div style={s.card}>
         <div style={s.logo}>
-          <div style={s.title}>🐄 Gado System</div>
+          <div style={s.title}>🐄 BovIA</div>
           <div style={s.sub}>Criar nova conta</div>
         </div>
         {erro && <div style={s.error}>{erro}</div>}

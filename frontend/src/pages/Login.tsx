@@ -42,8 +42,8 @@ export default function Login() {
     <div style={s.page}>
       <div style={s.card}>
         <div style={s.logo}>
-          <div style={s.title}>🐄 Gado System</div>
-          <div style={s.sub}>Gestão pecuária simplificada</div>
+          <div style={s.title}>🐄 BovIA</div>
+          <div style={s.sub}>Gestão pecuária inteligente</div>
         </div>
         {erro && <div style={s.error}>{erro}</div>}
         <form onSubmit={handleSubmit}>
