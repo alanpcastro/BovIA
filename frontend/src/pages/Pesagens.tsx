@@ -1,24 +1,25 @@
 import { useEffect, useState, FormEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import api, { Pesagem, Animal } from '../services/api'
-
-const input: React.CSSProperties = { padding: '9px 12px', border: '1px solid #d1d5db', borderRadius: 8, fontSize: 14, outline: 'none', width: '100%' }
-const btn = (v = 'primary'): React.CSSProperties => ({
-  padding: '9px 18px', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600, fontSize: 13,
-  background: v === 'primary' ? '#2d6a4f' : v === 'danger' ? '#dc2626' : '#f3f4f6',
-  color: v === 'ghost' ? '#374151' : '#fff',
-})
+import Modal from '../components/Modal'
+import { useToast } from '../components/Toast'
 
 export default function Pesagens() {
   const [params] = useSearchParams()
   const animalIdParam = params.get('animal_id')
+  const { success, error: toastError } = useToast()
 
   const [pesagens, setPesagens] = useState<Pesagem[]>([])
   const [animais, setAnimais] = useState<Animal[]>([])
-  const [showForm, setShowForm] = useState(!!animalIdParam)
+  const [showModal, setShowModal] = useState(!!animalIdParam)
   const [filtroAnimal, setFiltroAnimal] = useState(animalIdParam || '')
-  const [form, setForm] = useState({ animal_id: animalIdParam || '', data: new Date().toISOString().split('T')[0], peso_kg: '', observacoes: '' })
+  const [form, setForm] = useState({
+    animal_id: animalIdParam || '',
+    data: new Date().toISOString().split('T')[0],
+    peso_kg: '', observacoes: ''
+  })
   const [erro, setErro] = useState('')
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     api.get('/animais', { params: { status: 'ativo' } }).then(r => setAnimais(r.data))
@@ -34,13 +35,23 @@ export default function Pesagens() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setErro('')
+    setSaving(true)
     try {
-      await api.post('/pesagens', { animal_id: parseInt(form.animal_id), data: form.data, peso_kg: parseFloat(form.peso_kg), observacoes: form.observacoes || undefined })
+      await api.post('/pesagens', {
+        animal_id: parseInt(form.animal_id),
+        data: form.data,
+        peso_kg: parseFloat(form.peso_kg),
+        observacoes: form.observacoes || undefined
+      })
       setForm(f => ({ ...f, peso_kg: '', observacoes: '' }))
-      setShowForm(false)
+      setShowModal(false)
       load()
+      success('Pesagem registrada com sucesso!')
     } catch (err: any) {
       setErro(err.response?.data?.detail || 'Erro ao registrar pesagem')
+      toastError('Erro ao registrar pesagem')
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -48,91 +59,128 @@ export default function Pesagens() {
     if (!confirm('Excluir esta pesagem?')) return
     await api.delete(`/pesagens/${id}`)
     load()
+    success('Pesagem excluída')
   }
 
   const animaisMap = Object.fromEntries(animais.map(a => [a.id, a]))
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 700 }}>Pesagens</h1>
-        <button style={btn()} onClick={() => setShowForm(!showForm)}>+ Registrar Pesagem</button>
+      <div className="page-header">
+        <div>
+          <div className="page-title">Pesagens</div>
+          <div className="page-subtitle">Controle de peso e GMD do rebanho</div>
+        </div>
+        <button className="btn btn-primary" onClick={() => { setErro(''); setShowModal(true) }}>
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/>
+          </svg>
+          Registrar Pesagem
+        </button>
       </div>
 
-      {showForm && (
-        <div style={{ background: '#fff', borderRadius: 12, padding: 24, border: '1px solid #e5e7eb', marginBottom: 20 }}>
-          <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>Nova Pesagem</h2>
-          {erro && <div style={{ color: '#dc2626', marginBottom: 12, fontSize: 13 }}>{erro}</div>}
-          <form onSubmit={handleSubmit}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 12 }}>
-              <div>
-                <label style={{ fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 4 }}>Animal *</label>
-                <select style={input} value={form.animal_id} onChange={e => setForm(f => ({ ...f, animal_id: e.target.value }))} required>
-                  <option value="">Selecione...</option>
-                  {animais.map(a => <option key={a.id} value={a.id}>#{a.brinco}{a.nome ? ` — ${a.nome}` : ''}</option>)}
-                </select>
-              </div>
-              <div>
-                <label style={{ fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 4 }}>Data *</label>
-                <input style={input} type="date" value={form.data} onChange={e => setForm(f => ({ ...f, data: e.target.value }))} required />
-              </div>
-              <div>
-                <label style={{ fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 4 }}>Peso (kg) *</label>
-                <input style={input} type="number" step="0.1" value={form.peso_kg} onChange={e => setForm(f => ({ ...f, peso_kg: e.target.value }))} required />
-              </div>
-            </div>
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 4 }}>Observações</label>
-              <input style={input} value={form.observacoes} onChange={e => setForm(f => ({ ...f, observacoes: e.target.value }))} />
-            </div>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button type="submit" style={btn()}>Registrar</button>
-              <button type="button" style={btn('ghost')} onClick={() => setShowForm(false)}>Cancelar</button>
-            </div>
-          </form>
-        </div>
-      )}
-
       {/* Filtro */}
-      <div style={{ background: '#fff', borderRadius: 10, padding: '12px 16px', border: '1px solid #e5e7eb', marginBottom: 16, display: 'flex', gap: 12, alignItems: 'center' }}>
-        <label style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>Filtrar por animal:</label>
-        <select style={{ ...input, width: 260 }} value={filtroAnimal} onChange={e => setFiltroAnimal(e.target.value)}>
+      <div className="filters-bar">
+        <label className="filter-label">Filtrar por animal:</label>
+        <select className="form-select" style={{ width: 280 }} value={filtroAnimal} onChange={e => setFiltroAnimal(e.target.value)}>
           <option value="">Todos os animais</option>
           {animais.map(a => <option key={a.id} value={a.id}>#{a.brinco}{a.nome ? ` — ${a.nome}` : ''}</option>)}
         </select>
       </div>
 
-      <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead style={{ background: '#f9fafb' }}>
+      <div className="table-wrapper">
+        <table className="data-table">
+          <thead>
             <tr>
-              {['Animal', 'Data', 'Peso', 'GMD (kg/dia)', 'Observações', ''].map(h => (
-                <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>{h}</th>
-              ))}
+              <th>Animal</th>
+              <th>Data</th>
+              <th>Peso</th>
+              <th>GMD (kg/dia)</th>
+              <th>Observações</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
-            {pesagens.length === 0 && <tr><td colSpan={6} style={{ padding: 32, textAlign: 'center', color: '#9ca3af' }}>Nenhuma pesagem registrada</td></tr>}
+            {pesagens.length === 0 && (
+              <tr><td colSpan={6} className="table-empty">Nenhuma pesagem registrada</td></tr>
+            )}
             {pesagens.map(p => {
               const animal = animaisMap[p.animal_id]
+              const gmdPositivo = p.gmd != null && p.gmd > 0
+              const gmdNegativo = p.gmd != null && p.gmd < 0
               return (
-                <tr key={p.id} style={{ borderTop: '1px solid #f3f4f6' }}>
-                  <td style={{ padding: '12px 16px', fontWeight: 600 }}>{animal ? `#${animal.brinco}${animal.nome ? ` — ${animal.nome}` : ''}` : `#${p.animal_id}`}</td>
-                  <td style={{ padding: '12px 16px' }}>{new Date(p.data + 'T00:00').toLocaleDateString('pt-BR')}</td>
-                  <td style={{ padding: '12px 16px', fontWeight: 700, color: '#2d6a4f' }}>{p.peso_kg} kg</td>
-                  <td style={{ padding: '12px 16px', color: p.gmd != null ? (p.gmd > 0 ? '#16a34a' : '#dc2626') : '#9ca3af', fontWeight: 600 }}>
-                    {p.gmd != null ? `${p.gmd > 0 ? '+' : ''}${p.gmd}` : '—'}
+                <tr key={p.id}>
+                  <td style={{ fontWeight: 600 }}>
+                    #{animal?.brinco || p.animal_id}
+                    {animal?.nome && <span style={{ color: 'var(--gray-400)', fontWeight: 400 }}> — {animal.nome}</span>}
                   </td>
-                  <td style={{ padding: '12px 16px', color: '#9ca3af', fontSize: 13 }}>{p.observacoes || '—'}</td>
-                  <td style={{ padding: '12px 16px' }}>
-                    <button style={{ ...btn('danger'), padding: '5px 10px' }} onClick={() => deletar(p.id)}>🗑️</button>
+                  <td>{new Date(p.data + 'T00:00').toLocaleDateString('pt-BR')}</td>
+                  <td style={{ fontWeight: 700, color: 'var(--green-700)' }}>{p.peso_kg} kg</td>
+                  <td>
+                    {p.gmd != null ? (
+                      <span style={{
+                        fontWeight: 700,
+                        color: gmdPositivo ? 'var(--green-700)' : gmdNegativo ? 'var(--red-600)' : 'var(--gray-500)'
+                      }}>
+                        {gmdPositivo ? '+' : ''}{p.gmd} kg/dia
+                      </span>
+                    ) : <span style={{ color: 'var(--gray-400)' }}>—</span>}
+                  </td>
+                  <td style={{ color: 'var(--gray-400)', fontSize: 13 }}>{p.observacoes || '—'}</td>
+                  <td>
+                    <button className="btn btn-danger btn-sm btn-icon" onClick={() => deletar(p.id)} title="Excluir">
+                      <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                      </svg>
+                    </button>
                   </td>
                 </tr>
               )
             })}
           </tbody>
         </table>
+        <div className="table-footer">{pesagens.length} pesagem(ns) registrada(s)</div>
       </div>
+
+      <Modal
+        open={showModal}
+        onClose={() => setShowModal(false)}
+        title="Registrar Pesagem"
+        size="sm"
+        footer={
+          <>
+            <button className="btn btn-ghost" onClick={() => setShowModal(false)}>Cancelar</button>
+            <button className="btn btn-primary" form="form-pesagem" type="submit" disabled={saving}>
+              {saving ? <><span className="spinner" /> Salvando...</> : 'Registrar'}
+            </button>
+          </>
+        }
+      >
+        {erro && <div className="alert alert-error">{erro}</div>}
+        <form id="form-pesagem" onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label className="form-label">Animal *</label>
+            <select className="form-select" value={form.animal_id} onChange={e => setForm(f => ({ ...f, animal_id: e.target.value }))} required autoFocus>
+              <option value="">Selecione um animal...</option>
+              {animais.map(a => <option key={a.id} value={a.id}>#{a.brinco}{a.nome ? ` — ${a.nome}` : ''}</option>)}
+            </select>
+          </div>
+          <div className="grid-2" style={{ marginBottom: 0 }}>
+            <div className="form-group">
+              <label className="form-label">Data *</label>
+              <input className="form-input" type="date" value={form.data} onChange={e => setForm(f => ({ ...f, data: e.target.value }))} required />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Peso (kg) *</label>
+              <input className="form-input" type="number" step="0.1" value={form.peso_kg} onChange={e => setForm(f => ({ ...f, peso_kg: e.target.value }))} required placeholder="Ex: 320" />
+            </div>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Observações</label>
+            <input className="form-input" value={form.observacoes} onChange={e => setForm(f => ({ ...f, observacoes: e.target.value }))} placeholder="Opcional..." />
+          </div>
+        </form>
+      </Modal>
     </div>
   )
 }
