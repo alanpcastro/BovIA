@@ -20,29 +20,39 @@ export default function Animais() {
   const navigate = useNavigate()
   const { success, error: toastError } = useToast()
   const [animais, setAnimais] = useState<Animal[]>([])
+  const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(1)
+  const pageSize = 50
   const [lotes, setLotes] = useState<Lote[]>([])
   const [showModal, setShowModal] = useState(false)
   const [filtros, setFiltros] = useState({ status: '', sexo: '', lote_id: '', busca: '' })
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
   const [erro, setErro] = useState('')
+  const [showLoteModal, setShowLoteModal] = useState(false)
+  const [loteForm, setLoteForm] = useState({ lote_id: '', quantidade: '', raca: '', sexo: 'macho', peso_medio: '', origem: 'nascido', observacoes: '' })
 
-  function load() {
-    const params = Object.fromEntries(
-      Object.entries(filtros).filter(([k, v]) => v && k !== 'busca')
-    )
-    api.get('/animais', { params }).then(r => setAnimais(r.data))
+  function load(p = page) {
+    const params: Record<string, string | number> = { page: p, page_size: pageSize }
+    if (filtros.status) params.status = filtros.status
+    if (filtros.sexo) params.sexo = filtros.sexo
+    if (filtros.lote_id) params.lote_id = filtros.lote_id
+    if (filtros.busca) params.busca = filtros.busca
+    api.get('/animais', { params }).then(r => {
+      setAnimais(r.data.items)
+      setTotal(r.data.total)
+    })
   }
 
   useEffect(() => { api.get('/lotes').then(r => setLotes(r.data)) }, [])
-  useEffect(load, [filtros.status, filtros.sexo, filtros.lote_id])
+  useEffect(() => { setPage(1); load(1) }, [filtros.status, filtros.sexo, filtros.lote_id, filtros.busca])
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setErro('')
     setSaving(true)
     const payload = {
-      brinco: form.brinco,
+      brinco: form.brinco || undefined,
       nome: form.nome || undefined,
       raca: form.raca || undefined,
       sexo: form.sexo,
@@ -66,17 +76,31 @@ export default function Animais() {
     }
   }
 
-  const lotesMap = Object.fromEntries(lotes.map(l => [l.id, l.nome]))
+  async function handleLoteSubmit(e: FormEvent) {
+    e.preventDefault()
+    setErro('')
+    setSaving(true)
+    try {
+      const res = await api.post(`/lotes/${loteForm.lote_id}/animais`, {
+        quantidade: parseInt(loteForm.quantidade),
+        raca: loteForm.raca || undefined,
+        sexo: loteForm.sexo,
+        peso_medio: loteForm.peso_medio ? parseFloat(loteForm.peso_medio) : undefined,
+        origem: loteForm.origem || undefined,
+        observacoes: loteForm.observacoes || undefined,
+      })
+      setShowLoteModal(false)
+      load()
+      success(`${res.data.criados} animais criados no lote ${res.data.lote}!`)
+    } catch (err: any) {
+      setErro(err.response?.data?.detail || 'Erro ao criar animais em lote')
+      toastError('Erro ao criar animais em lote')
+    } finally {
+      setSaving(false)
+    }
+  }
 
-  const animaisFiltrados = animais.filter(a => {
-    if (!filtros.busca) return true
-    const q = filtros.busca.toLowerCase()
-    return (
-      a.brinco.toLowerCase().includes(q) ||
-      (a.nome?.toLowerCase().includes(q)) ||
-      (a.raca?.toLowerCase().includes(q))
-    )
-  })
+  const lotesMap = Object.fromEntries(lotes.map(l => [l.id, l.nome]))
 
   return (
     <div>
@@ -85,12 +109,14 @@ export default function Animais() {
           <div className="page-title">Animais</div>
           <div className="page-subtitle">{animais.length} animal(is) no rebanho</div>
         </div>
-        <button className="btn btn-primary" onClick={() => { setForm(emptyForm); setErro(''); setShowModal(true) }}>
-          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/>
-          </svg>
-          Novo Animal
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn btn-ghost" onClick={() => { setLoteForm({ lote_id: '', quantidade: '', raca: '', sexo: 'macho', peso_medio: '', origem: 'nascido', observacoes: '' }); setErro(''); setShowLoteModal(true) }}>
+            Criar em Lote
+          </button>
+          <button className="btn btn-primary" onClick={() => { setForm(emptyForm); setErro(''); setShowModal(true) }}>
+            + Novo Animal
+          </button>
+        </div>
       </div>
 
       {/* Filtros */}
@@ -139,12 +165,12 @@ export default function Animais() {
             </tr>
           </thead>
           <tbody>
-            {animaisFiltrados.length === 0 && (
+            {animais.length === 0 && (
               <tr><td colSpan={8} className="table-empty">Nenhum animal encontrado</td></tr>
             )}
-            {animaisFiltrados.map(a => (
+            {animais.map(a => (
               <tr key={a.id} className="clickable" onClick={() => navigate(`/animais/${a.id}`)}>
-                <td style={{ fontWeight: 700, color: 'var(--gray-900)' }}>#{a.brinco}</td>
+                <td style={{ fontWeight: 700, color: 'var(--gray-900)' }}>{a.brinco ? `#${a.brinco}` : <span style={{ color: 'var(--gray-400)' }}>—</span>}</td>
                 <td style={{ fontWeight: 500 }}>{a.nome || <span style={{ color: 'var(--gray-400)' }}>—</span>}</td>
                 <td style={{ color: 'var(--gray-500)' }}>{a.raca || '—'}</td>
                 <td>{a.sexo === 'macho' ? '♂ Macho' : '♀ Fêmea'}</td>
@@ -156,7 +182,16 @@ export default function Animais() {
             ))}
           </tbody>
         </table>
-        <div className="table-footer">{animaisFiltrados.length} animal(is) exibido(s)</div>
+        <div className="table-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>{total} animal(is) no total</span>
+          {total > pageSize && (
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <button className="btn btn-ghost btn-sm" disabled={page === 1} onClick={() => { setPage(p => p - 1); load(page - 1) }}>← Anterior</button>
+              <span style={{ fontSize: 13, color: 'var(--gray-500)' }}>Página {page} de {Math.ceil(total / pageSize)}</span>
+              <button className="btn btn-ghost btn-sm" disabled={page * pageSize >= total} onClick={() => { setPage(p => p + 1); load(page + 1) }}>Próxima →</button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Modal de cadastro */}
@@ -178,8 +213,8 @@ export default function Animais() {
         <form id="form-animal" onSubmit={handleSubmit}>
           <div className="grid-3" style={{ marginBottom: 0 }}>
             <div className="form-group">
-              <label className="form-label">Brinco *</label>
-              <input className="form-input" value={form.brinco} onChange={e => setForm(p => ({ ...p, brinco: e.target.value }))} required placeholder="Ex: 001" autoFocus />
+              <label className="form-label">Brinco</label>
+              <input className="form-input" value={form.brinco} onChange={e => setForm(p => ({ ...p, brinco: e.target.value }))} placeholder="Ex: 001" autoFocus />
             </div>
             <div className="form-group">
               <label className="form-label">Nome</label>
@@ -226,6 +261,68 @@ export default function Animais() {
           <div className="form-group">
             <label className="form-label">Observações</label>
             <input className="form-input" value={form.observacoes} onChange={e => setForm(p => ({ ...p, observacoes: e.target.value }))} placeholder="Opcional..." />
+          </div>
+        </form>
+      </Modal>
+
+      {/* Modal criar em lote */}
+      <Modal
+        open={showLoteModal}
+        onClose={() => setShowLoteModal(false)}
+        title="Criar Animais em Lote"
+        footer={
+          <>
+            <button className="btn btn-ghost" onClick={() => setShowLoteModal(false)}>Cancelar</button>
+            <button className="btn btn-primary" form="form-animal-lote" type="submit" disabled={saving}>
+              {saving ? <><span className="spinner" /> Criando...</> : 'Criar Animais'}
+            </button>
+          </>
+        }
+      >
+        {erro && <div className="alert alert-error">{erro}</div>}
+        <form id="form-animal-lote" onSubmit={handleLoteSubmit}>
+          <div className="grid-2" style={{ marginBottom: 0 }}>
+            <div className="form-group">
+              <label className="form-label">Lote *</label>
+              <select className="form-select" value={loteForm.lote_id} onChange={e => setLoteForm(p => ({ ...p, lote_id: e.target.value }))} required>
+                <option value="">Selecione um lote...</option>
+                {lotes.map(l => <option key={l.id} value={l.id}>{l.nome}</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Quantidade de cabeças *</label>
+              <input className="form-input" type="number" min="1" value={loteForm.quantidade} onChange={e => setLoteForm(p => ({ ...p, quantidade: e.target.value }))} required placeholder="Ex: 50" />
+            </div>
+          </div>
+          <div className="grid-3" style={{ marginBottom: 0 }}>
+            <div className="form-group">
+              <label className="form-label">Raça</label>
+              <input className="form-input" value={loteForm.raca} onChange={e => setLoteForm(p => ({ ...p, raca: e.target.value }))} placeholder="Ex: Nelore" />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Sexo</label>
+              <select className="form-select" value={loteForm.sexo} onChange={e => setLoteForm(p => ({ ...p, sexo: e.target.value }))}>
+                <option value="macho">Macho</option>
+                <option value="femea">Fêmea</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Peso médio (kg)</label>
+              <input className="form-input" type="number" step="0.1" value={loteForm.peso_medio} onChange={e => setLoteForm(p => ({ ...p, peso_medio: e.target.value }))} placeholder="Ex: 320" />
+            </div>
+          </div>
+          <div className="grid-2" style={{ marginBottom: 0 }}>
+            <div className="form-group">
+              <label className="form-label">Origem</label>
+              <select className="form-select" value={loteForm.origem} onChange={e => setLoteForm(p => ({ ...p, origem: e.target.value }))}>
+                <option value="nascido">Nascido na fazenda</option>
+                <option value="comprado">Comprado</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Observações</label>
+              <input className="form-input" value={loteForm.observacoes} onChange={e => setLoteForm(p => ({ ...p, observacoes: e.target.value }))} placeholder="Opcional..." />
+            </div>
           </div>
         </form>
       </Modal>

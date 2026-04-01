@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from datetime import date, timedelta
@@ -10,6 +10,7 @@ from ..models.pesagem import Pesagem
 from ..models.movimentacao import Movimentacao
 from ..auth import get_current_user
 from ..models.user import User
+from ..email_service import enviar_alerta_vacinacao
 
 router = APIRouter()
 
@@ -65,21 +66,25 @@ def dashboard(db: Session = Depends(get_db), current_user: User = Depends(get_cu
         Reproducao.data_prevista_parto <= proximos_60,
     ).order_by(Reproducao.data_prevista_parto).limit(10).all()
 
+    proximas_vacinas_data = [
+        {
+            "id": s.id,
+            "animal_id": s.animal_id,
+            "brinco": s.animal.brinco if hasattr(s, 'animal') and s.animal else "",
+            "nome": s.animal.nome if hasattr(s, 'animal') and s.animal else None,
+            "descricao": s.descricao,
+            "tipo": s.tipo,
+            "proxima_data": str(s.proxima_data),
+        }
+        for s in proximas_vacinas
+    ]
+
     return {
         "total_animais": total_animais,
         "total_machos": total_machos,
         "total_femeas": total_femeas,
         "peso_medio_kg": peso_medio,
-        "proximas_vacinas": [
-            {
-                "id": s.id,
-                "animal_id": s.animal_id,
-                "descricao": s.descricao,
-                "tipo": s.tipo,
-                "proxima_data": s.proxima_data,
-            }
-            for s in proximas_vacinas
-        ],
+        "proximas_vacinas": proximas_vacinas_data,
         "partos_previstos": [
             {
                 "id": r.id,
@@ -90,3 +95,43 @@ def dashboard(db: Session = Depends(get_db), current_user: User = Depends(get_cu
             for r in partos_previstos
         ],
     }
+
+
+@router.post("/alertas/email")
+async def enviar_alertas_email(
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    uid = current_user.id
+    hoje = date.today()
+    proximos_7 = hoje + timedelta(days=7)
+
+    vacinas = db.query(Saude).join(Animal).filter(
+        Animal.user_id == uid,
+        Saude.proxima_data != None,
+        Saude.proxima_data >= hoje,
+        Saude.proxima_data <= proximos_7,
+    ).order_by(Saude.proxima_data).all()
+
+    if not vacinas:
+        return {"message": "Nenhuma vacinação prevista nos próximos 7 dias"}
+
+    alertas = [
+        {
+            "brinco": s.animal.brinco if s.animal else "",
+            "nome": s.animal.nome if s.animal else None,
+            "descricao": s.descricao,
+            "proxima_data": str(s.proxima_data),
+        }
+        for s in vacinas
+    ]
+
+    background_tasks.add_task(
+        enviar_alerta_vacinacao,
+        current_user.email,
+        current_user.fazenda_nome,
+        alertas,
+    )
+
+    return {"message": f"Alerta enviado para {current_user.email} com {len(alertas)} vacinação(ões)"}

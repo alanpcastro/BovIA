@@ -37,8 +37,15 @@ export default function Reproducao() {
   const [form, setForm] = useState({ ...emptyForm, animal_id: animalIdParam || '' })
   const [erro, setErro] = useState('')
   const [saving, setSaving] = useState(false)
+  const [lotes, setLotes] = useState<any[]>([])
+  const [showLoteModal, setShowLoteModal] = useState(false)
+  const emptyLoteForm = { lote_id: '', tipo: 'inseminacao', data: new Date().toISOString().split('T')[0], touro_brinco: '', resultado: '', data_prevista_parto: '', observacoes: '' }
+  const [loteForm, setLoteForm] = useState(emptyLoteForm)
 
-  useEffect(() => { api.get('/animais', { params: { sexo: 'femea' } }).then(r => setAnimais(r.data)) }, [])
+  useEffect(() => {
+    api.get('/animais', { params: { sexo: 'femea', page_size: 200 } }).then(r => setAnimais(r.data.items))
+    api.get('/lotes').then(r => setLotes(r.data))
+  }, [])
   function load() {
     const p: any = {}
     if (filtroAnimal) p.animal_id = filtroAnimal
@@ -71,6 +78,29 @@ export default function Reproducao() {
     }
   }
 
+  async function handleLoteSubmit(e: FormEvent) {
+    e.preventDefault()
+    setErro('')
+    setSaving(true)
+    try {
+      const res = await api.post(`/lotes/${loteForm.lote_id}/reproducao`, {
+        tipo: loteForm.tipo, data: loteForm.data,
+        touro_brinco: loteForm.touro_brinco || undefined,
+        resultado: loteForm.resultado || undefined,
+        data_prevista_parto: loteForm.data_prevista_parto || undefined,
+        observacoes: loteForm.observacoes || undefined,
+      })
+      setShowLoteModal(false)
+      load()
+      success(`Reprodução registrada para ${res.data.registrados} animais!`)
+    } catch (err: any) {
+      setErro(err.response?.data?.detail || 'Erro ao registrar em lote')
+      toastError('Erro ao registrar reprodução em lote')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   async function deletar(id: number) {
     if (!confirm('Excluir este registro?')) return
     await api.delete(`/reproducao/${id}`)
@@ -87,12 +117,14 @@ export default function Reproducao() {
           <div className="page-title">Reprodução</div>
           <div className="page-subtitle">Controle de cobertura, inseminação e partos</div>
         </div>
-        <button className="btn btn-primary" onClick={() => { setErro(''); setForm(emptyForm); setShowModal(true) }}>
-          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/>
-          </svg>
-          Registrar
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn btn-ghost" onClick={() => { setLoteForm(emptyLoteForm); setErro(''); setShowLoteModal(true) }}>
+            Por Lote
+          </button>
+          <button className="btn btn-primary" onClick={() => { setErro(''); setForm(emptyForm); setShowModal(true) }}>
+            + Registrar
+          </button>
+        </div>
       </div>
 
       {/* Filtro */}
@@ -216,6 +248,66 @@ export default function Reproducao() {
               <label className="form-label">Observações</label>
               <input className="form-input" value={form.observacoes} onChange={e => setForm(f => ({ ...f, observacoes: e.target.value }))} placeholder="Opcional..." />
             </div>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Modal reprodução por lote */}
+      <Modal
+        open={showLoteModal}
+        onClose={() => setShowLoteModal(false)}
+        title="Reprodução por Lote"
+        size="lg"
+        footer={
+          <>
+            <button className="btn btn-ghost" onClick={() => setShowLoteModal(false)}>Cancelar</button>
+            <button className="btn btn-primary" form="form-repro-lote" type="submit" disabled={saving}>
+              {saving ? <><span className="spinner" /> Salvando...</> : 'Registrar'}
+            </button>
+          </>
+        }
+      >
+        {erro && <div className="alert alert-error">{erro}</div>}
+        <form id="form-repro-lote" onSubmit={handleLoteSubmit}>
+          <div className="grid-3" style={{ marginBottom: 0 }}>
+            <div className="form-group">
+              <label className="form-label">Lote *</label>
+              <select className="form-select" value={loteForm.lote_id} onChange={e => setLoteForm(f => ({ ...f, lote_id: e.target.value }))} required>
+                <option value="">Selecione...</option>
+                {lotes.map(l => <option key={l.id} value={l.id}>{l.nome} ({l.total_animais} animais)</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Tipo *</label>
+              <select className="form-select" value={loteForm.tipo} onChange={e => setLoteForm(f => ({ ...f, tipo: e.target.value }))} required>
+                {tipos.map(t => <option key={t} value={t}>{tipoLabel[t]}</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Data *</label>
+              <input className="form-input" type="date" value={loteForm.data} onChange={e => setLoteForm(f => ({ ...f, data: e.target.value }))} required />
+            </div>
+          </div>
+          <div className="grid-3" style={{ marginBottom: 0 }}>
+            <div className="form-group">
+              <label className="form-label">Brinco do Touro</label>
+              <input className="form-input" value={loteForm.touro_brinco} onChange={e => setLoteForm(f => ({ ...f, touro_brinco: e.target.value }))} placeholder="Ex: T-001" />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Resultado</label>
+              <select className="form-select" value={loteForm.resultado} onChange={e => setLoteForm(f => ({ ...f, resultado: e.target.value }))}>
+                <option value="">Pendente</option>
+                {resultados.map(r => <option key={r} value={r}>{resultadoLabel[r]}</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Previsão de Parto</label>
+              <input className="form-input" type="date" value={loteForm.data_prevista_parto} onChange={e => setLoteForm(f => ({ ...f, data_prevista_parto: e.target.value }))} />
+            </div>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Observações</label>
+            <input className="form-input" value={loteForm.observacoes} onChange={e => setLoteForm(f => ({ ...f, observacoes: e.target.value }))} placeholder="Opcional..." />
           </div>
         </form>
       </Modal>

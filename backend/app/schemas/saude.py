@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator, model_validator
 from typing import Optional
 from datetime import date, datetime
 from enum import Enum
@@ -23,6 +23,19 @@ class SaudeCreate(BaseModel):
     responsavel: Optional[str] = None
     proxima_data: Optional[date] = None
     observacoes: Optional[str] = None
+
+    @field_validator('custo')
+    @classmethod
+    def custo_positivo(cls, v: Optional[float]) -> Optional[float]:
+        if v is not None and v < 0:
+            raise ValueError('Custo não pode ser negativo')
+        return v
+
+    @model_validator(mode='after')
+    def proxima_data_apos_data(self) -> 'SaudeCreate':
+        if self.proxima_data and self.proxima_data <= self.data:
+            raise ValueError('Próxima data deve ser posterior à data do registro')
+        return self
 
 
 class SaudeUpdate(BaseModel):

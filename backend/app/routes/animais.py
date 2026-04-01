@@ -14,21 +14,35 @@ from ..schemas.reproducao import ReproducaoOut
 from ..schemas.movimentacao import MovimentacaoCreate, MovimentacaoOut
 from ..auth import get_current_user
 from ..models.user import User
-from datetime import date
+from datetime import date, datetime, timezone
+from pydantic import BaseModel
 
 router = APIRouter()
 
 
-@router.get("", response_model=List[AnimalOut])
+class AnimaisPage(BaseModel):
+    total: int
+    page: int
+    page_size: int
+    items: List[AnimalOut]
+
+    class Config:
+        from_attributes = True
+
+
+@router.get("", response_model=AnimaisPage)
 def listar_animais(
     lote_id: Optional[int] = Query(None),
     status: Optional[str] = Query(None),
     sexo: Optional[str] = Query(None),
     raca: Optional[str] = Query(None),
+    busca: Optional[str] = Query(None),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=200),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    q = db.query(Animal).filter(Animal.user_id == current_user.id)
+    q = db.query(Animal).filter(Animal.user_id == current_user.id, Animal.deletado_em == None)
     if lote_id is not None:
         q = q.filter(Animal.lote_id == lote_id)
     if status:
@@ -37,14 +51,21 @@ def listar_animais(
         q = q.filter(Animal.sexo == sexo)
     if raca:
         q = q.filter(Animal.raca.ilike(f"%{raca}%"))
-    return q.order_by(Animal.brinco).all()
+    if busca:
+        q = q.filter(
+            Animal.brinco.ilike(f"%{busca}%") | Animal.nome.ilike(f"%{busca}%")
+        )
+    total = q.count()
+    items = q.order_by(Animal.brinco).offset((page - 1) * page_size).limit(page_size).all()
+    return AnimaisPage(total=total, page=page, page_size=page_size, items=items)
 
 
 @router.post("", response_model=AnimalOut, status_code=201)
 def criar_animal(data: AnimalCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    existe = db.query(Animal).filter(Animal.user_id == current_user.id, Animal.brinco == data.brinco).first()
-    if existe:
-        raise HTTPException(status_code=400, detail=f"Brinco '{data.brinco}' já cadastrado")
+    if data.brinco:
+        existe = db.query(Animal).filter(Animal.user_id == current_user.id, Animal.brinco == data.brinco).first()
+        if existe:
+            raise HTTPException(status_code=400, detail=f"Brinco '{data.brinco}' já cadastrado")
 
     animal = Animal(**data.model_dump(), user_id=current_user.id)
     db.add(animal)
@@ -77,7 +98,7 @@ def criar_animal(data: AnimalCreate, db: Session = Depends(get_db), current_user
 
 @router.get("/{animal_id}", response_model=AnimalOut)
 def get_animal(animal_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    animal = db.query(Animal).filter(Animal.id == animal_id, Animal.user_id == current_user.id).first()
+    animal = db.query(Animal).filter(Animal.id == animal_id, Animal.user_id == current_user.id, Animal.deletado_em == None).first()
     if not animal:
         raise HTTPException(status_code=404, detail="Animal não encontrado")
     return animal
@@ -85,7 +106,7 @@ def get_animal(animal_id: int, db: Session = Depends(get_db), current_user: User
 
 @router.put("/{animal_id}", response_model=AnimalOut)
 def atualizar_animal(animal_id: int, data: AnimalUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    animal = db.query(Animal).filter(Animal.id == animal_id, Animal.user_id == current_user.id).first()
+    animal = db.query(Animal).filter(Animal.id == animal_id, Animal.user_id == current_user.id, Animal.deletado_em == None).first()
     if not animal:
         raise HTTPException(status_code=404, detail="Animal não encontrado")
 
@@ -123,10 +144,10 @@ def atualizar_animal(animal_id: int, data: AnimalUpdate, db: Session = Depends(g
 
 @router.delete("/{animal_id}", status_code=204)
 def deletar_animal(animal_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    animal = db.query(Animal).filter(Animal.id == animal_id, Animal.user_id == current_user.id).first()
+    animal = db.query(Animal).filter(Animal.id == animal_id, Animal.user_id == current_user.id, Animal.deletado_em == None).first()
     if not animal:
         raise HTTPException(status_code=404, detail="Animal não encontrado")
-    db.delete(animal)
+    animal.deletado_em = datetime.now(timezone.utc)
     db.commit()
 
 

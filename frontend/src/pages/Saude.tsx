@@ -36,8 +36,15 @@ export default function Saude() {
   const [form, setForm] = useState({ ...emptyForm, animal_id: animalIdParam || '' })
   const [erro, setErro] = useState('')
   const [saving, setSaving] = useState(false)
+  const [lotes, setLotes] = useState<any[]>([])
+  const [showLoteModal, setShowLoteModal] = useState(false)
+  const emptyLoteForm = { lote_id: '', tipo: 'vacinacao', data: new Date().toISOString().split('T')[0], descricao: '', medicamento: '', dose: '', custo_total: '', responsavel: '', proxima_data: '', observacoes: '' }
+  const [loteForm, setLoteForm] = useState(emptyLoteForm)
 
-  useEffect(() => { api.get('/animais').then(r => setAnimais(r.data)) }, [])
+  useEffect(() => {
+    api.get('/animais', { params: { page_size: 200 } }).then(r => setAnimais(r.data.items))
+    api.get('/lotes').then(r => setLotes(r.data))
+  }, [])
   function load() {
     const p: any = {}
     if (filtroAnimal) p.animal_id = filtroAnimal
@@ -71,6 +78,30 @@ export default function Saude() {
     }
   }
 
+  async function handleLoteSubmit(e: FormEvent) {
+    e.preventDefault()
+    setErro('')
+    setSaving(true)
+    try {
+      const res = await api.post(`/lotes/${loteForm.lote_id}/saude`, {
+        tipo: loteForm.tipo, data: loteForm.data, descricao: loteForm.descricao,
+        medicamento: loteForm.medicamento || undefined, dose: loteForm.dose || undefined,
+        custo_total: loteForm.custo_total ? parseFloat(loteForm.custo_total) : undefined,
+        responsavel: loteForm.responsavel || undefined,
+        proxima_data: loteForm.proxima_data || undefined,
+        observacoes: loteForm.observacoes || undefined,
+      })
+      setShowLoteModal(false)
+      load()
+      success(`Saúde registrada para ${res.data.registrados} animais!`)
+    } catch (err: any) {
+      setErro(err.response?.data?.detail || 'Erro ao registrar em lote')
+      toastError('Erro ao registrar saúde em lote')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   async function deletar(id: number) {
     if (!confirm('Excluir este registro?')) return
     await api.delete(`/saude/${id}`)
@@ -94,12 +125,14 @@ export default function Saude() {
             {registros.length} registro(s) · Custo total: <strong style={{ color: 'var(--red-600)' }}>R$ {totalCustos.toFixed(2)}</strong>
           </div>
         </div>
-        <button className="btn btn-primary" onClick={() => { setErro(''); setForm(emptyForm); setShowModal(true) }}>
-          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/>
-          </svg>
-          Registrar
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn btn-ghost" onClick={() => { setLoteForm(emptyLoteForm); setErro(''); setShowLoteModal(true) }}>
+            Por Lote
+          </button>
+          <button className="btn btn-primary" onClick={() => { setErro(''); setForm(emptyForm); setShowModal(true) }}>
+            + Registrar
+          </button>
+        </div>
       </div>
 
       {/* Filtros */}
@@ -231,6 +264,73 @@ export default function Saude() {
             <div className="form-group">
               <label className="form-label">Próxima Data</label>
               <input className="form-input" type="date" value={form.proxima_data} onChange={e => setForm(f => ({ ...f, proxima_data: e.target.value }))} />
+            </div>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Modal saúde por lote */}
+      <Modal
+        open={showLoteModal}
+        onClose={() => setShowLoteModal(false)}
+        title="Saúde por Lote"
+        size="lg"
+        footer={
+          <>
+            <button className="btn btn-ghost" onClick={() => setShowLoteModal(false)}>Cancelar</button>
+            <button className="btn btn-primary" form="form-saude-lote" type="submit" disabled={saving}>
+              {saving ? <><span className="spinner" /> Salvando...</> : 'Registrar'}
+            </button>
+          </>
+        }
+      >
+        {erro && <div className="alert alert-error">{erro}</div>}
+        <form id="form-saude-lote" onSubmit={handleLoteSubmit}>
+          <div className="grid-3" style={{ marginBottom: 0 }}>
+            <div className="form-group">
+              <label className="form-label">Lote *</label>
+              <select className="form-select" value={loteForm.lote_id} onChange={e => setLoteForm(f => ({ ...f, lote_id: e.target.value }))} required>
+                <option value="">Selecione...</option>
+                {lotes.map(l => <option key={l.id} value={l.id}>{l.nome} ({l.total_animais} animais)</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Tipo *</label>
+              <select className="form-select" value={loteForm.tipo} onChange={e => setLoteForm(f => ({ ...f, tipo: e.target.value }))} required>
+                {tipos.map(t => <option key={t} value={t}>{tipoLabel[t]}</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Data *</label>
+              <input className="form-input" type="date" value={loteForm.data} onChange={e => setLoteForm(f => ({ ...f, data: e.target.value }))} required />
+            </div>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Descrição *</label>
+            <input className="form-input" value={loteForm.descricao} onChange={e => setLoteForm(f => ({ ...f, descricao: e.target.value }))} required placeholder="Ex: Vacina contra febre aftosa" />
+          </div>
+          <div className="grid-3" style={{ marginBottom: 0 }}>
+            <div className="form-group">
+              <label className="form-label">Medicamento</label>
+              <input className="form-input" value={loteForm.medicamento} onChange={e => setLoteForm(f => ({ ...f, medicamento: e.target.value }))} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Dose</label>
+              <input className="form-input" value={loteForm.dose} onChange={e => setLoteForm(f => ({ ...f, dose: e.target.value }))} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Responsável</label>
+              <input className="form-input" value={loteForm.responsavel} onChange={e => setLoteForm(f => ({ ...f, responsavel: e.target.value }))} />
+            </div>
+          </div>
+          <div className="grid-2" style={{ marginBottom: 0 }}>
+            <div className="form-group">
+              <label className="form-label">Custo total (R$)</label>
+              <input className="form-input" type="number" step="0.01" value={loteForm.custo_total} onChange={e => setLoteForm(f => ({ ...f, custo_total: e.target.value }))} placeholder="Será dividido entre os animais" />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Próxima Data</label>
+              <input className="form-input" type="date" value={loteForm.proxima_data} onChange={e => setLoteForm(f => ({ ...f, proxima_data: e.target.value }))} />
             </div>
           </div>
         </form>

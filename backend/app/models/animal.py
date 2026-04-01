@@ -24,7 +24,7 @@ class Animal(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     lote_id = Column(Integer, ForeignKey("lotes.id"), nullable=True)
 
-    brinco = Column(String, nullable=False, index=True)
+    brinco = Column(String, nullable=True, index=True)
     nome = Column(String, nullable=True)
     raca = Column(String, nullable=True)
     sexo = Column(Enum(SexoEnum), nullable=False)
@@ -34,6 +34,7 @@ class Animal(Base):
     status = Column(Enum(StatusEnum), default=StatusEnum.ativo)
     observacoes = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    deletado_em = Column(DateTime(timezone=True), nullable=True)
 
     usuario = relationship("User", back_populates="animais")
     lote = relationship("Lote", back_populates="animais")

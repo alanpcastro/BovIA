@@ -3,7 +3,7 @@ import api, { Lote } from '../services/api'
 import Modal from '../components/Modal'
 import { useToast } from '../components/Toast'
 
-const emptyForm = { nome: '', area_ha: '', descricao: '' }
+const emptyForm = { nome: '', area_hectares: '', descricao: '' }
 
 export default function Lotes() {
   const { success, error: toastError } = useToast()
@@ -21,7 +21,7 @@ export default function Lotes() {
 
   function openEdit(l: Lote) {
     setEditing(l)
-    setForm({ nome: l.nome, area_ha: l.area_ha?.toString() || '', descricao: l.descricao || '' })
+    setForm({ nome: l.nome, area_hectares: l.area_hectares?.toString() || '', descricao: l.descricao || '' })
     setErro('')
     setShowModal(true)
   }
@@ -32,19 +32,20 @@ export default function Lotes() {
     setSaving(true)
     const payload = {
       nome: form.nome,
-      area_ha: form.area_ha ? parseFloat(form.area_ha) : undefined,
+      area_hectares: form.area_hectares ? parseFloat(form.area_hectares) : undefined,
       descricao: form.descricao || undefined
     }
     try {
       if (editing) {
-        await api.put(`/lotes/${editing.id}`, payload)
+        const res = await api.put(`/lotes/${editing.id}`, payload)
+        setLotes(prev => prev.map(l => l.id === editing.id ? res.data : l))
         success('Lote atualizado com sucesso!')
       } else {
-        await api.post('/lotes', payload)
+        const res = await api.post('/lotes', payload)
+        setLotes(prev => [...prev, res.data])
         success('Lote criado com sucesso!')
       }
       setShowModal(false)
-      load()
     } catch (err: any) {
       setErro(err.response?.data?.detail || 'Erro ao salvar')
       toastError('Erro ao salvar lote')
@@ -114,9 +115,9 @@ export default function Lotes() {
                   </span>
                   <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--gray-900)' }}>{l.nome}</div>
                 </div>
-                {l.area_ha && (
+                {l.area_hectares && (
                   <div style={{ fontSize: 13, color: 'var(--gray-500)', marginBottom: 4 }}>
-                    📐 {l.area_ha} hectares
+                    📐 {l.area_hectares} hectares
                   </div>
                 )}
                 {l.descricao && (
@@ -171,7 +172,7 @@ export default function Lotes() {
             </div>
             <div className="form-group">
               <label className="form-label">Área (ha)</label>
-              <input className="form-input" type="number" step="0.1" value={form.area_ha} onChange={e => setForm(p => ({ ...p, area_ha: e.target.value }))} placeholder="Ex: 120" />
+              <input className="form-input" type="number" step="0.1" value={form.area_hectares} onChange={e => setForm(p => ({ ...p, area_hectares: e.target.value }))} placeholder="Ex: 120" />
             </div>
           </div>
           <div className="form-group">

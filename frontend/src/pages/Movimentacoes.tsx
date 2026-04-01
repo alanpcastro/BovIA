@@ -28,8 +28,15 @@ export default function Movimentacoes() {
   const [form, setForm] = useState(emptyForm)
   const [erro, setErro] = useState('')
   const [saving, setSaving] = useState(false)
+  const [lotes, setLotes] = useState<any[]>([])
+  const [showLoteModal, setShowLoteModal] = useState(false)
+  const emptyLoteForm = { lote_id: '', tipo: 'compra', data: new Date().toISOString().split('T')[0], valor_total: '', peso_medio_kg: '', origem: '', destino: '', observacoes: '' }
+  const [loteForm, setLoteForm] = useState(emptyLoteForm)
 
-  useEffect(() => { api.get('/animais').then(r => setAnimais(r.data)) }, [])
+  useEffect(() => {
+    api.get('/animais', { params: { page_size: 200 } }).then(r => setAnimais(r.data.items))
+    api.get('/lotes').then(r => setLotes(r.data))
+  }, [])
 
   function load() {
     const p: any = {}
@@ -62,6 +69,29 @@ export default function Movimentacoes() {
     }
   }
 
+  async function handleLoteSubmit(e: FormEvent) {
+    e.preventDefault()
+    setErro('')
+    setSaving(true)
+    try {
+      const res = await api.post(`/lotes/${loteForm.lote_id}/movimentacoes`, {
+        tipo: loteForm.tipo, data: loteForm.data,
+        valor_total: loteForm.valor_total ? parseFloat(loteForm.valor_total) : undefined,
+        peso_medio_kg: loteForm.peso_medio_kg ? parseFloat(loteForm.peso_medio_kg) : undefined,
+        origem: loteForm.origem || undefined, destino: loteForm.destino || undefined,
+        observacoes: loteForm.observacoes || undefined,
+      })
+      setShowLoteModal(false)
+      load()
+      success(`Movimentação registrada para ${res.data.registrados} animais!`)
+    } catch (err: any) {
+      setErro(err.response?.data?.detail || 'Erro ao registrar em lote')
+      toastError('Erro ao registrar movimentação em lote')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const animaisMap = Object.fromEntries(animais.map(a => [a.id, a]))
 
   const totalVendas = movs.filter(m => m.tipo === 'venda').reduce((acc, m) => acc + (m.valor || 0), 0)
@@ -75,12 +105,14 @@ export default function Movimentacoes() {
           <div className="page-title">Movimentações</div>
           <div className="page-subtitle">Compras, vendas, nascimentos e outros eventos</div>
         </div>
-        <button className="btn btn-primary" onClick={() => { setErro(''); setForm(emptyForm); setShowModal(true) }}>
-          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/>
-          </svg>
-          Registrar
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn btn-ghost" onClick={() => { setLoteForm(emptyLoteForm); setErro(''); setShowLoteModal(true) }}>
+            Por Lote
+          </button>
+          <button className="btn btn-primary" onClick={() => { setErro(''); setForm(emptyForm); setShowModal(true) }}>
+            + Registrar
+          </button>
+        </div>
       </div>
 
       {/* Resumo financeiro */}
@@ -211,6 +243,69 @@ export default function Movimentacoes() {
           <div className="form-group">
             <label className="form-label">Observações</label>
             <input className="form-input" value={form.observacoes} onChange={e => setForm(f => ({ ...f, observacoes: e.target.value }))} placeholder="Opcional..." />
+          </div>
+        </form>
+      </Modal>
+
+      {/* Modal movimentação por lote */}
+      <Modal
+        open={showLoteModal}
+        onClose={() => setShowLoteModal(false)}
+        title="Movimentação por Lote"
+        size="lg"
+        footer={
+          <>
+            <button className="btn btn-ghost" onClick={() => setShowLoteModal(false)}>Cancelar</button>
+            <button className="btn btn-primary" form="form-mov-lote" type="submit" disabled={saving}>
+              {saving ? <><span className="spinner" /> Salvando...</> : 'Registrar'}
+            </button>
+          </>
+        }
+      >
+        {erro && <div className="alert alert-error">{erro}</div>}
+        <form id="form-mov-lote" onSubmit={handleLoteSubmit}>
+          <div className="grid-3" style={{ marginBottom: 0 }}>
+            <div className="form-group">
+              <label className="form-label">Lote *</label>
+              <select className="form-select" value={loteForm.lote_id} onChange={e => setLoteForm(f => ({ ...f, lote_id: e.target.value }))} required>
+                <option value="">Selecione...</option>
+                {lotes.map(l => <option key={l.id} value={l.id}>{l.nome} ({l.total_animais} animais)</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Tipo *</label>
+              <select className="form-select" value={loteForm.tipo} onChange={e => setLoteForm(f => ({ ...f, tipo: e.target.value }))} required>
+                {tipos.map(t => <option key={t} value={t}>{tipoLabel[t]}</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Data *</label>
+              <input className="form-input" type="date" value={loteForm.data} onChange={e => setLoteForm(f => ({ ...f, data: e.target.value }))} required />
+            </div>
+          </div>
+          <div className="grid-2" style={{ marginBottom: 0 }}>
+            <div className="form-group">
+              <label className="form-label">Valor total (R$)</label>
+              <input className="form-input" type="number" step="0.01" value={loteForm.valor_total} onChange={e => setLoteForm(f => ({ ...f, valor_total: e.target.value }))} placeholder="Será dividido entre os animais" />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Peso médio (kg)</label>
+              <input className="form-input" type="number" step="0.1" value={loteForm.peso_medio_kg} onChange={e => setLoteForm(f => ({ ...f, peso_medio_kg: e.target.value }))} placeholder="Ex: 400" />
+            </div>
+          </div>
+          <div className="grid-2" style={{ marginBottom: 0 }}>
+            <div className="form-group">
+              <label className="form-label">Origem</label>
+              <input className="form-input" value={loteForm.origem} onChange={e => setLoteForm(f => ({ ...f, origem: e.target.value }))} placeholder="Ex: Fazenda Boa Vista" />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Destino</label>
+              <input className="form-input" value={loteForm.destino} onChange={e => setLoteForm(f => ({ ...f, destino: e.target.value }))} placeholder="Ex: Frigorífico ABC" />
+            </div>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Observações</label>
+            <input className="form-input" value={loteForm.observacoes} onChange={e => setLoteForm(f => ({ ...f, observacoes: e.target.value }))} placeholder="Opcional..." />
           </div>
         </form>
       </Modal>

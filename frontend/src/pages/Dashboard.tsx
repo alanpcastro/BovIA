@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api, { Dashboard as DashboardData } from '../services/api'
+import { useToast } from '../components/Toast'
 
 function StatCard({ label, value, sub, color, bg, icon }: {
   label: string; value: string | number; sub?: string; color: string; bg: string; icon: React.ReactNode
@@ -22,7 +23,21 @@ function StatCard({ label, value, sub, color, bg, icon }: {
 export default function Dashboard() {
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [enviandoEmail, setEnviandoEmail] = useState(false)
   const navigate = useNavigate()
+  const { success, error: toastError } = useToast()
+
+  async function enviarAlertas() {
+    setEnviandoEmail(true)
+    try {
+      const r = await api.post('/dashboard/alertas/email')
+      success(r.data.message)
+    } catch {
+      toastError('Erro ao enviar alertas. Verifique as configurações de email no .env')
+    } finally {
+      setEnviandoEmail(false)
+    }
+  }
 
   useEffect(() => {
     api.get('/dashboard').then(r => setData(r.data)).finally(() => setLoading(false))
@@ -49,6 +64,9 @@ export default function Dashboard() {
           <div className="page-subtitle">Visão geral do seu rebanho</div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn btn-outline" onClick={enviarAlertas} disabled={enviandoEmail} title="Enviar alertas de vacinação por email">
+            {enviandoEmail ? <><span className="spinner" /> Enviando...</> : '📧 Alertas'}
+          </button>
           <button className="btn btn-primary" onClick={() => navigate('/animais')}>
             <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/>

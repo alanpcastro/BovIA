@@ -12,6 +12,7 @@ import Pesagens from './pages/Pesagens'
 import Saude from './pages/Saude'
 import Reproducao from './pages/Reproducao'
 import Movimentacoes from './pages/Movimentacoes'
+import Relatorios from './pages/Relatorios'
 
 export default function App() {
   return (
@@ -37,6 +38,7 @@ export default function App() {
             <Route path="saude" element={<Saude />} />
             <Route path="reproducao" element={<Reproducao />} />
             <Route path="movimentacoes" element={<Movimentacoes />} />
+            <Route path="relatorios" element={<Relatorios />} />
           </Route>
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>

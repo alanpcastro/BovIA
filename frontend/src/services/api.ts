@@ -38,14 +38,15 @@ export interface User {
 export interface Lote {
   id: number
   nome: string
-  area_ha?: number
+  area_hectares?: number
   descricao?: string
   created_at: string
+  total_animais?: number
 }
 
 export interface Animal {
   id: number
-  brinco: string
+  brinco?: string
   nome?: string
   raca?: string
   sexo: 'macho' | 'femea'

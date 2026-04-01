@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, FormEvent } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import api, { Animal, Pesagem, Saude, Reproducao, Movimentacao, Lote } from '../services/api'
+import Modal from '../components/Modal'
+import { useToast } from '../components/Toast'
 
 interface Historico {
   animal: Animal
@@ -34,9 +36,15 @@ export default function AnimalDetalhe() {
   const [hist, setHist] = useState<Historico | null>(null)
   const [lotes, setLotes] = useState<Lote[]>([])
   const [tab, setTab] = useState<'pesagens' | 'saude' | 'reproducao' | 'movimentacoes'>('pesagens')
+  const { success, error: toastError } = useToast()
   const [editStatus, setEditStatus] = useState(false)
   const [novoStatus, setNovoStatus] = useState('')
   const [saving, setSaving] = useState(false)
+  const [showEdit, setShowEdit] = useState(false)
+  const [editForm, setEditForm] = useState({
+    brinco: '', nome: '', raca: '', sexo: 'macho',
+    data_nascimento: '', peso_entrada: '', lote_id: '', observacoes: ''
+  })
 
   function load() {
     api.get(`/animais/${id}/historico`).then(r => {
@@ -53,6 +61,41 @@ export default function AnimalDetalhe() {
     setSaving(false)
     setEditStatus(false)
     load()
+  }
+
+  function openEdit() {
+    if (!hist) return
+    const a = hist.animal
+    setEditForm({
+      brinco: a.brinco || '', nome: a.nome || '', raca: a.raca || '', sexo: a.sexo,
+      data_nascimento: a.data_nascimento || '', peso_entrada: a.peso_entrada?.toString() || '',
+      lote_id: a.lote_id?.toString() || '', observacoes: a.observacoes || ''
+    })
+    setShowEdit(true)
+  }
+
+  async function handleEditSubmit(e: FormEvent) {
+    e.preventDefault()
+    setSaving(true)
+    try {
+      await api.put(`/animais/${id}`, {
+        brinco: editForm.brinco || undefined,
+        nome: editForm.nome || undefined,
+        raca: editForm.raca || undefined,
+        sexo: editForm.sexo,
+        data_nascimento: editForm.data_nascimento || undefined,
+        peso_entrada: editForm.peso_entrada ? parseFloat(editForm.peso_entrada) : undefined,
+        lote_id: editForm.lote_id ? parseInt(editForm.lote_id) : null,
+        observacoes: editForm.observacoes || undefined,
+      })
+      setShowEdit(false)
+      load()
+      success('Animal atualizado com sucesso!')
+    } catch (err: any) {
+      toastError(err.response?.data?.detail || 'Erro ao atualizar')
+    } finally {
+      setSaving(false)
+    }
   }
 
   async function deletar() {
@@ -144,6 +187,7 @@ export default function AnimalDetalhe() {
                   {statusLabel[animal.status]}
                 </span>
                 <button className="btn btn-ghost btn-sm" onClick={() => setEditStatus(true)}>Mudar status</button>
+                <button className="btn btn-primary btn-sm" onClick={openEdit}>Editar</button>
                 <button className="btn btn-danger btn-sm" onClick={deletar}>Excluir</button>
               </>
             )}
@@ -349,6 +393,69 @@ export default function AnimalDetalhe() {
           }
         </div>
       )}
+
+      <Modal
+        open={showEdit}
+        onClose={() => setShowEdit(false)}
+        title="Editar Animal"
+        footer={
+          <>
+            <button className="btn btn-ghost" onClick={() => setShowEdit(false)}>Cancelar</button>
+            <button className="btn btn-primary" form="form-edit-animal" type="submit" disabled={saving}>
+              {saving ? <><span className="spinner" /> Salvando...</> : 'Salvar'}
+            </button>
+          </>
+        }
+      >
+        <form id="form-edit-animal" onSubmit={handleEditSubmit}>
+          <div className="grid-2" style={{ marginBottom: 0 }}>
+            <div className="form-group">
+              <label className="form-label">Brinco</label>
+              <input className="form-input" value={editForm.brinco} onChange={e => setEditForm(p => ({ ...p, brinco: e.target.value }))} placeholder="Ex: 001" />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Nome</label>
+              <input className="form-input" value={editForm.nome} onChange={e => setEditForm(p => ({ ...p, nome: e.target.value }))} placeholder="Ex: Mimosa" />
+            </div>
+          </div>
+          <div className="grid-2" style={{ marginBottom: 0 }}>
+            <div className="form-group">
+              <label className="form-label">Raça</label>
+              <input className="form-input" value={editForm.raca} onChange={e => setEditForm(p => ({ ...p, raca: e.target.value }))} placeholder="Ex: Nelore" />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Sexo</label>
+              <select className="form-select" value={editForm.sexo} onChange={e => setEditForm(p => ({ ...p, sexo: e.target.value }))}>
+                <option value="macho">Macho</option>
+                <option value="femea">Fêmea</option>
+              </select>
+            </div>
+          </div>
+          <div className="grid-2" style={{ marginBottom: 0 }}>
+            <div className="form-group">
+              <label className="form-label">Data de Nascimento</label>
+              <input className="form-input" type="date" value={editForm.data_nascimento} onChange={e => setEditForm(p => ({ ...p, data_nascimento: e.target.value }))} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Peso de Entrada (kg)</label>
+              <input className="form-input" type="number" step="0.1" value={editForm.peso_entrada} onChange={e => setEditForm(p => ({ ...p, peso_entrada: e.target.value }))} />
+            </div>
+          </div>
+          <div className="grid-2" style={{ marginBottom: 0 }}>
+            <div className="form-group">
+              <label className="form-label">Lote</label>
+              <select className="form-select" value={editForm.lote_id} onChange={e => setEditForm(p => ({ ...p, lote_id: e.target.value }))}>
+                <option value="">Sem lote</option>
+                {lotes.map(l => <option key={l.id} value={l.id}>{l.nome}</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Observações</label>
+              <input className="form-input" value={editForm.observacoes} onChange={e => setEditForm(p => ({ ...p, observacoes: e.target.value }))} placeholder="Opcional..." />
+            </div>
+          </div>
+        </form>
+      </Modal>
     </div>
   )
 }
