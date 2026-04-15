@@ -13,7 +13,13 @@ const statusBadge: Record<string, string> = {
 
 const emptyForm = {
   brinco: '', nome: '', raca: '', sexo: 'macho',
-  data_nascimento: '', peso_entrada: '', origem: 'nascido', lote_id: '', observacoes: ''
+  data_nascimento: '', peso_entrada: '', origem: 'nascido', lote_id: '', observacoes: '',
+  // Compra (movimentação)
+  registrar_compra: false,
+  compra_valor: '', compra_preco_arroba: '', compra_origem: '',
+  // Vacinação (saúde)
+  registrar_vacina: false,
+  vacina_descricao: '', vacina_medicamento: '', vacina_proxima_data: '',
 }
 
 export default function Animais() {
@@ -63,7 +69,28 @@ export default function Animais() {
       observacoes: form.observacoes || undefined,
     }
     try {
-      await api.post('/animais', payload)
+      const res = await api.post('/animais', payload)
+      const animalId = res.data.id
+      const hoje = new Date().toISOString().split('T')[0]
+      // Register purchase if checked
+      if (form.registrar_compra && form.compra_valor) {
+        await api.post('/movimentacoes', {
+          animal_id: animalId, tipo: 'compra', data: hoje,
+          valor: parseFloat(form.compra_valor),
+          peso_kg: form.peso_entrada ? parseFloat(form.peso_entrada) : undefined,
+          preco_arroba: form.compra_preco_arroba ? parseFloat(form.compra_preco_arroba) : undefined,
+          origem: form.compra_origem || undefined,
+        }).catch(() => {})
+      }
+      // Register vaccination if checked
+      if (form.registrar_vacina && form.vacina_descricao) {
+        await api.post('/saude', {
+          animal_id: animalId, tipo: 'vacinacao', data: hoje,
+          descricao: form.vacina_descricao,
+          medicamento: form.vacina_medicamento || undefined,
+          proxima_data: form.vacina_proxima_data || undefined,
+        }).catch(() => {})
+      }
       setShowModal(false)
       setForm(emptyForm)
       load()
@@ -261,6 +288,54 @@ export default function Animais() {
           <div className="form-group">
             <label className="form-label">Observações</label>
             <input className="form-input" value={form.observacoes} onChange={e => setForm(p => ({ ...p, observacoes: e.target.value }))} placeholder="Opcional..." />
+          </div>
+
+          {/* Compra (optional section) */}
+          <div style={{ borderTop: '1px solid var(--gray-200)', marginTop: 12, paddingTop: 12 }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, fontWeight: 600, color: 'var(--gray-700)' }}>
+              <input type="checkbox" checked={form.registrar_compra} onChange={e => setForm(p => ({ ...p, registrar_compra: e.target.checked }))} />
+              Registrar compra junto
+            </label>
+            {form.registrar_compra && (
+              <div className="grid-3" style={{ marginTop: 12, marginBottom: 0 }}>
+                <div className="form-group">
+                  <label className="form-label">Valor (R$)</label>
+                  <input className="form-input" type="number" step="0.01" value={form.compra_valor} onChange={e => setForm(p => ({ ...p, compra_valor: e.target.value }))} placeholder="0,00" />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Preco @ (R$)</label>
+                  <input className="form-input" type="number" step="0.01" value={form.compra_preco_arroba} onChange={e => setForm(p => ({ ...p, compra_preco_arroba: e.target.value }))} placeholder="Ex: 320" />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Origem</label>
+                  <input className="form-input" value={form.compra_origem} onChange={e => setForm(p => ({ ...p, compra_origem: e.target.value }))} placeholder="Ex: Fazenda X" />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Vacinação (optional section) */}
+          <div style={{ borderTop: '1px solid var(--gray-200)', marginTop: 12, paddingTop: 12 }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, fontWeight: 600, color: 'var(--gray-700)' }}>
+              <input type="checkbox" checked={form.registrar_vacina} onChange={e => setForm(p => ({ ...p, registrar_vacina: e.target.checked }))} />
+              Registrar vacinacao junto
+            </label>
+            {form.registrar_vacina && (
+              <div className="grid-3" style={{ marginTop: 12, marginBottom: 0 }}>
+                <div className="form-group">
+                  <label className="form-label">Descricao *</label>
+                  <input className="form-input" value={form.vacina_descricao} onChange={e => setForm(p => ({ ...p, vacina_descricao: e.target.value }))} placeholder="Ex: Aftosa" />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Medicamento</label>
+                  <input className="form-input" value={form.vacina_medicamento} onChange={e => setForm(p => ({ ...p, vacina_medicamento: e.target.value }))} placeholder="Nome" />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Proxima data</label>
+                  <input className="form-input" type="date" value={form.vacina_proxima_data} onChange={e => setForm(p => ({ ...p, vacina_proxima_data: e.target.value }))} />
+                </div>
+              </div>
+            )}
           </div>
         </form>
       </Modal>

@@ -27,13 +27,13 @@ export default function Login() {
   }
 
   return (
-    <div style={{
+    <div className="auth-page" style={{
       minHeight: '100vh',
       display: 'flex',
       background: '#111',
     }}>
       {/* Left panel — hero image */}
-      <div style={{
+      <div className="auth-hero" style={{
         flex: 1,
         backgroundImage: `url(${farmBg})`,
         backgroundSize: 'cover',
@@ -62,7 +62,7 @@ export default function Login() {
       </div>
 
       {/* Right panel — form */}
-      <div style={{
+      <div className="auth-form-panel" style={{
         width: 440,
         flexShrink: 0,
         background: '#fff',
@@ -124,6 +124,12 @@ export default function Login() {
                 placeholder="••••••••"
               />
             </div>
+          </div>
+
+          <div style={{ textAlign: 'right', marginTop: 4, marginBottom: 4 }}>
+            <Link to="/esqueci-senha" style={{ fontSize: 13, color: 'var(--green-800)', fontWeight: 500 }}>
+              Esqueci minha senha
+            </Link>
           </div>
 
           <button

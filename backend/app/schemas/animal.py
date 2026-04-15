@@ -53,6 +53,7 @@ class AnimalCreate(BaseModel):
 
 
 class AnimalUpdate(BaseModel):
+    brinco: Optional[str] = None
     nome: Optional[str] = None
     raca: Optional[str] = None
     sexo: Optional[SexoEnum] = None
@@ -62,6 +63,30 @@ class AnimalUpdate(BaseModel):
     lote_id: Optional[int] = None
     status: Optional[StatusEnum] = None
     observacoes: Optional[str] = None
+
+    @field_validator('brinco')
+    @classmethod
+    def brinco_nao_vazio(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return v
+        v = v.strip()
+        if len(v) > 50:
+            raise ValueError('Brinco deve ter no maximo 50 caracteres')
+        return v or None
+
+    @field_validator('peso_entrada')
+    @classmethod
+    def peso_positivo(cls, v: Optional[float]) -> Optional[float]:
+        if v is not None and v <= 0:
+            raise ValueError('Peso deve ser maior que zero')
+        return v
+
+    @field_validator('data_nascimento')
+    @classmethod
+    def data_nao_futura(cls, v: Optional[date]) -> Optional[date]:
+        if v is not None and v > date.today():
+            raise ValueError('Data de nascimento nao pode ser futura')
+        return v
 
 
 class AnimalOut(BaseModel):
@@ -76,6 +101,7 @@ class AnimalOut(BaseModel):
     lote_id: Optional[int]
     status: StatusEnum
     observacoes: Optional[str]
+    foto_url: Optional[str] = None
     created_at: datetime
 
     class Config:

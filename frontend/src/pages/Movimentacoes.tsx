@@ -16,7 +16,7 @@ const tipoBadge: Record<string, string> = {
 const emptyForm = {
   animal_id: '', tipo: 'compra',
   data: new Date().toISOString().split('T')[0],
-  valor: '', peso_kg: '', origem: '', destino: '', observacoes: ''
+  valor: '', peso_kg: '', preco_arroba: '', agio_compra: '', origem: '', destino: '', observacoes: ''
 }
 
 export default function Movimentacoes() {
@@ -32,6 +32,7 @@ export default function Movimentacoes() {
   const [showLoteModal, setShowLoteModal] = useState(false)
   const emptyLoteForm = { lote_id: '', tipo: 'compra', data: new Date().toISOString().split('T')[0], valor_total: '', peso_medio_kg: '', origem: '', destino: '', observacoes: '' }
   const [loteForm, setLoteForm] = useState(emptyLoteForm)
+  const [loteConfirm, setLoteConfirm] = useState(false)
 
   useEffect(() => {
     api.get('/animais', { params: { page_size: 200 } }).then(r => setAnimais(r.data.items))
@@ -54,6 +55,8 @@ export default function Movimentacoes() {
         animal_id: parseInt(form.animal_id), tipo: form.tipo, data: form.data,
         valor: form.valor ? parseFloat(form.valor) : undefined,
         peso_kg: form.peso_kg ? parseFloat(form.peso_kg) : undefined,
+        preco_arroba: form.preco_arroba ? parseFloat(form.preco_arroba) : undefined,
+        agio_compra: form.agio_compra ? parseFloat(form.agio_compra) : undefined,
         origem: form.origem || undefined, destino: form.destino || undefined,
         observacoes: form.observacoes || undefined
       })
@@ -71,6 +74,7 @@ export default function Movimentacoes() {
 
   async function handleLoteSubmit(e: FormEvent) {
     e.preventDefault()
+    if (!loteConfirm) { setLoteConfirm(true); return }
     setErro('')
     setSaving(true)
     try {
@@ -82,6 +86,7 @@ export default function Movimentacoes() {
         observacoes: loteForm.observacoes || undefined,
       })
       setShowLoteModal(false)
+      setLoteConfirm(false)
       load()
       success(`Movimentação registrada para ${res.data.registrados} animais!`)
     } catch (err: any) {
@@ -106,7 +111,7 @@ export default function Movimentacoes() {
           <div className="page-subtitle">Compras, vendas, nascimentos e outros eventos</div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn btn-ghost" onClick={() => { setLoteForm(emptyLoteForm); setErro(''); setShowLoteModal(true) }}>
+          <button className="btn btn-ghost" onClick={() => { setLoteForm(emptyLoteForm); setErro(''); setLoteConfirm(false); setShowLoteModal(true) }}>
             Por Lote
           </button>
           <button className="btn btn-primary" onClick={() => { setErro(''); setForm(emptyForm); setShowModal(true) }}>
@@ -154,6 +159,7 @@ export default function Movimentacoes() {
               <th>Tipo</th>
               <th>Valor</th>
               <th>Peso</th>
+              <th>@</th>
               <th>Origem</th>
               <th>Destino</th>
               <th>Observações</th>
@@ -161,7 +167,7 @@ export default function Movimentacoes() {
           </thead>
           <tbody>
             {movs.length === 0 && (
-              <tr><td colSpan={8} className="table-empty">Nenhuma movimentação registrada</td></tr>
+              <tr><td colSpan={9} className="table-empty">Nenhuma movimentação registrada</td></tr>
             )}
             {movs.map(m => {
               const a = animaisMap[m.animal_id]
@@ -174,6 +180,7 @@ export default function Movimentacoes() {
                     {m.valor != null ? `R$ ${m.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '—'}
                   </td>
                   <td style={{ color: 'var(--gray-500)', fontSize: 13 }}>{m.peso_kg ? `${m.peso_kg} kg` : '—'}</td>
+                  <td style={{ color: 'var(--amber-600)', fontSize: 13, fontWeight: 600 }}>{m.preco_arroba ? `R$ ${m.preco_arroba.toFixed(2)}` : '—'}</td>
                   <td style={{ color: 'var(--gray-500)', fontSize: 13 }}>{m.origem || '—'}</td>
                   <td style={{ color: 'var(--gray-500)', fontSize: 13 }}>{m.destino || '—'}</td>
                   <td style={{ color: 'var(--gray-400)', fontSize: 13 }}>{m.observacoes || '—'}</td>
@@ -220,7 +227,7 @@ export default function Movimentacoes() {
               <input className="form-input" type="date" value={form.data} onChange={e => setForm(f => ({ ...f, data: e.target.value }))} required />
             </div>
           </div>
-          <div className="grid-2" style={{ marginBottom: 0 }}>
+          <div className="grid-3" style={{ marginBottom: 0 }}>
             <div className="form-group">
               <label className="form-label">Valor (R$)</label>
               <input className="form-input" type="number" step="0.01" value={form.valor} onChange={e => setForm(f => ({ ...f, valor: e.target.value }))} placeholder="0,00" />
@@ -229,6 +236,18 @@ export default function Movimentacoes() {
               <label className="form-label">Peso (kg)</label>
               <input className="form-input" type="number" step="0.1" value={form.peso_kg} onChange={e => setForm(f => ({ ...f, peso_kg: e.target.value }))} placeholder="Ex: 400" />
             </div>
+            {(form.tipo === 'compra' || form.tipo === 'venda') && (
+              <div className="form-group">
+                <label className="form-label">Preco @ (R$)</label>
+                <input className="form-input" type="number" step="0.01" value={form.preco_arroba} onChange={e => setForm(f => ({ ...f, preco_arroba: e.target.value }))} placeholder="Ex: 320" />
+              </div>
+            )}
+            {form.tipo === 'compra' && (
+              <div className="form-group">
+                <label className="form-label">Agil / Comissao (R$)</label>
+                <input className="form-input" type="number" step="0.01" value={form.agio_compra} onChange={e => setForm(f => ({ ...f, agio_compra: e.target.value }))} placeholder="Comissao do intermediario" />
+              </div>
+            )}
           </div>
           <div className="grid-2" style={{ marginBottom: 0 }}>
             <div className="form-group">
@@ -250,19 +269,25 @@ export default function Movimentacoes() {
       {/* Modal movimentação por lote */}
       <Modal
         open={showLoteModal}
-        onClose={() => setShowLoteModal(false)}
+        onClose={() => { setShowLoteModal(false); setLoteConfirm(false) }}
         title="Movimentação por Lote"
         size="lg"
         footer={
           <>
-            <button className="btn btn-ghost" onClick={() => setShowLoteModal(false)}>Cancelar</button>
+            <button className="btn btn-ghost" onClick={() => { setShowLoteModal(false); setLoteConfirm(false) }}>Cancelar</button>
             <button className="btn btn-primary" form="form-mov-lote" type="submit" disabled={saving}>
-              {saving ? <><span className="spinner" /> Salvando...</> : 'Registrar'}
+              {saving ? <><span className="spinner" /> Salvando...</> : loteConfirm ? 'Confirmar' : 'Registrar'}
             </button>
           </>
         }
       >
         {erro && <div className="alert alert-error">{erro}</div>}
+        {loteConfirm && (
+          <div className="alert alert-warning" style={{ marginBottom: 16 }}>
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ flexShrink: 0 }}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+            Isso vai registrar para <strong>todos os animais</strong> do lote <strong>{lotes.find(l => String(l.id) === loteForm.lote_id)?.nome}</strong> ({lotes.find(l => String(l.id) === loteForm.lote_id)?.total_animais} animais). Confirmar?
+          </div>
+        )}
         <form id="form-mov-lote" onSubmit={handleLoteSubmit}>
           <div className="grid-3" style={{ marginBottom: 0 }}>
             <div className="form-group">

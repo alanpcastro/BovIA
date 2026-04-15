@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
+from pathlib import Path
+import uuid
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from ..database import get_db
@@ -113,6 +115,16 @@ def atualizar_animal(animal_id: int, data: AnimalUpdate, db: Session = Depends(g
     updates = data.model_dump(exclude_unset=True)
     novo_status = updates.get("status")
 
+    novo_brinco = updates.get("brinco")
+    if novo_brinco and novo_brinco != animal.brinco:
+        existe = db.query(Animal).filter(
+            Animal.user_id == current_user.id,
+            Animal.brinco == novo_brinco,
+            Animal.id != animal_id,
+        ).first()
+        if existe:
+            raise HTTPException(status_code=400, detail=f"Brinco '{novo_brinco}' já cadastrado")
+
     for field, value in updates.items():
         setattr(animal, field, value)
 
@@ -139,6 +151,57 @@ def atualizar_animal(animal_id: int, data: AnimalUpdate, db: Session = Depends(g
         db.commit()
 
     db.refresh(animal)
+    return animal
+
+
+UPLOAD_DIR = Path(__file__).resolve().parent.parent.parent / "uploads" / "animais"
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+ALLOWED_PHOTO_TYPES = {"image/jpeg", "image/png", "image/webp"}
+MAX_PHOTO_BYTES = 5 * 1024 * 1024
+
+
+@router.post("/{animal_id}/foto", response_model=AnimalOut)
+async def upload_foto(
+    animal_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    animal = db.query(Animal).filter(Animal.id == animal_id, Animal.user_id == current_user.id, Animal.deletado_em == None).first()
+    if not animal:
+        raise HTTPException(status_code=404, detail="Animal não encontrado")
+    if file.content_type not in ALLOWED_PHOTO_TYPES:
+        raise HTTPException(status_code=400, detail="Formato inválido (use JPG, PNG ou WEBP)")
+    raw = await file.read()
+    if len(raw) > MAX_PHOTO_BYTES:
+        raise HTTPException(status_code=400, detail="Arquivo muito grande (máx 5MB)")
+    ext = {"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp"}[file.content_type]
+    fname = f"{current_user.id}_{animal_id}_{uuid.uuid4().hex[:8]}.{ext}"
+    (UPLOAD_DIR / fname).write_bytes(raw)
+    if animal.foto_url:
+        old = UPLOAD_DIR / Path(animal.foto_url).name
+        if old.exists():
+            try: old.unlink()
+            except Exception: pass
+    animal.foto_url = f"/uploads/animais/{fname}"
+    db.commit()
+    db.refresh(animal)
+    return animal
+
+
+@router.delete("/{animal_id}/foto", response_model=AnimalOut)
+def deletar_foto(animal_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    animal = db.query(Animal).filter(Animal.id == animal_id, Animal.user_id == current_user.id, Animal.deletado_em == None).first()
+    if not animal:
+        raise HTTPException(status_code=404, detail="Animal não encontrado")
+    if animal.foto_url:
+        old = UPLOAD_DIR / Path(animal.foto_url).name
+        if old.exists():
+            try: old.unlink()
+            except Exception: pass
+        animal.foto_url = None
+        db.commit()
+        db.refresh(animal)
     return animal
 
 

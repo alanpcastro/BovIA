@@ -1,61 +1,79 @@
-# Gado System — Definição do Projeto
+# BovIA — Definicao do Projeto
 
-## O que é
-Sistema web de gestão pecuária para fazendeiros acompanharem seu rebanho.
-Multi-tenant: cada fazendeiro tem seus próprios dados isolados.
+## O que e
+Sistema web de gestao pecuaria para pequenos e medios produtores rurais.
+Multi-tenant: cada fazendeiro tem seus proprios dados isolados.
+Objetivo: substituir papel e planilha Excel, permitindo controle total de gastos, ganhos, lucros e metricas zootecnicas.
 
 ## Stack
-- **Backend**: Python + FastAPI + PostgreSQL + SQLAlchemy + Alembic + JWT
+- **Backend**: Python + FastAPI + PostgreSQL + SQLAlchemy + JWT
 - **Frontend**: React + Vite + TypeScript
 - **Auth**: JWT (token expira em 7 dias)
 
-## Módulos / Entidades
+## Modulos / Entidades
 
-### 1. Usuário (User)
+### 1. Usuario (User)
 - Cadastro com nome, email, senha, nome da fazenda
 - Login retorna JWT
 
 ### 2. Lote (Lote)
-- Agrupa animais por pasto/área
-- Campos: nome, área em hectares, descrição
+- Agrupa animais por pasto/area
+- Campos: nome, area em hectares, descricao, rendimento de carcaca (%, padrao 52)
 
 ### 3. Animal (Animal)
-- Brinco (identificador único por fazendeiro), nome, raça, sexo, data de nascimento
+- Brinco (identificador unico por fazendeiro), nome, raca, sexo, data de nascimento
 - Peso de entrada, origem (nascido/comprado), status (ativo/vendido/morto/transferido)
 - Pertence a um lote (opcional)
+- Soft delete (deletado_em)
 
 ### 4. Pesagem (Pesagem)
-- Histórico de pesagens por animal
-- Data + peso em kg + observações
-- Permite calcular GMD (ganho médio diário)
+- Historico de pesagens por animal
+- Data + peso em kg + observacoes
+- Calcula GMD (ganho medio diario) automaticamente
 
-### 5. Saúde (Saude)
-- Vacinação, vermifugação, tratamento, exame, cirurgia
-- Data, descrição, medicamento, dose, custo, responsável, próxima data
+### 5. Saude (Saude)
+- Tipos: vacinacao, vermifugacao, tratamento, exame, cirurgia
+- Data, descricao, medicamento, dose, custo, responsavel, proxima data, observacoes
 
-### 6. Reprodução (Reproducao)
-- Cobertura natural, inseminação, transferência de embrião, parto
-- Touro (brinco), resultado (prenha/vazia/nasceu bezerro), data prevista parto, brinco do bezerro
+### 6. Reproducao (Reproducao)
+- Tipos: cobertura natural, inseminacao, transferencia de embriao, parto
+- Touro (brinco), resultado (prenha/vazia/nasceu bezerro/aborto), data prevista parto, brinco do bezerro
 
-### 7. Movimentação (Movimentacao)
-- Compra, venda, transferência, nascimento, morte
-- Data, valor, peso, origem, destino
+### 7. Movimentacao (Movimentacao)
+- Tipos: compra, venda, transferencia, nascimento, morte
+- Data, valor, peso, preco por arroba (@), origem, destino, observacoes
 
-## Endpoints da API (planejados)
+### 8. Custo Nutricional (CustoNutricional)
+- Custos de alimentacao/suplementacao por produto
+- Campos: produto, preco/kg, consumo kg/dia/cab, data inicio, data fim, lote (opcional)
+- Calcula custo diario por cabeca automaticamente
+
+### 9. Despesa Fixa (DespesaFixa)
+- Custos operacionais recorrentes
+- Categorias: mao de obra, manutencao, energia, arrendamento, impostos, outros
+- Campos: categoria, descricao, valor mensal, data inicio, data fim
+
+## Endpoints da API
 
 ```
 POST /auth/register       — cadastrar fazendeiro
 POST /auth/login          — login, retorna token
+GET  /auth/me             — dados do usuario autenticado
 
 GET/POST        /lotes
 GET/PUT/DELETE  /lotes/{id}
+POST            /lotes/{id}/animais       — criacao em lote
+POST            /lotes/{id}/pesagens      — pesagem em lote
+POST            /lotes/{id}/saude         — saude em lote
+POST            /lotes/{id}/reproducao    — reproducao em lote
+POST            /lotes/{id}/movimentacoes — movimentacao em lote
 
 GET/POST        /animais
 GET/PUT/DELETE  /animais/{id}
-GET             /animais/{id}/historico   — pesagens + saúde + reprodução juntos
+GET             /animais/{id}/historico    — pesagens + saude + reproducao + movimentacoes
 
 GET/POST        /pesagens
-GET/DELETE      /pesagens/{id}
+DELETE          /pesagens/{id}
 
 GET/POST        /saude
 GET/PUT/DELETE  /saude/{id}
@@ -66,55 +84,62 @@ GET/PUT/DELETE  /reproducao/{id}
 GET/POST        /movimentacoes
 GET             /movimentacoes/{id}
 
-GET             /dashboard   — resumo: total animais, peso médio, próximas vacinas, nascimentos esperados
+GET             /dashboard                — resumo: totais, peso medio, proximas vacinas, partos previstos
+POST            /dashboard/alertas/email  — enviar alertas de vacinacao por email
+
+GET/POST        /custos-nutricionais
+PUT/DELETE      /custos-nutricionais/{id}
+
+GET/POST        /despesas-fixas
+PUT/DELETE      /despesas-fixas/{id}
+
+GET             /financeiro/analise       — analise financeira completa (23+ metricas)
+                                            params: data_inicio, data_fim, lote_id (opcional)
+
+GET             /relatorios/animais.csv       — exportar animais
+GET             /relatorios/pesagens.csv      — exportar pesagens
+GET             /relatorios/financeiro.csv    — exportar movimentacoes + custos saude
+POST            /relatorios/animais/importar  — importar animais via CSV
 ```
 
-## Regras de Negócio
-- Cada fazendeiro só vê seus próprios dados (filtro por `user_id` em todo SELECT)
-- Brinco é único por fazendeiro (não global)
-- Ao marcar animal como vendido/morto, registrar movimentação automaticamente
+## Metricas Financeiras Implementadas
+
+A analise financeira (`/financeiro/analise`) calcula:
+
+| Categoria | Metricas |
+|---|---|
+| Peso | Peso medio inicial/final, GPD, ganho periodo em @ |
+| Carcaca | Rendimento %, peso carcaca, GMC |
+| Arrobas | @ entrada, @ saida, @ produzidas |
+| Custos | Nutricional (total + /cab), Operacional (total + /cab), Saude, Total/cab, Custo/@ produzida |
+| Precos | @ compra medio, @ venda medio, ganho/@, preco medio animal compra/venda |
+| Resultado | Receita vendas, custo compras, lucro bruto, impostos, lucro liquido, rentabilidade % |
+
+## Regras de Negocio
+- Cada fazendeiro so ve seus proprios dados (filtro por `user_id` em todo SELECT)
+- Brinco e unico por fazendeiro (nao global)
+- Ao marcar animal como vendido/morto, registrar movimentacao automaticamente
 - Pesagem registra GMD se houver pesagem anterior
+- 1 arroba (@) = 15 kg
+- Rendimento de carcaca padrao = 52% (configuravel por lote)
+- Custos nutricionais podem ser por lote ou gerais (toda fazenda)
+- Impostos sao separados das despesas operacionais no calculo de lucro liquido
+- Calculo de custos usa sobreposicao de datas (overlap) entre registro e periodo de analise
 
-## Frontend (telas planejadas)
+## Frontend (telas)
 1. Login / Cadastro
-2. Dashboard (cards: total animais, peso médio rebanho, alertas de vacinação)
-3. Lista de Animais (tabela com filtro por lote/status/sexo)
-4. Ficha do Animal (todas as informações + histórico)
-5. Lotes (gestão de pastos)
-6. Pesagens em lote (pesar vários animais de uma vez)
-7. Saúde (agenda de vacinações, histórico)
-8. Reprodução (controle de prenhez, previsão de partos)
-9. Movimentações (entradas e saídas com valor)
-10. Relatórios (evolução de peso, custo de saúde)
-
-## Status Atual (23/03/2026)
-
-### Backend — COMPLETO ✅
-- [x] Models: User, Animal, Lote, Pesagem, Reproducao, Saude, Movimentacao
-- [x] config.py, database.py, requirements.txt, .env.example
-- [x] app/auth.py — JWT (hash senha, criar token, get_current_user)
-- [x] app/schemas/ — Pydantic schemas para todas as entidades
-- [x] app/routes/ — todos os endpoints REST (auth, lotes, animais, pesagens, saude, reproducao, movimentacoes, dashboard)
-- [x] app/main.py — FastAPI com CORS configurado
-
-### Frontend — COMPLETO ✅
-- [x] package.json, vite.config.ts, tsconfig.json, index.html
-- [x] src/main.tsx, src/App.tsx (React Router, rotas privadas)
-- [x] src/services/api.ts (axios, interceptors JWT, tipos TypeScript)
-- [x] src/context/AuthContext.tsx (login, register, logout)
-- [x] src/components/Layout.tsx (sidebar com nav), PrivateRoute.tsx
-- [x] src/pages/Login.tsx, Register.tsx
-- [x] src/pages/Dashboard.tsx (cards + alertas)
-- [x] src/pages/Animais.tsx (listagem com filtros + cadastro)
-- [x] src/pages/AnimalDetalhe.tsx (ficha completa com tabs)
-- [x] src/pages/Lotes.tsx (CRUD completo)
-- [x] src/pages/Pesagens.tsx (registro com GMD)
-- [x] src/pages/Saude.tsx (vacinações, tratamentos)
-- [x] src/pages/Reproducao.tsx (inseminação, partos)
-- [x] src/pages/Movimentacoes.tsx (compras/vendas com resumo financeiro)
-
-### Pendente
-- [ ] Alembic migrations (opcional — em dev, as tabelas são criadas automaticamente)
+2. Dashboard (stats + alertas vacinacao + partos previstos + acoes rapidas)
+3. Animais (tabela paginada com filtros por lote/status/sexo/busca)
+4. Ficha do Animal (info + tabs: pesagens, saude, reproducao, movimentacoes)
+5. Lotes / Pastos (cards com CRUD, rendimento de carcaca)
+6. Pesagens (registro individual + em lote, com GMD)
+7. Saude (vacinacoes, tratamentos, alertas de urgencia 7 dias)
+8. Reproducao (controle de prenhez, previsao de partos)
+9. Movimentacoes (compras/vendas com resumo financeiro, preco/@)
+10. Analise Financeira (KPIs, custos, resultado, arrobas, desempenho zootecnico)
+11. Custos Nutricionais (CRUD com calculo custo diario/cab)
+12. Despesas Fixas (CRUD com categorias, separacao operacional vs impostos)
+13. Relatorios (export/import CSV)
 
 ## Como rodar (local)
 ```bash
@@ -123,7 +148,7 @@ cd backend
 python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env   # editar com credenciais reais
-alembic upgrade head
+alembic upgrade head   # aplicar migrations no banco
 uvicorn app.main:app --reload --port 8000
 
 # Frontend
@@ -131,3 +156,29 @@ cd frontend
 npm install
 npm run dev
 ```
+
+## Migrations (Alembic)
+O projeto usa Alembic para controle de schema do banco de dados.
+
+```bash
+cd backend
+
+# Aplicar todas as migrations pendentes
+alembic upgrade head
+
+# Criar nova migration apos alterar models
+alembic revision --autogenerate -m "descricao_da_mudanca"
+
+# Ver migration atual
+alembic current
+
+# Reverter ultima migration
+alembic downgrade -1
+```
+
+## Observacoes tecnicas
+- Alembic gerencia o schema do banco (migrations em `backend/alembic/versions/`)
+- O `env.py` do Alembic usa `DATABASE_URL` do `.env` automaticamente
+- Email de alertas e recuperacao de senha usam `fastapi-mail` (configurar MAIL_* no .env)
+- Frontend usa proxy do Vite: `/api` -> `http://localhost:8000`
+- Recuperacao de senha usa token JWT com expiracao de 30 minutos

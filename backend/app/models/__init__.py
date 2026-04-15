@@ -5,3 +5,5 @@ from .pesagem import Pesagem
 from .reproducao import Reproducao
 from .saude import Saude
 from .movimentacao import Movimentacao
+from .custo_nutricional import CustoNutricional
+from .despesa_fixa import DespesaFixa

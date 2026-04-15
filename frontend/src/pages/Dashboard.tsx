@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import api, { Dashboard as DashboardData } from '../services/api'
+import api, { Dashboard as DashboardData, AnaliseFinanceira } from '../services/api'
 import { useToast } from '../components/Toast'
 
 function StatCard({ label, value, sub, color, bg, icon }: {
@@ -20,8 +20,12 @@ function StatCard({ label, value, sub, color, bg, icon }: {
   )
 }
 
+const fmt = (v: number | undefined | null) =>
+  v != null ? `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'
+
 export default function Dashboard() {
   const [data, setData] = useState<DashboardData | null>(null)
+  const [fin, setFin] = useState<AnaliseFinanceira | null>(null)
   const [loading, setLoading] = useState(true)
   const [enviandoEmail, setEnviandoEmail] = useState(false)
   const navigate = useNavigate()
@@ -41,6 +45,13 @@ export default function Dashboard() {
 
   useEffect(() => {
     api.get('/dashboard').then(r => setData(r.data)).finally(() => setLoading(false))
+    // Financial summary — last 30 days
+    const hoje = new Date()
+    const mesAtras = new Date(hoje)
+    mesAtras.setMonth(mesAtras.getMonth() - 1)
+    api.get('/financeiro/analise', {
+      params: { data_inicio: mesAtras.toISOString().split('T')[0], data_fim: hoje.toISOString().split('T')[0] }
+    }).then(r => setFin(r.data)).catch(() => {})
   }, [])
 
   if (loading) return (
@@ -51,10 +62,73 @@ export default function Dashboard() {
   )
   if (!data) return null
 
+  const isNewUser = data.total_animais === 0
+
   const vacinasUrgentes = data.proximas_vacinas.filter(v => {
     const dias = Math.ceil((new Date(v.proxima_data + 'T00:00').getTime() - Date.now()) / 86400000)
     return dias <= 7
   })
+
+  // Onboarding wizard for new users
+  if (isNewUser) {
+    const steps = [
+      {
+        num: 1, title: 'Crie seu primeiro lote',
+        desc: 'Lotes organizam seus animais por pasto, fase ou finalidade.',
+        action: () => navigate('/lotes'), btn: 'Criar Lote',
+        icon: <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="var(--green-700)" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M3 7l9-4 9 4M3 7v10l9 4m0-14v14m9-10v10l-9 4" /></svg>,
+      },
+      {
+        num: 2, title: 'Cadastre animais',
+        desc: 'Registre seus animais com brinco, raca, peso de entrada e lote.',
+        action: () => navigate('/animais'), btn: 'Cadastrar Animais',
+        icon: <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="var(--green-700)" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" /></svg>,
+      },
+      {
+        num: 3, title: 'Registre a primeira pesagem',
+        desc: 'Pesagens permitem acompanhar ganho de peso e GMD.',
+        action: () => navigate('/pesagens'), btn: 'Registrar Pesagem',
+        icon: <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="var(--green-700)" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M3 6l3 1m0 0l-3 9a5 5 0 006.9 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5 5 0 006.9 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V6m0 16H9m3 0h3" /></svg>,
+      },
+    ]
+
+    return (
+      <div>
+        <div className="page-header">
+          <div>
+            <div className="page-title">Bem-vindo ao BovIA!</div>
+            <div className="page-subtitle">Siga os passos abaixo para comecar</div>
+          </div>
+        </div>
+
+        <div style={{ maxWidth: 640, margin: '0 auto' }}>
+          {steps.map((s, i) => (
+            <div key={s.num} className="card card-padded" style={{
+              display: 'flex', gap: 20, alignItems: 'center', marginBottom: 16,
+              borderLeft: '4px solid var(--green-600)',
+            }}>
+              <div style={{
+                width: 56, height: 56, borderRadius: 'var(--radius)',
+                background: 'var(--green-100)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+              }}>
+                {s.icon}
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--gray-400)', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                  Passo {s.num}
+                </div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--gray-900)', marginTop: 2 }}>{s.title}</div>
+                <div style={{ fontSize: 13, color: 'var(--gray-500)', marginTop: 4 }}>{s.desc}</div>
+              </div>
+              <button className="btn btn-primary" onClick={s.action} style={{ flexShrink: 0 }}>
+                {s.btn}
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div>
@@ -106,12 +180,40 @@ export default function Dashboard() {
         <StatCard
           label="Peso Médio"
           value={data.peso_medio_kg ? `${data.peso_medio_kg} kg` : '—'}
-          sub="última pesagem"
+          sub={data.peso_medio_kg ? `${(data.peso_medio_kg * 0.52 / 15).toFixed(1)} @` : undefined}
           color="var(--amber-600)"
           bg="var(--amber-100)"
           icon={<svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M3 6l3 1m0 0l-3 9a5 5 0 006.9 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5 5 0 006.9 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V6m0 16H9m3 0h3"/></svg>}
         />
       </div>
+
+      {/* Resumo Financeiro (último mês) */}
+      {fin && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16, marginBottom: 28 }}>
+          <StatCard
+            label="Lucro do Mês"
+            value={fmt(fin.lucro_liquido)}
+            color={fin.lucro_liquido >= 0 ? 'var(--green-800)' : 'var(--red-600)'}
+            bg={fin.lucro_liquido >= 0 ? 'var(--green-100)' : 'var(--red-100)'}
+            icon={<svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>}
+          />
+          <StatCard
+            label="Custo / @"
+            value={fin.custo_por_arroba_produzida != null ? fmt(fin.custo_por_arroba_produzida) : '—'}
+            color="var(--amber-600)"
+            bg="var(--amber-100)"
+            icon={<svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"/></svg>}
+          />
+          <StatCard
+            label="Rentabilidade"
+            value={fin.rentabilidade_pct != null ? `${fin.rentabilidade_pct}%` : '—'}
+            sub="último mês"
+            color={fin.rentabilidade_pct != null && fin.rentabilidade_pct >= 0 ? 'var(--green-800)' : 'var(--red-600)'}
+            bg={fin.rentabilidade_pct != null && fin.rentabilidade_pct >= 0 ? 'var(--green-100)' : 'var(--red-100)'}
+            icon={<svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>}
+          />
+        </div>
+      )}
 
       {/* Alertas urgentes */}
       {vacinasUrgentes.length > 0 && (
@@ -155,6 +257,7 @@ export default function Dashboard() {
               Nenhuma vacina agendada
             </div>
           ) : (
+            <div className="table-wrapper">
             <table className="data-table">
               <thead>
                 <tr>
@@ -180,6 +283,7 @@ export default function Dashboard() {
                 })}
               </tbody>
             </table>
+            </div>
           )}
         </div>
 
@@ -205,6 +309,7 @@ export default function Dashboard() {
               Nenhum parto previsto
             </div>
           ) : (
+            <div className="table-wrapper">
             <table className="data-table">
               <thead>
                 <tr>
@@ -226,6 +331,7 @@ export default function Dashboard() {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </div>
       </div>
@@ -235,6 +341,7 @@ export default function Dashboard() {
         <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--gray-400)', marginBottom: 12, textTransform: 'uppercase', letterSpacing: 0.5 }}>Ações rápidas</div>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           {[
+            { label: 'Analise Financeira', path: '/financeiro', color: 'var(--green-800)', bg: 'var(--green-100)' },
             { label: 'Registrar Pesagem', path: '/pesagens', color: 'var(--amber-600)', bg: 'var(--amber-100)' },
             { label: 'Registrar Vacinação', path: '/saude', color: 'var(--pink-600)', bg: 'var(--pink-100)' },
             { label: 'Nova Movimentação', path: '/movimentacoes', color: 'var(--blue-600)', bg: 'var(--blue-100)' },

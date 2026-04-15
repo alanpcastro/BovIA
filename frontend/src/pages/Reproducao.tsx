@@ -41,6 +41,7 @@ export default function Reproducao() {
   const [showLoteModal, setShowLoteModal] = useState(false)
   const emptyLoteForm = { lote_id: '', tipo: 'inseminacao', data: new Date().toISOString().split('T')[0], touro_brinco: '', resultado: '', data_prevista_parto: '', observacoes: '' }
   const [loteForm, setLoteForm] = useState(emptyLoteForm)
+  const [loteConfirm, setLoteConfirm] = useState(false)
 
   useEffect(() => {
     api.get('/animais', { params: { sexo: 'femea', page_size: 200 } }).then(r => setAnimais(r.data.items))
@@ -80,6 +81,7 @@ export default function Reproducao() {
 
   async function handleLoteSubmit(e: FormEvent) {
     e.preventDefault()
+    if (!loteConfirm) { setLoteConfirm(true); return }
     setErro('')
     setSaving(true)
     try {
@@ -91,6 +93,7 @@ export default function Reproducao() {
         observacoes: loteForm.observacoes || undefined,
       })
       setShowLoteModal(false)
+      setLoteConfirm(false)
       load()
       success(`Reprodução registrada para ${res.data.registrados} animais!`)
     } catch (err: any) {
@@ -118,7 +121,7 @@ export default function Reproducao() {
           <div className="page-subtitle">Controle de cobertura, inseminação e partos</div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn btn-ghost" onClick={() => { setLoteForm(emptyLoteForm); setErro(''); setShowLoteModal(true) }}>
+          <button className="btn btn-ghost" onClick={() => { setLoteForm(emptyLoteForm); setErro(''); setLoteConfirm(false); setShowLoteModal(true) }}>
             Por Lote
           </button>
           <button className="btn btn-primary" onClick={() => { setErro(''); setForm(emptyForm); setShowModal(true) }}>
@@ -255,19 +258,25 @@ export default function Reproducao() {
       {/* Modal reprodução por lote */}
       <Modal
         open={showLoteModal}
-        onClose={() => setShowLoteModal(false)}
+        onClose={() => { setShowLoteModal(false); setLoteConfirm(false) }}
         title="Reprodução por Lote"
         size="lg"
         footer={
           <>
-            <button className="btn btn-ghost" onClick={() => setShowLoteModal(false)}>Cancelar</button>
+            <button className="btn btn-ghost" onClick={() => { setShowLoteModal(false); setLoteConfirm(false) }}>Cancelar</button>
             <button className="btn btn-primary" form="form-repro-lote" type="submit" disabled={saving}>
-              {saving ? <><span className="spinner" /> Salvando...</> : 'Registrar'}
+              {saving ? <><span className="spinner" /> Salvando...</> : loteConfirm ? 'Confirmar' : 'Registrar'}
             </button>
           </>
         }
       >
         {erro && <div className="alert alert-error">{erro}</div>}
+        {loteConfirm && (
+          <div className="alert alert-warning" style={{ marginBottom: 16 }}>
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ flexShrink: 0 }}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+            Isso vai registrar para <strong>todas as femeas</strong> do lote <strong>{lotes.find(l => String(l.id) === loteForm.lote_id)?.nome}</strong> ({lotes.find(l => String(l.id) === loteForm.lote_id)?.total_animais} animais). Confirmar?
+          </div>
+        )}
         <form id="form-repro-lote" onSubmit={handleLoteSubmit}>
           <div className="grid-3" style={{ marginBottom: 0 }}>
             <div className="form-group">

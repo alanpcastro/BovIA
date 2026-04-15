@@ -15,6 +15,37 @@ def get_mail_config() -> ConnectionConfig:
     )
 
 
+async def enviar_reset_senha(email_destino: str, nome: str, link: str) -> None:
+    if not settings.MAIL_USERNAME or not settings.MAIL_PASSWORD:
+        return
+
+    body = f"""
+Ola, {nome}!
+
+Voce solicitou a redefinicao de senha no BovIA.
+
+Clique no link abaixo para criar uma nova senha:
+
+{link}
+
+Este link expira em 30 minutos.
+
+Se voce nao solicitou essa alteracao, ignore este email.
+
+— Equipe BovIA
+"""
+
+    message = MessageSchema(
+        subject="BovIA — Redefinicao de Senha",
+        recipients=[email_destino],
+        body=body,
+        subtype=MessageType.plain,
+    )
+
+    fm = FastMail(get_mail_config())
+    await fm.send_message(message)
+
+
 async def enviar_alerta_vacinacao(email_destino: str, fazenda: str, alertas: list[dict]) -> None:
     if not settings.MAIL_USERNAME or not settings.MAIL_PASSWORD:
         return

@@ -12,6 +12,7 @@ class Lote(Base):
     nome = Column(String, nullable=False)
     area_hectares = Column(Float, nullable=True)
     descricao = Column(String, nullable=True)
+    rendimento_carcaca = Column(Float, nullable=True, default=52.0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     usuario = relationship("User", back_populates="lotes")

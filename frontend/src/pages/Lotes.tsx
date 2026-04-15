@@ -3,7 +3,7 @@ import api, { Lote } from '../services/api'
 import Modal from '../components/Modal'
 import { useToast } from '../components/Toast'
 
-const emptyForm = { nome: '', area_hectares: '', descricao: '' }
+const emptyForm = { nome: '', area_hectares: '', descricao: '', rendimento_carcaca: '52' }
 
 export default function Lotes() {
   const { success, error: toastError } = useToast()
@@ -21,7 +21,7 @@ export default function Lotes() {
 
   function openEdit(l: Lote) {
     setEditing(l)
-    setForm({ nome: l.nome, area_hectares: l.area_hectares?.toString() || '', descricao: l.descricao || '' })
+    setForm({ nome: l.nome, area_hectares: l.area_hectares?.toString() || '', descricao: l.descricao || '', rendimento_carcaca: l.rendimento_carcaca?.toString() || '52' })
     setErro('')
     setShowModal(true)
   }
@@ -33,7 +33,8 @@ export default function Lotes() {
     const payload = {
       nome: form.nome,
       area_hectares: form.area_hectares ? parseFloat(form.area_hectares) : undefined,
-      descricao: form.descricao || undefined
+      descricao: form.descricao || undefined,
+      rendimento_carcaca: form.rendimento_carcaca ? parseFloat(form.rendimento_carcaca) : 52.0,
     }
     try {
       if (editing) {
@@ -120,6 +121,11 @@ export default function Lotes() {
                     📐 {l.area_hectares} hectares
                   </div>
                 )}
+                {l.rendimento_carcaca && (
+                  <div style={{ fontSize: 13, color: 'var(--gray-500)', marginBottom: 4 }}>
+                    🥩 Rendimento: {l.rendimento_carcaca}%
+                  </div>
+                )}
                 {l.descricao && (
                   <div style={{ fontSize: 12, color: 'var(--gray-400)', marginTop: 4, lineHeight: 1.4 }}>{l.descricao}</div>
                 )}
@@ -175,9 +181,15 @@ export default function Lotes() {
               <input className="form-input" type="number" step="0.1" value={form.area_hectares} onChange={e => setForm(p => ({ ...p, area_hectares: e.target.value }))} placeholder="Ex: 120" />
             </div>
           </div>
-          <div className="form-group">
-            <label className="form-label">Descrição</label>
-            <input className="form-input" value={form.descricao} onChange={e => setForm(p => ({ ...p, descricao: e.target.value }))} placeholder="Opcional..." />
+          <div className="grid-2" style={{ marginBottom: 0 }}>
+            <div className="form-group">
+              <label className="form-label">Rendimento Carcaca (%)</label>
+              <input className="form-input" type="number" step="0.1" value={form.rendimento_carcaca} onChange={e => setForm(p => ({ ...p, rendimento_carcaca: e.target.value }))} placeholder="Ex: 52" />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Descricao</label>
+              <input className="form-input" value={form.descricao} onChange={e => setForm(p => ({ ...p, descricao: e.target.value }))} placeholder="Opcional..." />
+            </div>
           </div>
         </form>
       </Modal>

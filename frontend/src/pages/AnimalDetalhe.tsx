@@ -1,4 +1,4 @@
-import { useEffect, useState, FormEvent } from 'react'
+import { useEffect, useState, FormEvent, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import api, { Animal, Pesagem, Saude, Reproducao, Movimentacao, Lote } from '../services/api'
 import Modal from '../components/Modal'
@@ -98,6 +98,38 @@ export default function AnimalDetalhe() {
     }
   }
 
+  const fotoRef = useRef<HTMLInputElement>(null)
+  const [uploadingFoto, setUploadingFoto] = useState(false)
+
+  async function handleFoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0]
+    if (!f) return
+    setUploadingFoto(true)
+    try {
+      const fd = new FormData()
+      fd.append('file', f)
+      await api.post(`/animais/${id}/foto`, fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+      load()
+      success('Foto atualizada')
+    } catch (err: any) {
+      toastError(err.response?.data?.detail || 'Erro ao enviar foto')
+    } finally {
+      setUploadingFoto(false)
+      e.target.value = ''
+    }
+  }
+
+  async function removerFoto() {
+    if (!confirm('Remover foto?')) return
+    try {
+      await api.delete(`/animais/${id}/foto`)
+      load()
+      success('Foto removida')
+    } catch {
+      toastError('Erro ao remover foto')
+    }
+  }
+
   async function deletar() {
     if (!confirm('Excluir este animal permanentemente? Esta ação não pode ser desfeita.')) return
     await api.delete(`/animais/${id}`)
@@ -140,12 +172,43 @@ export default function AnimalDetalhe() {
       <div className="card card-padded" style={{ marginBottom: 20 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
           <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
-            <div style={{
-              width: 56, height: 56, borderRadius: 14,
-              background: animal.sexo === 'macho' ? 'var(--blue-100)' : 'var(--pink-100)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, flexShrink: 0
-            }}>
-              {animal.sexo === 'macho' ? '♂' : '♀'}
+            <div style={{ position: 'relative', flexShrink: 0 }}>
+              {animal.foto_url ? (
+                <img
+                  src={`/api${animal.foto_url}`}
+                  alt={animal.nome || animal.brinco || 'Animal'}
+                  style={{ width: 80, height: 80, borderRadius: 14, objectFit: 'cover', display: 'block', cursor: 'pointer' }}
+                  onClick={() => fotoRef.current?.click()}
+                />
+              ) : (
+                <div
+                  onClick={() => fotoRef.current?.click()}
+                  title="Adicionar foto"
+                  style={{
+                    width: 80, height: 80, borderRadius: 14,
+                    background: animal.sexo === 'macho' ? 'var(--blue-100)' : 'var(--pink-100)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36, cursor: 'pointer'
+                  }}
+                >
+                  {animal.sexo === 'macho' ? '♂' : '♀'}
+                </div>
+              )}
+              {uploadingFoto && (
+                <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span className="spinner" />
+                </div>
+              )}
+              {animal.foto_url && !uploadingFoto && (
+                <button
+                  type="button"
+                  onClick={removerFoto}
+                  title="Remover foto"
+                  style={{ position: 'absolute', top: -6, right: -6, width: 22, height: 22, borderRadius: '50%', border: 'none', background: 'var(--red-600)', color: '#fff', cursor: 'pointer', fontSize: 14, lineHeight: 1, padding: 0 }}
+                >
+                  ×
+                </button>
+              )}
+              <input ref={fotoRef} type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }} onChange={handleFoto} />
             </div>
             <div>
               <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--gray-900)' }}>
@@ -266,6 +329,7 @@ export default function AnimalDetalhe() {
           {hist.pesagens.length === 0
             ? <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--gray-400)', fontSize: 13 }}>Sem pesagens registradas</div>
             : (
+              <div className="table-wrapper">
               <table className="data-table">
                 <thead>
                   <tr>
@@ -285,6 +349,7 @@ export default function AnimalDetalhe() {
                   ))}
                 </tbody>
               </table>
+              </div>
             )
           }
         </div>
@@ -302,6 +367,7 @@ export default function AnimalDetalhe() {
           {hist.saudes.length === 0
             ? <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--gray-400)', fontSize: 13 }}>Sem registros de saúde</div>
             : (
+              <div className="table-wrapper">
               <table className="data-table">
                 <thead>
                   <tr><th>Data</th><th>Tipo</th><th>Descrição</th><th>Medicamento</th><th>Custo</th><th>Próxima</th></tr>
@@ -321,6 +387,7 @@ export default function AnimalDetalhe() {
                   ))}
                 </tbody>
               </table>
+              </div>
             )
           }
         </div>
@@ -338,6 +405,7 @@ export default function AnimalDetalhe() {
           {hist.reproducoes.length === 0
             ? <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--gray-400)', fontSize: 13 }}>Sem registros reprodutivos</div>
             : (
+              <div className="table-wrapper">
               <table className="data-table">
                 <thead>
                   <tr><th>Data</th><th>Tipo</th><th>Resultado</th><th>Touro</th><th>Parto Previsto</th></tr>
@@ -361,6 +429,7 @@ export default function AnimalDetalhe() {
                   ))}
                 </tbody>
               </table>
+              </div>
             )
           }
         </div>
@@ -373,6 +442,7 @@ export default function AnimalDetalhe() {
           {hist.movimentacoes.length === 0
             ? <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--gray-400)', fontSize: 13 }}>Sem movimentações</div>
             : (
+              <div className="table-wrapper">
               <table className="data-table">
                 <thead>
                   <tr><th>Data</th><th>Tipo</th><th>Valor</th><th>Peso</th><th>Observações</th></tr>
@@ -389,6 +459,7 @@ export default function AnimalDetalhe() {
                   ))}
                 </tbody>
               </table>
+              </div>
             )
           }
         </div>

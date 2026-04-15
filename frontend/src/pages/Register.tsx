@@ -29,9 +29,9 @@ export default function Register() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', background: '#111' }}>
+    <div className="auth-page" style={{ minHeight: '100vh', display: 'flex', background: '#111' }}>
       {/* Left hero */}
-      <div style={{
+      <div className="auth-hero" style={{
         flex: 1,
         backgroundImage: `url(${farmBg})`,
         backgroundSize: 'cover',
@@ -57,7 +57,7 @@ export default function Register() {
       </div>
 
       {/* Right form */}
-      <div style={{
+      <div className="auth-form-panel" style={{
         width: 460,
         flexShrink: 0,
         background: '#fff',

@@ -4,6 +4,8 @@ import PrivateRoute from './components/PrivateRoute'
 import Layout from './components/Layout'
 import Login from './pages/Login'
 import Register from './pages/Register'
+import EsqueciSenha from './pages/EsqueciSenha'
+import ResetSenha from './pages/ResetSenha'
 import Dashboard from './pages/Dashboard'
 import Animais from './pages/Animais'
 import AnimalDetalhe from './pages/AnimalDetalhe'
@@ -12,7 +14,12 @@ import Pesagens from './pages/Pesagens'
 import Saude from './pages/Saude'
 import Reproducao from './pages/Reproducao'
 import Movimentacoes from './pages/Movimentacoes'
+import Financeiro from './pages/Financeiro'
+import CustosNutricionais from './pages/CustosNutricionais'
+import DespesasFixas from './pages/DespesasFixas'
 import Relatorios from './pages/Relatorios'
+import Graficos from './pages/Graficos'
+import Configuracoes from './pages/Configuracoes'
 
 export default function App() {
   return (
@@ -21,6 +28,8 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/esqueci-senha" element={<EsqueciSenha />} />
+          <Route path="/reset-senha" element={<ResetSenha />} />
           <Route
             path="/"
             element={
@@ -38,7 +47,12 @@ export default function App() {
             <Route path="saude" element={<Saude />} />
             <Route path="reproducao" element={<Reproducao />} />
             <Route path="movimentacoes" element={<Movimentacoes />} />
+            <Route path="financeiro" element={<Financeiro />} />
+            <Route path="custos-nutricionais" element={<CustosNutricionais />} />
+            <Route path="despesas-fixas" element={<DespesasFixas />} />
+            <Route path="graficos" element={<Graficos />} />
             <Route path="relatorios" element={<Relatorios />} />
+            <Route path="configuracoes" element={<Configuracoes />} />
           </Route>
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>

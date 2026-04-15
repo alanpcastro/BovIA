@@ -40,6 +40,7 @@ export interface Lote {
   nome: string
   area_hectares?: number
   descricao?: string
+  rendimento_carcaca?: number
   created_at: string
   total_animais?: number
 }
@@ -56,6 +57,7 @@ export interface Animal {
   lote_id?: number
   status: 'ativo' | 'vendido' | 'morto' | 'transferido'
   observacoes?: string
+  foto_url?: string | null
   created_at: string
 }
 
@@ -101,9 +103,73 @@ export interface Movimentacao {
   data: string
   valor?: number
   peso_kg?: number
+  preco_arroba?: number
+  agio_compra?: number
   origem?: string
   destino?: string
   observacoes?: string
+}
+
+export interface CustoNutricional {
+  id: number
+  lote_id?: number
+  produto: string
+  preco_kg: number
+  consumo_kg_dia: number
+  custo_diario_cab?: number
+  data_inicio: string
+  data_fim?: string
+  observacoes?: string
+  created_at: string
+}
+
+export interface DespesaFixa {
+  id: number
+  categoria: string
+  descricao: string
+  valor_mensal: number
+  data_inicio: string
+  data_fim?: string
+  observacoes?: string
+  created_at: string
+}
+
+export interface AnaliseFinanceira {
+  periodo_inicio: string
+  periodo_fim: string
+  lote_id?: number
+  qtd_cabecas: number
+  dias_periodo: number
+  peso_medio_inicial?: number
+  peso_medio_final?: number
+  gpd_medio?: number
+  ganho_periodo_arroba?: number
+  rendimento_carcaca_pct: number
+  peso_carcaca_medio_final?: number
+  gmc_medio?: number
+  arrobas_entrada_total?: number
+  arrobas_saida_total?: number
+  arrobas_produzidas_total?: number
+  custo_nutricional_total: number
+  custo_nutricional_por_cabeca: number
+  custo_operacional_total: number
+  custo_operacional_por_cabeca: number
+  custo_saude_total: number
+  custo_total_por_cabeca: number
+  custo_por_arroba_produzida?: number
+  preco_arroba_compra_medio?: number
+  preco_arroba_venda_medio?: number
+  ganho_por_arroba?: number
+  receita_vendas: number
+  custo_compras: number
+  lucro_bruto: number
+  impostos: number
+  lucro_liquido: number
+  rentabilidade_pct?: number
+  preco_medio_compra_animal?: number
+  preco_medio_venda_animal?: number
+  lucro_liquido_sem_agil?: number
+  lucro_liquido_sem_agil_por_cab?: number
 }
 
 export interface Dashboard {

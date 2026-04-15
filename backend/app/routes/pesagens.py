@@ -51,7 +51,7 @@ def criar_pesagem(data: PesagemCreate, db: Session = Depends(get_db), current_us
     if not animal:
         raise HTTPException(status_code=404, detail="Animal não encontrado")
 
-    pesagem = Pesagem(**data.model_dump())
+    pesagem = Pesagem(**data.model_dump(), user_id=current_user.id)
     db.add(pesagem)
     db.commit()
     db.refresh(pesagem)

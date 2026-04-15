@@ -33,6 +33,7 @@ class Animal(Base):
     origem = Column(String, nullable=True)  # nascido, comprado
     status = Column(Enum(StatusEnum), default=StatusEnum.ativo)
     observacoes = Column(String, nullable=True)
+    foto_url = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     deletado_em = Column(DateTime(timezone=True), nullable=True)
 

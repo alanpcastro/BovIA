@@ -23,9 +23,18 @@ export default function Pesagens() {
   const [lotes, setLotes] = useState<any[]>([])
   const [showLoteModal, setShowLoteModal] = useState(false)
   const [loteForm, setLoteForm] = useState({ lote_id: '', data: new Date().toISOString().split('T')[0], peso_medio_kg: '', observacoes: '' })
+  const [loteConfirm, setLoteConfirm] = useState(false)
 
   useEffect(() => {
-    api.get('/animais', { params: { status: 'ativo', page_size: 200 } }).then(r => setAnimais(r.data.items))
+    api.get('/animais', { params: { status: 'ativo', page_size: 200 } }).then(r => {
+      const sorted = [...r.data.items].sort((a, b) => {
+        const aNum = parseInt(a.brinco ?? '')
+        const bNum = parseInt(b.brinco ?? '')
+        if (!isNaN(aNum) && !isNaN(bNum)) return aNum - bNum
+        return (a.brinco ?? '').localeCompare(b.brinco ?? '')
+      })
+      setAnimais(sorted)
+    })
     api.get('/lotes').then(r => setLotes(r.data))
   }, [])
 
@@ -61,6 +70,10 @@ export default function Pesagens() {
 
   async function handleLoteSubmit(e: FormEvent) {
     e.preventDefault()
+    if (!loteConfirm) {
+      setLoteConfirm(true)
+      return
+    }
     setErro('')
     setSaving(true)
     try {
@@ -70,6 +83,7 @@ export default function Pesagens() {
         observacoes: loteForm.observacoes || undefined,
       })
       setShowLoteModal(false)
+      setLoteConfirm(false)
       load()
       success(`Pesagem registrada para ${res.data.registrados} animais!`)
     } catch (err: any) {
@@ -97,7 +111,7 @@ export default function Pesagens() {
           <div className="page-subtitle">Controle de peso e GMD do rebanho</div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn btn-ghost" onClick={() => { setLoteForm({ lote_id: '', data: new Date().toISOString().split('T')[0], peso_medio_kg: '', observacoes: '' }); setErro(''); setShowLoteModal(true) }}>
+          <button className="btn btn-ghost" onClick={() => { setLoteForm({ lote_id: '', data: new Date().toISOString().split('T')[0], peso_medio_kg: '', observacoes: '' }); setErro(''); setLoteConfirm(false); setShowLoteModal(true) }}>
             Por Lote
           </button>
           <button className="btn btn-primary" onClick={() => { setErro(''); setShowModal(true) }}>
@@ -212,19 +226,25 @@ export default function Pesagens() {
       {/* Modal pesagem por lote */}
       <Modal
         open={showLoteModal}
-        onClose={() => setShowLoteModal(false)}
+        onClose={() => { setShowLoteModal(false); setLoteConfirm(false) }}
         title="Pesagem por Lote"
         size="sm"
         footer={
           <>
-            <button className="btn btn-ghost" onClick={() => setShowLoteModal(false)}>Cancelar</button>
+            <button className="btn btn-ghost" onClick={() => { setShowLoteModal(false); setLoteConfirm(false) }}>Cancelar</button>
             <button className="btn btn-primary" form="form-pesagem-lote" type="submit" disabled={saving}>
-              {saving ? <><span className="spinner" /> Salvando...</> : 'Registrar'}
+              {saving ? <><span className="spinner" /> Salvando...</> : loteConfirm ? 'Confirmar' : 'Registrar'}
             </button>
           </>
         }
       >
         {erro && <div className="alert alert-error">{erro}</div>}
+        {loteConfirm && (
+          <div className="alert alert-warning" style={{ marginBottom: 16 }}>
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ flexShrink: 0 }}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+            Isso vai registrar pesagem para <strong>todos os animais</strong> do lote <strong>{lotes.find(l => String(l.id) === loteForm.lote_id)?.nome}</strong> ({lotes.find(l => String(l.id) === loteForm.lote_id)?.total_animais} animais). Confirmar?
+          </div>
+        )}
         <form id="form-pesagem-lote" onSubmit={handleLoteSubmit}>
           <div className="form-group">
             <label className="form-label">Lote *</label>

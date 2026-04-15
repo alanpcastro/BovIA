@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator, model_validator
 from typing import Optional
 from datetime import date, datetime
 from enum import Enum
@@ -20,6 +20,19 @@ class ReproducaoCreate(BaseModel):
     data_prevista_parto: Optional[date] = None
     bezerro_brinco: Optional[str] = None
     observacoes: Optional[str] = None
+
+    @field_validator('data')
+    @classmethod
+    def data_nao_futura(cls, v: date) -> date:
+        if v > date.today():
+            raise ValueError('Data do evento nao pode ser futura')
+        return v
+
+    @model_validator(mode='after')
+    def parto_apos_cobertura(self) -> 'ReproducaoCreate':
+        if self.data_prevista_parto and self.data_prevista_parto <= self.data:
+            raise ValueError('Data prevista de parto deve ser posterior a data do evento')
+        return self
 
 
 class ReproducaoUpdate(BaseModel):

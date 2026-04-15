@@ -24,6 +24,8 @@ class Movimentacao(Base):
     data = Column(Date, nullable=False)
     valor = Column(Float, nullable=True)
     peso_kg = Column(Float, nullable=True)
+    preco_arroba = Column(Float, nullable=True)
+    agio_compra = Column(Float, nullable=True)  # comissao do intermediario na compra
     origem = Column(String, nullable=True)
     destino = Column(String, nullable=True)
     observacoes = Column(String, nullable=True)
