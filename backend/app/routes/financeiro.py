@@ -232,8 +232,10 @@ def analise_financeira(
         q_mov = q_mov.filter(Movimentacao.animal_id.in_(animal_ids))
     movs = q_mov.all()
 
-    receita_vendas = sum(m.valor or 0 for m in movs if m.tipo == "venda")
-    custo_compras = sum(m.valor or 0 for m in movs if m.tipo == "compra")
+    # Receita de vendas: valor menos desconto concedido
+    receita_vendas = sum((m.valor or 0) - (m.desconto or 0) for m in movs if m.tipo == "venda")
+    # Custo de compras: valor mais frete pago
+    custo_compras = sum((m.valor or 0) + (m.frete or 0) for m in movs if m.tipo == "compra")
     receita_vendas = round(receita_vendas, 2)
     custo_compras = round(custo_compras, 2)
 

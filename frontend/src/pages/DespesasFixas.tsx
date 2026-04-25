@@ -3,14 +3,18 @@ import api, { DespesaFixa } from '../services/api'
 import Modal from '../components/Modal'
 import { useToast } from '../components/Toast'
 
-const categorias = ['mao_de_obra', 'manutencao', 'energia', 'arrendamento', 'impostos', 'outros']
+const categorias = ['mao_de_obra', 'manutencao', 'energia', 'arrendamento', 'impostos', 'sal_mineral', 'suplemento', 'vermifugo', 'combustivel', 'outros']
 const categoriaLabel: Record<string, string> = {
   mao_de_obra: 'Mao de Obra', manutencao: 'Manutencao', energia: 'Energia',
-  arrendamento: 'Arrendamento', impostos: 'Impostos', outros: 'Outros'
+  arrendamento: 'Arrendamento', impostos: 'Impostos',
+  sal_mineral: 'Sal Mineral', suplemento: 'Suplemento', vermifugo: 'Vermifugo',
+  combustivel: 'Combustivel', outros: 'Outros'
 }
 const categoriaBadge: Record<string, string> = {
   mao_de_obra: 'badge-blue', manutencao: 'badge-amber', energia: 'badge-teal',
-  arrendamento: 'badge-green', impostos: 'badge-red', outros: 'badge-gray'
+  arrendamento: 'badge-green', impostos: 'badge-red',
+  sal_mineral: 'badge-amber', suplemento: 'badge-green', vermifugo: 'badge-pink',
+  combustivel: 'badge-blue', outros: 'badge-gray'
 }
 
 const emptyForm = {

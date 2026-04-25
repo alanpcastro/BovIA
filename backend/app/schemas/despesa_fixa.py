@@ -10,6 +10,10 @@ class CategoriaDespEnum(str, Enum):
     energia = "energia"
     arrendamento = "arrendamento"
     impostos = "impostos"
+    sal_mineral = "sal_mineral"
+    suplemento = "suplemento"
+    vermifugo = "vermifugo"
+    combustivel = "combustivel"
     outros = "outros"
 
 

@@ -111,11 +111,14 @@ export default function Pesagens() {
           <div className="page-subtitle">Controle de peso e GMD do rebanho</div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn btn-ghost" onClick={() => { setLoteForm({ lote_id: '', data: new Date().toISOString().split('T')[0], peso_medio_kg: '', observacoes: '' }); setErro(''); setLoteConfirm(false); setShowLoteModal(true) }}>
-            Por Lote
+          <button className="btn btn-ghost btn-xl" onClick={() => { setLoteForm({ lote_id: '', data: new Date().toISOString().split('T')[0], peso_medio_kg: '', observacoes: '' }); setErro(''); setLoteConfirm(false); setShowLoteModal(true) }}>
+            Pesar Lote Inteiro
           </button>
-          <button className="btn btn-primary" onClick={() => { setErro(''); setShowModal(true) }}>
-            + Registrar Pesagem
+          <button className="btn btn-primary btn-xl" onClick={() => { setErro(''); setShowModal(true) }}>
+            <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 6l3 1m0 0l-3 9a5 5 0 006.9 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5 5 0 006.9 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V6"/>
+            </svg>
+            Registrar Pesagem
           </button>
         </div>
       </div>
@@ -130,7 +133,7 @@ export default function Pesagens() {
       </div>
 
       <div className="table-wrapper">
-        <table className="data-table">
+        <table className="data-table data-table-big">
           <thead>
             <tr>
               <th>Animal</th>

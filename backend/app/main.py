@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from .config import settings
-from .routes import auth, lotes, animais, pesagens, saude, reproducao, movimentacoes, dashboard, relatorios, custos_nutricionais, despesas_fixas, financeiro, backup
+from .routes import auth, lotes, animais, pesagens, saude, reproducao, movimentacoes, dashboard, relatorios, custos_nutricionais, despesas_fixas, financeiro, backup, pastos
 
 app = FastAPI(title="BovIA API", version="1.0.0")
 
@@ -21,6 +21,7 @@ app.add_middleware(
 
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(lotes.router, prefix="/lotes", tags=["lotes"])
+app.include_router(pastos.router, prefix="/pastos", tags=["pastos"])
 app.include_router(animais.router, prefix="/animais", tags=["animais"])
 app.include_router(pesagens.router, prefix="/pesagens", tags=["pesagens"])
 app.include_router(saude.router, prefix="/saude", tags=["saude"])

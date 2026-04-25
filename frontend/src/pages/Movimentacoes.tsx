@@ -16,7 +16,7 @@ const tipoBadge: Record<string, string> = {
 const emptyForm = {
   animal_id: '', tipo: 'compra',
   data: new Date().toISOString().split('T')[0],
-  valor: '', peso_kg: '', preco_arroba: '', agio_compra: '', origem: '', destino: '', observacoes: ''
+  valor: '', peso_kg: '', preco_arroba: '', agio_compra: '', frete: '', desconto: '', origem: '', destino: '', observacoes: ''
 }
 
 export default function Movimentacoes() {
@@ -57,6 +57,8 @@ export default function Movimentacoes() {
         peso_kg: form.peso_kg ? parseFloat(form.peso_kg) : undefined,
         preco_arroba: form.preco_arroba ? parseFloat(form.preco_arroba) : undefined,
         agio_compra: form.agio_compra ? parseFloat(form.agio_compra) : undefined,
+        frete: form.frete ? parseFloat(form.frete) : undefined,
+        desconto: form.desconto ? parseFloat(form.desconto) : undefined,
         origem: form.origem || undefined, destino: form.destino || undefined,
         observacoes: form.observacoes || undefined
       })
@@ -160,6 +162,7 @@ export default function Movimentacoes() {
               <th>Valor</th>
               <th>Peso</th>
               <th>@</th>
+              <th>R$/kg</th>
               <th>Origem</th>
               <th>Destino</th>
               <th>Observações</th>
@@ -167,7 +170,7 @@ export default function Movimentacoes() {
           </thead>
           <tbody>
             {movs.length === 0 && (
-              <tr><td colSpan={9} className="table-empty">Nenhuma movimentação registrada</td></tr>
+              <tr><td colSpan={10} className="table-empty">Nenhuma movimentação registrada</td></tr>
             )}
             {movs.map(m => {
               const a = animaisMap[m.animal_id]
@@ -181,6 +184,7 @@ export default function Movimentacoes() {
                   </td>
                   <td style={{ color: 'var(--gray-500)', fontSize: 13 }}>{m.peso_kg ? `${m.peso_kg} kg` : '—'}</td>
                   <td style={{ color: 'var(--amber-600)', fontSize: 13, fontWeight: 600 }}>{m.preco_arroba ? `R$ ${m.preco_arroba.toFixed(2)}` : '—'}</td>
+                  <td style={{ color: 'var(--gray-500)', fontSize: 13 }}>{m.custo_kg != null ? `R$ ${m.custo_kg.toFixed(2)}` : '—'}</td>
                   <td style={{ color: 'var(--gray-500)', fontSize: 13 }}>{m.origem || '—'}</td>
                   <td style={{ color: 'var(--gray-500)', fontSize: 13 }}>{m.destino || '—'}</td>
                   <td style={{ color: 'var(--gray-400)', fontSize: 13 }}>{m.observacoes || '—'}</td>
@@ -246,6 +250,18 @@ export default function Movimentacoes() {
               <div className="form-group">
                 <label className="form-label">Agil / Comissao (R$)</label>
                 <input className="form-input" type="number" step="0.01" value={form.agio_compra} onChange={e => setForm(f => ({ ...f, agio_compra: e.target.value }))} placeholder="Comissao do intermediario" />
+              </div>
+            )}
+            {form.tipo === 'compra' && (
+              <div className="form-group">
+                <label className="form-label">Frete (R$)</label>
+                <input className="form-input" type="number" step="0.01" value={form.frete} onChange={e => setForm(f => ({ ...f, frete: e.target.value }))} placeholder="Frete do transporte" />
+              </div>
+            )}
+            {form.tipo === 'venda' && (
+              <div className="form-group">
+                <label className="form-label">Desconto (R$)</label>
+                <input className="form-input" type="number" step="0.01" value={form.desconto} onChange={e => setForm(f => ({ ...f, desconto: e.target.value }))} placeholder="Desconto concedido" />
               </div>
             )}
           </div>

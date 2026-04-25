@@ -41,8 +41,57 @@ export interface Lote {
   area_hectares?: number
   descricao?: string
   rendimento_carcaca?: number
+  pasto_atual_id?: number | null
+  data_entrada_pasto?: string | null
   created_at: string
   total_animais?: number
+}
+
+export interface LoteNoPasto {
+  id: number
+  nome: string
+  total_animais: number
+  peso_medio_kg?: number | null
+  data_entrada_pasto?: string | null
+}
+
+export interface Pasto {
+  id: number
+  nome: string
+  area_ha: number
+  capacidade_ua_ha?: number | null
+  status: 'disponivel' | 'ocupado' | 'descanso'
+  descricao?: string | null
+  created_at: string
+  total_animais: number
+  peso_total_kg: number
+  unidades_animais: number
+  taxa_lotacao_ua_ha: number
+  capacidade_total_ua: number
+  ocupacao_pct: number
+  superlotado: boolean
+  dias_ocupacao?: number | null
+  dias_descanso?: number | null
+  lotes_no_pasto: LoteNoPasto[]
+}
+
+export interface HistoricoOcupacao {
+  id: number
+  pasto_id: number
+  lote_id: number
+  lote_nome?: string | null
+  data_entrada: string
+  data_saida?: string | null
+  dias?: number | null
+  observacoes?: string | null
+}
+
+export interface AlertaPasto {
+  pasto_id: number
+  pasto_nome: string
+  tipo: 'superlotacao' | 'sem_rotacao' | 'descanso_excedido'
+  mensagem: string
+  severidade: 'alta' | 'media' | 'baixa'
 }
 
 export interface Animal {
@@ -105,6 +154,9 @@ export interface Movimentacao {
   peso_kg?: number
   preco_arroba?: number
   agio_compra?: number
+  frete?: number
+  desconto?: number
+  custo_kg?: number | null
   origem?: string
   destino?: string
   observacoes?: string

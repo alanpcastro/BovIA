@@ -175,3 +175,71 @@ Pendente (proximos blocos):
 ### 6.5 Modo escuro
 - Toggle claro/escuro no Layout
 - CSS variables ja facilitam isso
+
+---
+
+## BLOCO 7 — LACUNAS DO ESCOPO ORIGINAL (auditoria 15/04/2026)
+
+Auditoria comparando o projeto atual com os 10 blocos de requisitos originais (imagens do ChatGPT).
+Cobertura estimada: ~60%. Abaixo as lacunas por prioridade.
+
+### 7.1 Controle de Pastagens (MODULO NOVO — alta prioridade) ✅ (concluido 15/04/2026)
+- Model `Pasto` + `HistoricoOcupacao` em `backend/app/models/pasto.py`
+- 9 endpoints em `backend/app/routes/pastos.py` (CRUD, ocupar, desocupar, historico, alertas)
+- Schemas com metricas computadas: UA/ha, taxa_lotacao, ocupacao_pct, superlotacao
+- Frontend `Pastagens.tsx`: cards com KPIs, alertas, modais de criar/editar/ocupar/historico
+- Migration `a7c4e1b2d3f0_pastagens.py` aplicada
+- FKs `pasto_atual_id` e `data_entrada_pasto` adicionadas em `lotes`
+
+### 7.2 Simulador de Compra e Venda (DIFERENCIAL — alta prioridade) ✅ (concluido 16/04/2026)
+- Pagina `/simulador` 100% client-side (sem backend)
+- Inputs: qtd animais, peso compra/venda, preco/@ compra/venda, GMD, rendimento carcaca, custo diario/cab, frete compra/venda, mortalidade %
+- Presets rapidos: Confinamento, Semiconfinamento, Pasto
+- Output: lucro liquido, margem %, @ produzidas, custo/@ produzida, break-even (@/venda e peso minimo), detalhamento de custos e producao
+- Responsivo: 2 colunas desktop, 1 coluna mobile
+- Arquivo: `frontend/src/pages/Simulador.tsx`
+
+### 7.3 Relatorios em PDF e Excel (alta prioridade)
+Hoje `relatorios.py` so exporta CSV.
+- Adicionar `reportlab` (PDF) e `openpyxl` (Excel) ao requirements
+- Endpoints `/relatorios/animais.pdf`, `/animais.xlsx`, `/financeiro.pdf`, `/pesagens.xlsx`
+- Template "resumo para contador": movimentacoes do periodo + despesas + lucro consolidado
+- Historico anual: relatorio agregado ano fiscal (jan-dez)
+- Arquivos: `backend/app/routes/relatorios.py`, `requirements.txt`
+
+### 7.4 Campos financeiros faltantes (media prioridade) ✅ (concluido 16/04/2026)
+- `Movimentacao`: colunas `frete` e `desconto` (Float, nullable) em `models/movimentacao.py`
+- `MovimentacaoOut`: campo computado `custo_kg` (valor/peso_kg) via `@computed_field`
+- `DespesaFixa.CategoriaDespEnum`: adicionadas `sal_mineral`, `suplemento`, `vermifugo`, `combustivel`
+- `routes/financeiro.py`: receita_vendas = valor - desconto; custo_compras = valor + frete
+- Migration `b8d5f2e9c1a0_campos_financeiros.py` aplicada (autocommit_block para ALTER TYPE)
+- Frontend: form de Movimentacoes mostra Frete (compra) e Desconto (venda); coluna R$/kg na tabela
+- Frontend: DespesasFixas com 4 novas categorias no select e badges
+
+### 7.5 Categoria do Animal (media prioridade)
+Escopo original pede campo "Categoria: bezerro, garrote, novilha, vaca, boi magro, boi gordo".
+- Adicionar `CategoriaAnimalEnum` em `models/animal.py`
+- Campo derivavel de sexo + idade + peso, mas deixar editavel
+- Filtro por categoria em `Animais.tsx`
+- Migration alembic
+
+### 7.6 Campos do Lote faltantes (baixa prioridade)
+- `pasto_atual_id` (FK para pasto — depende de 7.1)
+- `data_entrada` (Date) — quando o lote comecou
+- Ja temos `area_hectares` e quantidade (computada via count animais)
+
+### 7.7 Agenda de Alertas completa (media prioridade)
+Hoje so ha alerta de vacinas urgentes no dashboard.
+- Rotacao de pasto (depende de 7.1): alertar quando dias_ocupacao > limite
+- Data ideal de venda: quando animal atinge peso/categoria de abate
+- Contas a pagar: alertas de despesas_fixas com vencimento proximo
+- Meta de peso por lote: definir meta e alertar progresso
+- Consolidar em `/dashboard/alertas` e em uma pagina `/agenda`
+
+### 7.8 Inteligencia / Extras Diferencial (pos-MVP)
+Bloco "Extra" das imagens — o que diferencia a BovIA.
+- Indice de eficiencia por lote (GMD + custo/@ + mortalidade)
+- Previsao de ponto de abate (regressao linear sobre pesagens)
+- Analise do pior lote (ranking por eficiencia invertida)
+- Sugestao automatica de venda (quando lote atinge meta ou preco de mercado favoravel)
+- Pode ser feito em `routes/inteligencia.py` com calculos determinicos; IA generativa opcional

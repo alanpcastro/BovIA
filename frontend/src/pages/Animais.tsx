@@ -137,11 +137,14 @@ export default function Animais() {
           <div className="page-subtitle">{animais.length} animal(is) no rebanho</div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn btn-ghost" onClick={() => { setLoteForm({ lote_id: '', quantidade: '', raca: '', sexo: 'macho', peso_medio: '', origem: 'nascido', observacoes: '' }); setErro(''); setShowLoteModal(true) }}>
+          <button className="btn btn-ghost btn-xl" onClick={() => { setLoteForm({ lote_id: '', quantidade: '', raca: '', sexo: 'macho', peso_medio: '', origem: 'nascido', observacoes: '' }); setErro(''); setShowLoteModal(true) }}>
             Criar em Lote
           </button>
-          <button className="btn btn-primary" onClick={() => { setForm(emptyForm); setErro(''); setShowModal(true) }}>
-            + Novo Animal
+          <button className="btn btn-primary btn-xl" onClick={() => { setForm(emptyForm); setErro(''); setShowModal(true) }}>
+            <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.8}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/>
+            </svg>
+            Cadastrar Animal
           </button>
         </div>
       </div>
@@ -178,7 +181,7 @@ export default function Animais() {
 
       {/* Tabela */}
       <div className="table-wrapper">
-        <table className="data-table">
+        <table className="data-table data-table-big">
           <thead>
             <tr>
               <th>Brinco</th>
@@ -193,18 +196,18 @@ export default function Animais() {
           </thead>
           <tbody>
             {animais.length === 0 && (
-              <tr><td colSpan={8} className="table-empty">Nenhum animal encontrado</td></tr>
+              <tr><td colSpan={8} className="table-empty" style={{ fontSize: 16, padding: 56 }}>Nenhum animal encontrado</td></tr>
             )}
             {animais.map(a => (
               <tr key={a.id} className="clickable" onClick={() => navigate(`/animais/${a.id}`)}>
-                <td style={{ fontWeight: 700, color: 'var(--gray-900)' }}>{a.brinco ? `#${a.brinco}` : <span style={{ color: 'var(--gray-400)' }}>—</span>}</td>
-                <td style={{ fontWeight: 500 }}>{a.nome || <span style={{ color: 'var(--gray-400)' }}>—</span>}</td>
-                <td style={{ color: 'var(--gray-500)' }}>{a.raca || '—'}</td>
-                <td>{a.sexo === 'macho' ? '♂ Macho' : '♀ Fêmea'}</td>
-                <td style={{ color: 'var(--gray-500)' }}>{a.lote_id ? (lotesMap[a.lote_id] || '—') : '—'}</td>
-                <td style={{ fontWeight: 500, color: 'var(--gray-700)' }}>{a.peso_entrada ? `${a.peso_entrada} kg` : '—'}</td>
-                <td><span className={`badge ${statusBadge[a.status]}`}>{statusLabel[a.status]}</span></td>
-                <td style={{ color: 'var(--green-700)', fontWeight: 600, fontSize: 12 }}>Ver →</td>
+                <td style={{ fontWeight: 800, color: 'var(--gray-900)' }}>{a.brinco ? `#${a.brinco}` : <span style={{ color: 'var(--gray-400)' }}>—</span>}</td>
+                <td style={{ fontWeight: 600 }}>{a.nome || <span style={{ color: 'var(--gray-400)' }}>—</span>}</td>
+                <td style={{ color: 'var(--gray-600)' }}>{a.raca || '—'}</td>
+                <td style={{ fontWeight: 600 }}>{a.sexo === 'macho' ? 'Macho' : 'Fêmea'}</td>
+                <td style={{ color: 'var(--gray-600)' }}>{a.lote_id ? (lotesMap[a.lote_id] || '—') : '—'}</td>
+                <td style={{ fontWeight: 700, color: 'var(--gray-800)' }}>{a.peso_entrada ? `${a.peso_entrada} kg` : '—'}</td>
+                <td><span className={`badge ${statusBadge[a.status]}`} style={{ fontSize: 13, padding: '5px 12px' }}>{statusLabel[a.status]}</span></td>
+                <td style={{ color: 'var(--green-700)', fontWeight: 700, fontSize: 14 }}>Ver →</td>
               </tr>
             ))}
           </tbody>

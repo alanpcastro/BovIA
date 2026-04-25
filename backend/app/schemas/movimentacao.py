@@ -1,4 +1,4 @@
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, computed_field
 from typing import Optional
 from datetime import date, datetime
 from enum import Enum
@@ -20,6 +20,8 @@ class MovimentacaoCreate(BaseModel):
     peso_kg: Optional[float] = None
     preco_arroba: Optional[float] = None
     agio_compra: Optional[float] = None
+    frete: Optional[float] = None
+    desconto: Optional[float] = None
     origem: Optional[str] = None
     destino: Optional[str] = None
     observacoes: Optional[str] = None
@@ -62,6 +64,20 @@ class MovimentacaoCreate(BaseModel):
             raise ValueError('Agio nao pode ser negativo')
         return v
 
+    @field_validator('frete')
+    @classmethod
+    def frete_positivo(cls, v: Optional[float]) -> Optional[float]:
+        if v is not None and v < 0:
+            raise ValueError('Frete nao pode ser negativo')
+        return v
+
+    @field_validator('desconto')
+    @classmethod
+    def desconto_positivo(cls, v: Optional[float]) -> Optional[float]:
+        if v is not None and v < 0:
+            raise ValueError('Desconto nao pode ser negativo')
+        return v
+
 
 class MovimentacaoOut(BaseModel):
     id: int
@@ -72,10 +88,19 @@ class MovimentacaoOut(BaseModel):
     peso_kg: Optional[float]
     preco_arroba: Optional[float]
     agio_compra: Optional[float]
+    frete: Optional[float]
+    desconto: Optional[float]
     origem: Optional[str]
     destino: Optional[str]
     observacoes: Optional[str]
     created_at: datetime
+
+    @computed_field
+    @property
+    def custo_kg(self) -> Optional[float]:
+        if self.valor and self.peso_kg and self.peso_kg > 0:
+            return round(self.valor / self.peso_kg, 2)
+        return None
 
     class Config:
         from_attributes = True

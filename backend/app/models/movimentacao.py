@@ -26,6 +26,8 @@ class Movimentacao(Base):
     peso_kg = Column(Float, nullable=True)
     preco_arroba = Column(Float, nullable=True)
     agio_compra = Column(Float, nullable=True)  # comissao do intermediario na compra
+    frete = Column(Float, nullable=True)        # frete (sobretudo na compra)
+    desconto = Column(Float, nullable=True)     # desconto concedido (sobretudo na venda)
     origem = Column(String, nullable=True)
     destino = Column(String, nullable=True)
     observacoes = Column(String, nullable=True)

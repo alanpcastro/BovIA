@@ -129,11 +129,14 @@ export default function Saude() {
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn btn-ghost" onClick={() => { setLoteForm(emptyLoteForm); setErro(''); setLoteConfirm(false); setShowLoteModal(true) }}>
-            Por Lote
+          <button className="btn btn-ghost btn-xl" onClick={() => { setLoteForm(emptyLoteForm); setErro(''); setLoteConfirm(false); setShowLoteModal(true) }}>
+            Vacinar Lote Inteiro
           </button>
-          <button className="btn btn-primary" onClick={() => { setErro(''); setForm(emptyForm); setShowModal(true) }}>
-            + Registrar
+          <button className="btn btn-primary btn-xl" onClick={() => { setErro(''); setForm(emptyForm); setShowModal(true) }}>
+            <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+            </svg>
+            Vacinar / Tratar
           </button>
         </div>
       </div>
@@ -153,7 +156,7 @@ export default function Saude() {
       </div>
 
       <div className="table-wrapper">
-        <table className="data-table">
+        <table className="data-table data-table-big">
           <thead>
             <tr>
               <th>Animal</th>
