@@ -2,10 +2,13 @@ import { useEffect, useState, FormEvent } from 'react'
 import api, { CustoNutricional, Lote } from '../services/api'
 import Modal from '../components/Modal'
 import { useToast } from '../components/Toast'
+import { formatBRL, formatKg } from '../utils/format'
+import { todayLocal } from '../utils/date'
+import { apiErrorMessage } from '../utils/apiError'
 
 const emptyForm = {
   lote_id: '', produto: '', preco_kg: '', consumo_kg_dia: '',
-  data_inicio: new Date().toISOString().split('T')[0], data_fim: '', observacoes: ''
+  data_inicio: todayLocal(), data_fim: '', observacoes: ''
 }
 
 export default function CustosNutricionais() {
@@ -18,6 +21,7 @@ export default function CustosNutricionais() {
   const [erro, setErro] = useState('')
   const [saving, setSaving] = useState(false)
   const [filtroLote, setFiltroLote] = useState('')
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
 
   function load() {
     const p: any = {}
@@ -64,7 +68,7 @@ export default function CustosNutricionais() {
       }
       setShowModal(false); load()
     } catch (err: any) {
-      setErro(err.response?.data?.detail || 'Erro ao salvar')
+      setErro(apiErrorMessage(err, 'Erro ao salvar'))
       toastError('Erro ao salvar custo')
     } finally { setSaving(false) }
   }
@@ -73,6 +77,41 @@ export default function CustosNutricionais() {
     if (!confirm('Excluir este custo nutricional?')) return
     await api.delete(`/custos-nutricionais/${id}`)
     load(); success('Custo excluído')
+  }
+
+  function toggleSelect(id: number) {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id); else next.add(id)
+      return next
+    })
+  }
+  function toggleAllVisible() {
+    const visibleIds = custos.map(c => c.id)
+    const allSelected = visibleIds.length > 0 && visibleIds.every(id => selectedIds.has(id))
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (allSelected) visibleIds.forEach(id => next.delete(id))
+      else visibleIds.forEach(id => next.add(id))
+      return next
+    })
+  }
+  function clearSelection() { setSelectedIds(new Set()) }
+  async function bulkDelete() {
+    const ids = Array.from(selectedIds)
+    if (ids.length === 0) return
+    if (!confirm(`Excluir ${ids.length} custo(s)?`)) return
+    setSaving(true)
+    try {
+      const r = await api.post('/custos-nutricionais/bulk-delete', { ids })
+      success(`${r.data.afetados} custo(s) excluído(s)`)
+      clearSelection()
+      load()
+    } catch (err: any) {
+      toastError(apiErrorMessage(err, 'Erro ao excluir em massa'))
+    } finally {
+      setSaving(false)
+    }
   }
 
   const custoTotal = custos.reduce((s, c) => s + (c.custo_diario_cab || 0), 0)
@@ -96,18 +135,35 @@ export default function CustosNutricionais() {
       {/* Resumo */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16, marginBottom: 24 }}>
         <div className="card card-padded" style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--gray-400)', textTransform: 'uppercase', marginBottom: 4 }}>Produtos Cadastrados</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: 4 }}>Produtos Cadastrados</div>
           <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--gray-900)' }}>{custos.length}</div>
         </div>
         <div className="card card-padded" style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--gray-400)', textTransform: 'uppercase', marginBottom: 4 }}>Custo Diario / Cab</div>
-          <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--amber-600)' }}>R$ {custoTotal.toFixed(2)}</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: 4 }}>Custo Diario / Cab</div>
+          <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--amber-600)' }}>{formatBRL(custoTotal)}</div>
         </div>
         <div className="card card-padded" style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--gray-400)', textTransform: 'uppercase', marginBottom: 4 }}>Custo Mensal / Cab</div>
-          <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--red-600)' }}>R$ {(custoTotal * 30).toFixed(2)}</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: 4 }}>Custo Mensal / Cab</div>
+          <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--red-600)' }}>{formatBRL(custoTotal * 30)}</div>
         </div>
       </div>
+
+      {selectedIds.size > 0 && (
+        <div
+          style={{
+            display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
+            padding: '12px 16px', marginBottom: 16, borderRadius: 'var(--radius)',
+            background: 'var(--green-50)', border: '1px solid var(--green-100)',
+          }}
+        >
+          <span style={{ fontWeight: 700, color: 'var(--green-800)' }}>
+            {selectedIds.size} selecionado(s)
+          </span>
+          <button className="btn btn-ghost btn-sm" onClick={clearSelection}>Limpar</button>
+          <div style={{ flex: 1 }} />
+          <button className="btn btn-danger btn-sm" onClick={bulkDelete} disabled={saving}>Excluir selecionados</button>
+        </div>
+      )}
 
       {/* Filtro */}
       <div className="filters-bar">
@@ -122,6 +178,13 @@ export default function CustosNutricionais() {
         <table className="data-table">
           <thead>
             <tr>
+              <th style={{ width: 36 }}>
+                <input
+                  type="checkbox"
+                  checked={custos.length > 0 && custos.every(c => selectedIds.has(c.id))}
+                  onChange={toggleAllVisible}
+                />
+              </th>
               <th>Produto</th>
               <th>Lote</th>
               <th>R$/kg</th>
@@ -134,15 +197,22 @@ export default function CustosNutricionais() {
           </thead>
           <tbody>
             {custos.length === 0 && (
-              <tr><td colSpan={8} className="table-empty">Nenhum custo nutricional cadastrado</td></tr>
+              <tr><td colSpan={9} className="table-empty">Nenhum custo nutricional cadastrado</td></tr>
             )}
             {custos.map(c => (
-              <tr key={c.id}>
+              <tr key={c.id} style={{ background: selectedIds.has(c.id) ? 'var(--green-50)' : undefined }}>
+                <td>
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(c.id)}
+                    onChange={() => toggleSelect(c.id)}
+                  />
+                </td>
                 <td style={{ fontWeight: 600 }}>{c.produto}</td>
                 <td style={{ fontSize: 13, color: 'var(--gray-500)' }}>{c.lote_id ? lotesMap[c.lote_id] || `#${c.lote_id}` : 'Geral'}</td>
-                <td>R$ {c.preco_kg.toFixed(2)}</td>
-                <td>{c.consumo_kg_dia} kg</td>
-                <td style={{ fontWeight: 700, color: 'var(--amber-600)' }}>R$ {(c.custo_diario_cab || 0).toFixed(2)}</td>
+                <td>{formatBRL(c.preco_kg)}</td>
+                <td>{formatKg(c.consumo_kg_dia, 2)}</td>
+                <td style={{ fontWeight: 700, color: 'var(--amber-600)' }}>{formatBRL(c.custo_diario_cab || 0)}</td>
                 <td style={{ fontSize: 13 }}>{new Date(c.data_inicio + 'T00:00').toLocaleDateString('pt-BR')}</td>
                 <td style={{ fontSize: 13, color: c.data_fim ? 'var(--gray-600)' : 'var(--green-700)' }}>
                   {c.data_fim ? new Date(c.data_fim + 'T00:00').toLocaleDateString('pt-BR') : 'Vigente'}
@@ -221,7 +291,7 @@ export default function CustosNutricionais() {
           </div>
           {form.preco_kg && form.consumo_kg_dia && (
             <div style={{ padding: '10px 14px', background: 'var(--amber-100)', borderRadius: 'var(--radius)', fontSize: 13, color: 'var(--amber-800)', fontWeight: 600 }}>
-              Custo diario por cabeca: R$ {(parseFloat(form.preco_kg || '0') * parseFloat(form.consumo_kg_dia || '0')).toFixed(2)}
+              Custo diario por cabeca: {formatBRL(parseFloat(form.preco_kg || '0') * parseFloat(form.consumo_kg_dia || '0'))}
             </div>
           )}
         </form>

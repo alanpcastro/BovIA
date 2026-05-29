@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { formatBRL as fmtBRL, formatNumber as fmtNum } from '../utils/format'
 
 interface SimulacaoInput {
   qtd_animais: number
@@ -91,15 +92,13 @@ function calcular(input: SimulacaoInput): SimulacaoResult | null {
   }
 }
 
-const fmtBRL = (v: number) => `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-const fmtNum = (v: number, decimals = 2) => v.toLocaleString('pt-BR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })
 
 function KPI({ label, value, sub, color }: { label: string; value: string; sub?: string; color: string }) {
   return (
     <div className="card card-padded" style={{ textAlign: 'center' }}>
-      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--gray-400)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 }}>{label}</div>
+      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--gray-500)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 }}>{label}</div>
       <div style={{ fontSize: 26, fontWeight: 800, color }}>{value}</div>
-      {sub && <div style={{ fontSize: 12, color: 'var(--gray-400)', marginTop: 2 }}>{sub}</div>}
+      {sub && <div style={{ fontSize: 12, color: 'var(--gray-500)', marginTop: 2 }}>{sub}</div>}
     </div>
   )
 }
@@ -290,7 +289,7 @@ export default function Simulador() {
         {/* Coluna Direita: Resultado */}
         <div>
           {!result && (
-            <div className="card card-padded" style={{ textAlign: 'center', padding: 60, color: 'var(--gray-400)' }}>
+            <div className="card card-padded" style={{ textAlign: 'center', padding: 60, color: 'var(--gray-500)' }}>
               <svg width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} style={{ margin: '0 auto 12px' }}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
               </svg>

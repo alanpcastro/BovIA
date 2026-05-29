@@ -1,0 +1,126 @@
+- generic [ref=e3]:
+  - complementary [ref=e4]:
+    - generic [ref=e5]:
+      - img "BovIA" [ref=e6]
+      - generic [ref=e7]: Fazenda BovIA
+    - navigation [ref=e8]:
+      - generic [ref=e9]: Menu
+      - link "Dashboard" [ref=e10] [cursor=pointer]:
+        - /url: /dashboard
+        - img [ref=e11]
+        - generic [ref=e16]: Dashboard
+      - link "Agenda" [ref=e17] [cursor=pointer]:
+        - /url: /agenda
+        - img [ref=e18]
+        - generic [ref=e20]: Agenda
+      - link "Animais" [ref=e21] [cursor=pointer]:
+        - /url: /animais
+        - img [ref=e22]
+        - generic [ref=e24]: Animais
+      - link "Lotes" [ref=e25] [cursor=pointer]:
+        - /url: /lotes
+        - img [ref=e26]
+        - generic [ref=e28]: Lotes
+      - link "Pastagens" [ref=e29] [cursor=pointer]:
+        - /url: /pastagens
+        - img [ref=e30]
+        - generic [ref=e32]: Pastagens
+      - link "Pesagens" [ref=e33] [cursor=pointer]:
+        - /url: /pesagens
+        - img [ref=e34]
+        - generic [ref=e36]: Pesagens
+      - link "Saúde" [ref=e37] [cursor=pointer]:
+        - /url: /saude
+        - img [ref=e38]
+        - generic [ref=e40]: Saúde
+      - link "Reprodução" [ref=e41] [cursor=pointer]:
+        - /url: /reproducao
+        - img [ref=e42]
+        - generic [ref=e44]: Reprodução
+      - link "Movimentações" [ref=e45] [cursor=pointer]:
+        - /url: /movimentacoes
+        - img [ref=e46]
+        - generic [ref=e48]: Movimentações
+      - link "Financeiro" [ref=e49] [cursor=pointer]:
+        - /url: /financeiro
+        - img [ref=e50]
+        - generic [ref=e52]: Financeiro
+      - link "Simulador" [ref=e53] [cursor=pointer]:
+        - /url: /simulador
+        - img [ref=e54]
+        - generic [ref=e56]: Simulador
+      - link "Custos Nutri" [ref=e57] [cursor=pointer]:
+        - /url: /custos-nutricionais
+        - img [ref=e58]
+        - generic [ref=e60]: Custos Nutri
+      - link "Despesas Fixas" [ref=e61] [cursor=pointer]:
+        - /url: /despesas-fixas
+        - img [ref=e62]
+        - generic [ref=e64]: Despesas Fixas
+      - link "Gráficos" [ref=e65] [cursor=pointer]:
+        - /url: /graficos
+        - img [ref=e66]
+        - generic [ref=e68]: Gráficos
+      - link "Relatórios" [ref=e69] [cursor=pointer]:
+        - /url: /relatorios
+        - img [ref=e70]
+        - generic [ref=e72]: Relatórios
+      - link "Configurações" [ref=e73] [cursor=pointer]:
+        - /url: /configuracoes
+        - img [ref=e74]
+        - generic [ref=e77]: Configurações
+    - generic [ref=e78]:
+      - generic [ref=e79]: Admin Teste
+      - button "Alternar tema" [ref=e80] [cursor=pointer]:
+        - img [ref=e81]
+        - text: Modo escuro
+      - button "Sair" [ref=e83] [cursor=pointer]:
+        - img [ref=e84]
+        - text: Sair
+  - main [ref=e86]:
+    - generic [ref=e149]:
+      - button "Voltar para Animais" [ref=e150] [cursor=pointer]:
+        - img [ref=e151]
+        - text: Voltar para Animais
+      - generic [ref=e153]:
+        - generic [ref=e154]:
+          - generic [ref=e155]:
+            - generic "Adicionar foto" [ref=e157] [cursor=pointer]: ♂
+            - generic [ref=e158]:
+              - generic [ref=e159]: "Brinco #001"
+              - generic [ref=e160]:
+                - generic [ref=e161]: Nelore
+                - generic [ref=e162]:
+                  - text: ·
+                  - img [ref=e163]
+                  - text: pasto norte
+          - generic [ref=e165]:
+            - generic [ref=e166]: Ativo
+            - button "Mudar status" [ref=e167] [cursor=pointer]
+            - button "Editar" [ref=e168] [cursor=pointer]
+            - button "Excluir" [ref=e169] [cursor=pointer]
+        - generic [ref=e170]:
+          - generic [ref=e171]:
+            - generic [ref=e172]: Peso de Entrada
+            - generic [ref=e173]: 280 kg
+          - generic [ref=e174]:
+            - generic [ref=e175]: Último Peso
+            - generic [ref=e176]: —
+          - generic [ref=e177]:
+            - generic [ref=e178]: Origem
+            - generic [ref=e179]: Nascido na fazenda
+          - generic [ref=e180]:
+            - generic [ref=e181]: Cadastrado em
+            - generic [ref=e182]: 27/03/2026
+      - generic [ref=e183]:
+        - button "Pesagens" [ref=e184] [cursor=pointer]
+        - button "Saúde" [ref=e185] [cursor=pointer]
+        - button "Reprodução" [ref=e186] [cursor=pointer]
+        - button "Movimentações 1" [ref=e187] [cursor=pointer]:
+          - text: Movimentações
+          - generic [ref=e188]: "1"
+      - generic [ref=e189]:
+        - generic [ref=e190]:
+          - heading "Histórico de Pesagens" [level=3] [ref=e191]
+          - button "+ Registrar Pesagem" [ref=e192] [cursor=pointer]
+        - generic [ref=e193]: Sem pesagens registradas

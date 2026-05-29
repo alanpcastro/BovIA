@@ -3,13 +3,14 @@ import { useNavigate } from 'react-router-dom'
 import api, { AnaliseFinanceira, Lote } from '../services/api'
 import { useToast } from '../components/Toast'
 import { useEffect } from 'react'
+import { formatBRL, formatNumber } from '../utils/format'
 
 function KPI({ label, value, sub, color }: { label: string; value: string; sub?: string; color: string }) {
   return (
     <div className="card card-padded" style={{ textAlign: 'center' }}>
-      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--gray-400)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 }}>{label}</div>
+      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--gray-500)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 }}>{label}</div>
       <div style={{ fontSize: 26, fontWeight: 800, color }}>{value}</div>
-      {sub && <div style={{ fontSize: 12, color: 'var(--gray-400)', marginTop: 2 }}>{sub}</div>}
+      {sub && <div style={{ fontSize: 12, color: 'var(--gray-500)', marginTop: 2 }}>{sub}</div>}
     </div>
   )
 }
@@ -24,10 +25,10 @@ function MetricRow({ label, value, color }: { label: string; value: string; colo
 }
 
 const fmt = (v: number | undefined | null, prefix = 'R$ ', decimals = 2) =>
-  v != null ? `${prefix}${v.toFixed(decimals)}` : '—'
+  v != null ? (prefix === 'R$ ' ? formatBRL(v, decimals) : `${prefix}${formatNumber(v, decimals)}`) : '—'
 
 const fmtNum = (v: number | undefined | null, suffix = '', decimals = 2) =>
-  v != null ? `${v.toFixed(decimals)}${suffix}` : '—'
+  v != null ? `${formatNumber(v, decimals)}${suffix}` : '—'
 
 export default function Financeiro() {
   const navigate = useNavigate()
@@ -81,7 +82,7 @@ export default function Financeiro() {
           <label className="filter-label">Periodo:</label>
           <input className="form-input" type="date" style={{ width: 160 }} value={filtro.data_inicio}
             onChange={e => setFiltro(p => ({ ...p, data_inicio: e.target.value }))} />
-          <span style={{ color: 'var(--gray-400)' }}>ate</span>
+          <span style={{ color: 'var(--gray-500)' }}>ate</span>
           <input className="form-input" type="date" style={{ width: 160 }} value={filtro.data_fim}
             onChange={e => setFiltro(p => ({ ...p, data_fim: e.target.value }))} />
         </div>
@@ -100,13 +101,15 @@ export default function Financeiro() {
 
       {!data && !loading && (
         <div className="card card-padded" style={{ textAlign: 'center', padding: 48 }}>
-          <div style={{ fontSize: 40, marginBottom: 12 }}>📊</div>
+          <svg width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="var(--green-700)" strokeWidth={1.5} style={{ margin: '0 auto 12px', display: 'block' }}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+          </svg>
           <div style={{ fontWeight: 600, color: 'var(--gray-700)' }}>Selecione o periodo e clique em Analisar</div>
         </div>
       )}
 
       {loading && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: 'var(--gray-400)', padding: 40 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: 'var(--gray-500)', padding: 40 }}>
           <span className="spinner spinner-dark" /> Calculando analise financeira...
         </div>
       )}

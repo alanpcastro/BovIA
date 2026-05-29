@@ -4,13 +4,14 @@ import uuid
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from ..database import get_db
-from ..models.animal import Animal, StatusEnum
+from ..models.animal import Animal, StatusEnum, CategoriaAnimalEnum
 from ..models.pesagem import Pesagem
 from ..models.saude import Saude
 from ..models.reproducao import Reproducao
 from ..models.movimentacao import Movimentacao, TipoMovEnum
 from ..schemas.animal import AnimalCreate, AnimalUpdate, AnimalOut
 from ..schemas.pesagem import PesagemOut
+from .pesagens import _calcular_gmd
 from ..schemas.saude import SaudeOut
 from ..schemas.reproducao import ReproducaoOut
 from ..schemas.movimentacao import MovimentacaoCreate, MovimentacaoOut
@@ -32,11 +33,28 @@ class AnimaisPage(BaseModel):
         from_attributes = True
 
 
+class BulkUpdateIn(BaseModel):
+    ids: List[int]
+    lote_id: Optional[int] = None        # use 0 ou negativo para "sem lote"
+    status: Optional[StatusEnum] = None
+    categoria: Optional[CategoriaAnimalEnum] = None
+
+
+class BulkDeleteIn(BaseModel):
+    ids: List[int]
+
+
+class BulkResult(BaseModel):
+    total: int
+    afetados: int
+
+
 @router.get("", response_model=AnimaisPage)
 def listar_animais(
     lote_id: Optional[int] = Query(None),
     status: Optional[str] = Query(None),
     sexo: Optional[str] = Query(None),
+    categoria: Optional[str] = Query(None),
     raca: Optional[str] = Query(None),
     busca: Optional[str] = Query(None),
     page: int = Query(1, ge=1),
@@ -51,6 +69,8 @@ def listar_animais(
         q = q.filter(Animal.status == status)
     if sexo:
         q = q.filter(Animal.sexo == sexo)
+    if categoria:
+        q = q.filter(Animal.categoria == categoria)
     if raca:
         q = q.filter(Animal.raca.ilike(f"%{raca}%"))
     if busca:
@@ -154,6 +174,72 @@ def atualizar_animal(animal_id: int, data: AnimalUpdate, db: Session = Depends(g
     return animal
 
 
+@router.post("/bulk-update", response_model=BulkResult)
+def bulk_update(
+    data: BulkUpdateIn,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if not data.ids:
+        raise HTTPException(status_code=400, detail="Nenhum animal selecionado")
+    if data.lote_id is None and data.status is None and data.categoria is None:
+        raise HTTPException(status_code=400, detail="Informe ao menos um campo para atualizar")
+
+    animais = db.query(Animal).filter(
+        Animal.id.in_(data.ids),
+        Animal.user_id == current_user.id,
+        Animal.deletado_em == None,
+    ).all()
+
+    hoje = date.today()
+    afetados = 0
+    for a in animais:
+        if data.lote_id is not None:
+            a.lote_id = data.lote_id if data.lote_id > 0 else None
+        if data.categoria is not None:
+            a.categoria = data.categoria
+        if data.status is not None and a.status != data.status:
+            a.status = data.status
+            # gera movimentacao automatica para vendido/morto, igual ao PUT individual
+            if data.status == StatusEnum.vendido:
+                db.add(Movimentacao(
+                    user_id=current_user.id, animal_id=a.id,
+                    tipo=TipoMovEnum.venda, data=hoje,
+                ))
+            elif data.status == StatusEnum.morto:
+                db.add(Movimentacao(
+                    user_id=current_user.id, animal_id=a.id,
+                    tipo=TipoMovEnum.morte, data=hoje,
+                ))
+        afetados += 1
+
+    db.commit()
+    return BulkResult(total=len(data.ids), afetados=afetados)
+
+
+@router.post("/bulk-delete", response_model=BulkResult)
+def bulk_delete(
+    data: BulkDeleteIn,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if not data.ids:
+        raise HTTPException(status_code=400, detail="Nenhum animal selecionado")
+
+    animais = db.query(Animal).filter(
+        Animal.id.in_(data.ids),
+        Animal.user_id == current_user.id,
+        Animal.deletado_em == None,
+    ).all()
+
+    agora = datetime.now(timezone.utc)
+    for a in animais:
+        a.deletado_em = agora
+
+    db.commit()
+    return BulkResult(total=len(data.ids), afetados=len(animais))
+
+
 UPLOAD_DIR = Path(__file__).resolve().parent.parent.parent / "uploads" / "animais"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 ALLOWED_PHOTO_TYPES = {"image/jpeg", "image/png", "image/webp"}
@@ -220,14 +306,29 @@ def historico_animal(animal_id: int, db: Session = Depends(get_db), current_user
     if not animal:
         raise HTTPException(status_code=404, detail="Animal não encontrado")
 
-    pesagens = db.query(Pesagem).filter(Pesagem.animal_id == animal_id).order_by(Pesagem.data).all()
-    saudes = db.query(Saude).filter(Saude.animal_id == animal_id).order_by(Saude.data.desc()).all()
-    reproducoes = db.query(Reproducao).filter(Reproducao.animal_id == animal_id).order_by(Reproducao.data.desc()).all()
-    movimentacoes = db.query(Movimentacao).filter(Movimentacao.animal_id == animal_id).order_by(Movimentacao.data.desc()).all()
+    # Defense-in-depth: filtra por user_id mesmo apos verificar o animal
+    pesagens = db.query(Pesagem).join(Animal).filter(
+        Pesagem.animal_id == animal_id, Animal.user_id == current_user.id
+    ).order_by(Pesagem.data.desc()).all()
+    saudes = db.query(Saude).join(Animal).filter(
+        Saude.animal_id == animal_id, Animal.user_id == current_user.id
+    ).order_by(Saude.data.desc()).all()
+    reproducoes = db.query(Reproducao).join(Animal).filter(
+        Reproducao.animal_id == animal_id, Animal.user_id == current_user.id
+    ).order_by(Reproducao.data.desc()).all()
+    movimentacoes = db.query(Movimentacao).filter(
+        Movimentacao.animal_id == animal_id, Movimentacao.user_id == current_user.id
+    ).order_by(Movimentacao.data.desc()).all()
+
+    pesagens_out = []
+    for p in pesagens:
+        out = PesagemOut.model_validate(p)
+        out.gmd = _calcular_gmd(db, p.animal_id, p, current_user.id)
+        pesagens_out.append(out)
 
     return {
         "animal": AnimalOut.model_validate(animal),
-        "pesagens": [PesagemOut.model_validate(p) for p in pesagens],
+        "pesagens": pesagens_out,
         "saudes": [SaudeOut.model_validate(s) for s in saudes],
         "reproducoes": [ReproducaoOut.model_validate(r) for r in reproducoes],
         "movimentacoes": [MovimentacaoOut.model_validate(m) for m in movimentacoes],

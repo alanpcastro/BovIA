@@ -8,8 +8,8 @@ from ..models.lote import Lote
 from ..models.animal import Animal
 from ..models.pesagem import Pesagem
 from ..models.saude import Saude
-from ..models.reproducao import Reproducao
 from ..models.movimentacao import Movimentacao
+from ..models.custo_nutricional import CustoNutricional
 from ..schemas.lote import LoteCreate, LoteUpdate, LoteOut
 from ..auth import get_current_user
 from ..models.user import User
@@ -26,16 +26,24 @@ def _get_lote_or_404(lote_id: int, db: Session, user: User) -> Lote:
     return lote
 
 
-def _animais_ativos(lote_id: int, db: Session):
+def _animais_ativos(lote_id: int, db: Session, user_id: int):
     return db.query(Animal).filter(
-        Animal.lote_id == lote_id, Animal.deletado_em == None, Animal.status == "ativo"
+        Animal.lote_id == lote_id,
+        Animal.user_id == user_id,
+        Animal.deletado_em == None,
+        Animal.status == "ativo",
     ).all()
 
 
 def _lote_out(lote: Lote, db: Session) -> LoteOut:
-    total = db.query(Animal).filter(Animal.lote_id == lote.id, Animal.status == "ativo").count()
+    total = db.query(Animal).filter(
+        Animal.lote_id == lote.id,
+        Animal.status == "ativo",
+        Animal.deletado_em == None,  # noqa: E711
+    ).count()
     out = LoteOut.model_validate(lote)
     out.total_animais = total
+    out.pasto_atual_nome = lote.pasto_atual.nome if lote.pasto_atual else None
     return out
 
 
@@ -68,15 +76,6 @@ class LoteSaudeCreate(BaseModel):
     observacoes: Optional[str] = None
 
 
-class LoteReproducaoCreate(BaseModel):
-    tipo: str
-    data: date
-    touro_brinco: Optional[str] = None
-    resultado: Optional[str] = None
-    data_prevista_parto: Optional[date] = None
-    observacoes: Optional[str] = None
-
-
 class LoteMovimentacaoCreate(BaseModel):
     tipo: str
     data: date
@@ -101,9 +100,7 @@ def criar_lote(data: LoteCreate, db: Session = Depends(get_db), current_user: Us
     db.add(lote)
     db.commit()
     db.refresh(lote)
-    out = LoteOut.model_validate(lote)
-    out.total_animais = 0
-    return out
+    return _lote_out(lote, db)
 
 
 @router.get("/{lote_id}", response_model=LoteOut)
@@ -125,6 +122,13 @@ def atualizar_lote(lote_id: int, data: LoteUpdate, db: Session = Depends(get_db)
 @router.delete("/{lote_id}", status_code=204)
 def deletar_lote(lote_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     lote = _get_lote_or_404(lote_id, db, current_user)
+    # Desvincular animais (eles ficam sem lote, mas continuam cadastrados)
+    db.query(Animal).filter(Animal.lote_id == lote.id).update({Animal.lote_id: None})
+    # Desvincular custos nutricionais (FK nullable, preserva o historico)
+    db.query(CustoNutricional).filter(CustoNutricional.lote_id == lote.id).update({CustoNutricional.lote_id: None})
+    # Remover historico_ocupacao (lote_id e NOT NULL na tabela, nao da pra preservar)
+    from ..models.pasto import HistoricoOcupacao
+    db.query(HistoricoOcupacao).filter(HistoricoOcupacao.lote_id == lote.id).delete()
     db.delete(lote)
     db.commit()
 
@@ -170,7 +174,7 @@ def pesagem_em_lote(
 ):
     """Registra pesagem (peso médio) para todos os animais ativos do lote."""
     _get_lote_or_404(lote_id, db, current_user)
-    animais = _animais_ativos(lote_id, db)
+    animais = _animais_ativos(lote_id, db, current_user.id)
     if not animais:
         raise HTTPException(status_code=400, detail="Nenhum animal ativo neste lote")
 
@@ -195,7 +199,7 @@ def saude_em_lote(
 ):
     """Registra evento de saúde para todos os animais ativos do lote."""
     _get_lote_or_404(lote_id, db, current_user)
-    animais = _animais_ativos(lote_id, db)
+    animais = _animais_ativos(lote_id, db, current_user.id)
     if not animais:
         raise HTTPException(status_code=400, detail="Nenhum animal ativo neste lote")
 
@@ -217,33 +221,6 @@ def saude_em_lote(
     return {"registrados": len(animais)}
 
 
-@router.post("/{lote_id}/reproducao", status_code=201)
-def reproducao_em_lote(
-    lote_id: int,
-    data: LoteReproducaoCreate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    """Registra evento reprodutivo para todos os animais ativos do lote."""
-    _get_lote_or_404(lote_id, db, current_user)
-    animais = _animais_ativos(lote_id, db)
-    if not animais:
-        raise HTTPException(status_code=400, detail="Nenhum animal ativo neste lote")
-
-    for animal in animais:
-        r = Reproducao(
-            animal_id=animal.id, user_id=current_user.id,
-            tipo=data.tipo, data=data.data,
-            touro_brinco=data.touro_brinco, resultado=data.resultado,
-            data_prevista_parto=data.data_prevista_parto,
-            observacoes=data.observacoes,
-        )
-        db.add(r)
-
-    db.commit()
-    return {"registrados": len(animais)}
-
-
 @router.post("/{lote_id}/movimentacoes", status_code=201)
 def movimentacao_em_lote(
     lote_id: int,
@@ -253,7 +230,7 @@ def movimentacao_em_lote(
 ):
     """Registra movimentação para todos os animais ativos do lote."""
     _get_lote_or_404(lote_id, db, current_user)
-    animais = _animais_ativos(lote_id, db)
+    animais = _animais_ativos(lote_id, db, current_user.id)
     if not animais:
         raise HTTPException(status_code=400, detail="Nenhum animal ativo neste lote")
 

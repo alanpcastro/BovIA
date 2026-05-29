@@ -4,10 +4,11 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
 } from 'recharts'
 import api, { AnaliseFinanceira, Pesagem, Lote } from '../services/api'
+import { formatBRL, formatKg, formatPct } from '../utils/format'
 
 const COLORS = ['#2d6a4f', '#d97706', '#db2777', '#2563eb', '#0d9488', '#6b7280']
 
-const fmt = (v: number) => `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+const fmt = formatBRL
 
 export default function Graficos() {
   const [pesagens, setPesagens] = useState<Pesagem[]>([])
@@ -34,7 +35,7 @@ export default function Graficos() {
   }, [])
 
   if (loading) return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: 'var(--gray-400)', padding: 40 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: 'var(--gray-500)', padding: 40 }}>
       <span className="spinner spinner-dark" />
       Carregando graficos...
     </div>
@@ -84,7 +85,7 @@ export default function Graficos() {
         <div className="card card-padded">
           <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16 }}>Evolucao de Peso (Pesagens)</h3>
           {pesoData.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--gray-400)', fontSize: 13 }}>
+            <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--gray-500)', fontSize: 13 }}>
               Sem pesagens registradas
             </div>
           ) : (
@@ -93,7 +94,7 @@ export default function Graficos() {
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--gray-200)" />
                 <XAxis dataKey="data" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} unit=" kg" />
-                <Tooltip formatter={(v) => [`${v} kg`, 'Peso']} />
+                <Tooltip formatter={(v) => [formatKg(Number(v), 1), 'Peso']} />
                 <Line type="monotone" dataKey="peso" stroke="#2d6a4f" strokeWidth={2} dot={{ r: 3 }} />
               </LineChart>
             </ResponsiveContainer>
@@ -104,7 +105,7 @@ export default function Graficos() {
         <div className="card card-padded">
           <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16 }}>Composicao de Custos (6 meses)</h3>
           {custosPie.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--gray-400)', fontSize: 13 }}>
+            <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--gray-500)', fontSize: 13 }}>
               Sem custos registrados
             </div>
           ) : (
@@ -115,7 +116,7 @@ export default function Graficos() {
                   cx="50%" cy="50%"
                   outerRadius={100}
                   dataKey="value"
-                  label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
+                  label={({ name, percent }) => `${name} ${formatPct((percent ?? 0) * 100, 0)}`}
                 >
                   {custosPie.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                 </Pie>
@@ -129,7 +130,7 @@ export default function Graficos() {
         <div className="card card-padded">
           <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16 }}>Receita vs Custo (6 meses)</h3>
           {resultadoBar.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--gray-400)', fontSize: 13 }}>
+            <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--gray-500)', fontSize: 13 }}>
               Sem dados financeiros
             </div>
           ) : (
@@ -153,7 +154,7 @@ export default function Graficos() {
         <div className="card card-padded">
           <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16 }}>Animais por Lote</h3>
           {gmdLotes.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--gray-400)', fontSize: 13 }}>
+            <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--gray-500)', fontSize: 13 }}>
               Sem lotes cadastrados
             </div>
           ) : (

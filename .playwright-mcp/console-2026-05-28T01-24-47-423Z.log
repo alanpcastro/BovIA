@@ -1,0 +1,80 @@
+[      69ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ http://localhost:5173/node_modules/.vite/deps/chunk-NUMECXU6.js?v=6ac47136:21550
+[      78ms] [WARNING] ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition. @ http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=6ac47136:4435
+[      78ms] [WARNING] ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath. @ http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=6ac47136:4435
+[  140817ms] [ERROR] Failed to load resource: the server responded with a status of 422 (Unprocessable Entity) @ http://localhost:5173/api/reproducao:0
+[  140822ms] Error: Objects are not valid as a React child (found: object with keys {type, loc, msg, input, ctx}). If you meant to render a collection of children, use an array instead.
+    at throwOnInvalidObjectType (http://localhost:5173/node_modules/.vite/deps/chunk-NUMECXU6.js?v=6ac47136:9934:17)
+    at createChild (http://localhost:5173/node_modules/.vite/deps/chunk-NUMECXU6.js?v=6ac47136:10110:15)
+    at reconcileChildrenArray (http://localhost:5173/node_modules/.vite/deps/chunk-NUMECXU6.js?v=6ac47136:10282:33)
+    at reconcileChildFibers2 (http://localhost:5173/node_modules/.vite/deps/chunk-NUMECXU6.js?v=6ac47136:10559:24)
+    at reconcileChildren (http://localhost:5173/node_modules/.vite/deps/chunk-NUMECXU6.js?v=6ac47136:14290:37)
+    at updateHostComponent (http://localhost:5173/node_modules/.vite/deps/chunk-NUMECXU6.js?v=6ac47136:14807:11)
+    at beginWork (http://localhost:5173/node_modules/.vite/deps/chunk-NUMECXU6.js?v=6ac47136:15935:22)
+    at HTMLUnknownElement.callCallback2 (http://localhost:5173/node_modules/.vite/deps/chunk-NUMECXU6.js?v=6ac47136:3674:22)
+    at Object.invokeGuardedCallbackDev (http://localhost:5173/node_modules/.vite/deps/chunk-NUMECXU6.js?v=6ac47136:3699:24)
+    at invokeGuardedCallback (http://localhost:5173/node_modules/.vite/deps/chunk-NUMECXU6.js?v=6ac47136:3733:39)
+[  140823ms] Error: Objects are not valid as a React child (found: object with keys {type, loc, msg, input, ctx}). If you meant to render a collection of children, use an array instead.
+    at throwOnInvalidObjectType (http://localhost:5173/node_modules/.vite/deps/chunk-NUMECXU6.js?v=6ac47136:9934:17)
+    at createChild (http://localhost:5173/node_modules/.vite/deps/chunk-NUMECXU6.js?v=6ac47136:10110:15)
+    at reconcileChildrenArray (http://localhost:5173/node_modules/.vite/deps/chunk-NUMECXU6.js?v=6ac47136:10282:33)
+    at reconcileChildFibers2 (http://localhost:5173/node_modules/.vite/deps/chunk-NUMECXU6.js?v=6ac47136:10559:24)
+    at reconcileChildren (http://localhost:5173/node_modules/.vite/deps/chunk-NUMECXU6.js?v=6ac47136:14290:37)
+    at updateHostComponent (http://localhost:5173/node_modules/.vite/deps/chunk-NUMECXU6.js?v=6ac47136:14807:11)
+    at beginWork (http://localhost:5173/node_modules/.vite/deps/chunk-NUMECXU6.js?v=6ac47136:15935:22)
+    at HTMLUnknownElement.callCallback2 (http://localhost:5173/node_modules/.vite/deps/chunk-NUMECXU6.js?v=6ac47136:3674:22)
+    at Object.invokeGuardedCallbackDev (http://localhost:5173/node_modules/.vite/deps/chunk-NUMECXU6.js?v=6ac47136:3699:24)
+    at invokeGuardedCallback (http://localhost:5173/node_modules/.vite/deps/chunk-NUMECXU6.js?v=6ac47136:3733:39)
+[  140824ms] [ERROR] The above error occurred in the <div> component:
+
+    at div
+    at div
+    at div
+    at div
+    at Modal (http://localhost:5173/src/components/Modal.tsx:19:33)
+    at div
+    at Reproducao (http://localhost:5173/src/pages/Reproducao.tsx?t=1779926916848:58:20)
+    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=6ac47136:4131:5)
+    at Outlet (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=6ac47136:4537:26)
+    at main
+    at div
+    at Layout (http://localhost:5173/src/components/Layout.tsx?t=1779849819319:259:28)
+    at PrivateRoute (http://localhost:5173/src/components/PrivateRoute.tsx?t=1779849785389:20:40)
+    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=6ac47136:4131:5)
+    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=6ac47136:4601:5)
+    at AuthProvider (http://localhost:5173/src/context/AuthContext.tsx?t=1779849785389:21:32)
+    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=6ac47136:4544:15)
+    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=6ac47136:5290:5)
+    at App
+    at ToastProvider (http://localhost:5173/src/components/Toast.tsx:21:33)
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries. @ http://localhost:5173/node_modules/.vite/deps/chunk-NUMECXU6.js?v=6ac47136:14031
+[  140824ms] Error: Objects are not valid as a React child (found: object with keys {type, loc, msg, input, ctx}). If you meant to render a collection of children, use an array instead.
+    at throwOnInvalidObjectType (http://localhost:5173/node_modules/.vite/deps/chunk-NUMECXU6.js?v=6ac47136:9934:17)
+    at createChild (http://localhost:5173/node_modules/.vite/deps/chunk-NUMECXU6.js?v=6ac47136:10110:15)
+    at reconcileChildrenArray (http://localhost:5173/node_modules/.vite/deps/chunk-NUMECXU6.js?v=6ac47136:10282:33)
+    at reconcileChildFibers2 (http://localhost:5173/node_modules/.vite/deps/chunk-NUMECXU6.js?v=6ac47136:10559:24)
+    at reconcileChildren (http://localhost:5173/node_modules/.vite/deps/chunk-NUMECXU6.js?v=6ac47136:14290:37)
+    at updateHostComponent (http://localhost:5173/node_modules/.vite/deps/chunk-NUMECXU6.js?v=6ac47136:14807:11)
+    at beginWork (http://localhost:5173/node_modules/.vite/deps/chunk-NUMECXU6.js?v=6ac47136:15935:22)
+    at beginWork$1 (http://localhost:5173/node_modules/.vite/deps/chunk-NUMECXU6.js?v=6ac47136:19753:22)
+    at performUnitOfWork (http://localhost:5173/node_modules/.vite/deps/chunk-NUMECXU6.js?v=6ac47136:19198:20)
+    at workLoopSync (http://localhost:5173/node_modules/.vite/deps/chunk-NUMECXU6.js?v=6ac47136:19137:13)
+[  238349ms] [ERROR] ReferenceError: todayLocal is not defined
+    at http://localhost:5173/src/pages/Saude.tsx?t=1779931725731:42:9 @ http://localhost:5173/@vite/client:173
+[  238349ms] [ERROR] [hmr] Failed to reload /src/pages/Saude.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:175
+[  238351ms] [ERROR] ReferenceError: todayLocal is not defined
+    at http://localhost:5173/src/pages/Lotes.tsx?t=1779931725732:22:86 @ http://localhost:5173/@vite/client:173
+[  238351ms] [ERROR] [hmr] Failed to reload /src/pages/Lotes.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:175
+[  238374ms] [ERROR] ReferenceError: todayLocal is not defined
+    at http://localhost:5173/src/pages/Reproducao.tsx?t=1779931725732:47:9 @ http://localhost:5173/@vite/client:173
+[  238374ms] [ERROR] [hmr] Failed to reload /src/pages/Reproducao.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:175
+[  238402ms] [ERROR] ReferenceError: todayLocal is not defined
+    at http://localhost:5173/src/pages/Movimentacoes.tsx?t=1779931725732:41:9 @ http://localhost:5173/@vite/client:173
+[  238402ms] [ERROR] [hmr] Failed to reload /src/pages/Movimentacoes.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:175
+[  238465ms] [ERROR] ReferenceError: todayLocal is not defined
+    at http://localhost:5173/src/pages/DespesasFixas.tsx?t=1779931725732:52:16 @ http://localhost:5173/@vite/client:173
+[  238465ms] [ERROR] [hmr] Failed to reload /src/pages/DespesasFixas.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:175
+[  238468ms] [ERROR] ReferenceError: todayLocal is not defined
+    at http://localhost:5173/src/pages/CustosNutricionais.tsx?t=1779931725732:28:16 @ http://localhost:5173/@vite/client:173
+[  238468ms] [ERROR] [hmr] Failed to reload /src/pages/CustosNutricionais.tsx. This could be due to syntax errors or importing non-existent modules. (see errors above) @ http://localhost:5173/@vite/client:175

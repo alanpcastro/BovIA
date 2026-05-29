@@ -1,0 +1,121 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - complementary [ref=e4]:
+      - generic [ref=e5]:
+        - img "BovIA" [ref=e6]
+        - generic [ref=e7]: Fazenda BovIA
+      - navigation [ref=e8]:
+        - generic [ref=e9]: Menu
+        - link "Dashboard" [ref=e10] [cursor=pointer]:
+          - /url: /dashboard
+          - img [ref=e11]
+          - generic [ref=e16]: Dashboard
+        - link "Agenda" [ref=e17] [cursor=pointer]:
+          - /url: /agenda
+          - img [ref=e18]
+          - generic [ref=e20]: Agenda
+        - link "Animais" [ref=e21] [cursor=pointer]:
+          - /url: /animais
+          - img [ref=e22]
+          - generic [ref=e24]: Animais
+        - link "Lotes" [ref=e25] [cursor=pointer]:
+          - /url: /lotes
+          - img [ref=e26]
+          - generic [ref=e28]: Lotes
+        - link "Pastagens" [ref=e29] [cursor=pointer]:
+          - /url: /pastagens
+          - img [ref=e30]
+          - generic [ref=e32]: Pastagens
+        - link "Pesagens" [ref=e33] [cursor=pointer]:
+          - /url: /pesagens
+          - img [ref=e34]
+          - generic [ref=e36]: Pesagens
+        - link "Saúde" [ref=e37] [cursor=pointer]:
+          - /url: /saude
+          - img [ref=e38]
+          - generic [ref=e40]: Saúde
+        - link "Reprodução" [ref=e41] [cursor=pointer]:
+          - /url: /reproducao
+          - img [ref=e42]
+          - generic [ref=e44]: Reprodução
+        - link "Movimentações" [ref=e45] [cursor=pointer]:
+          - /url: /movimentacoes
+          - img [ref=e46]
+          - generic [ref=e48]: Movimentações
+        - link "Financeiro" [ref=e49] [cursor=pointer]:
+          - /url: /financeiro
+          - img [ref=e50]
+          - generic [ref=e52]: Financeiro
+        - link "Simulador" [ref=e53] [cursor=pointer]:
+          - /url: /simulador
+          - img [ref=e54]
+          - generic [ref=e56]: Simulador
+        - link "Custos Nutri" [ref=e57] [cursor=pointer]:
+          - /url: /custos-nutricionais
+          - img [ref=e58]
+          - generic [ref=e60]: Custos Nutri
+        - link "Despesas Fixas" [ref=e61] [cursor=pointer]:
+          - /url: /despesas-fixas
+          - img [ref=e62]
+          - generic [ref=e64]: Despesas Fixas
+        - link "Gráficos" [ref=e65] [cursor=pointer]:
+          - /url: /graficos
+          - img [ref=e66]
+          - generic [ref=e68]: Gráficos
+        - link "Relatórios" [ref=e69] [cursor=pointer]:
+          - /url: /relatorios
+          - img [ref=e70]
+          - generic [ref=e72]: Relatórios
+        - link "Configurações" [ref=e73] [cursor=pointer]:
+          - /url: /configuracoes
+          - img [ref=e74]
+          - generic [ref=e77]: Configurações
+      - generic [ref=e78]:
+        - generic [ref=e79]: Admin Teste
+        - button "Alternar tema" [ref=e80] [cursor=pointer]:
+          - img [ref=e81]
+          - text: Modo escuro
+        - button "Sair" [ref=e83] [cursor=pointer]:
+          - img [ref=e84]
+          - text: Sair
+    - main [ref=e86]:
+      - generic [ref=e87]:
+        - generic [ref=e89]:
+          - generic [ref=e90]: Graficos
+          - generic [ref=e91]: Visualizacao de dados do rebanho e financeiro
+        - generic [ref=e92]:
+          - generic [ref=e93]:
+            - heading "Evolucao de Peso (Pesagens)" [level=3] [ref=e94]
+            - generic [ref=e95]: Sem pesagens registradas
+          - generic [ref=e96]:
+            - heading "Composicao de Custos (6 meses)" [level=3] [ref=e97]
+            - generic [ref=e98]: Sem custos registrados
+          - generic [ref=e99]:
+            - heading "Receita vs Custo (6 meses)" [level=3] [ref=e100]
+            - application [ref=e103]:
+              - generic [ref=e115]:
+                - generic [ref=e116]:
+                  - generic [ref=e118]: Receita Vendas
+                  - generic [ref=e120]: Custo Compras
+                  - generic [ref=e122]: Custo Total
+                  - generic [ref=e124]: Lucro Liquido
+                - generic [ref=e125]:
+                  - generic [ref=e127]: "0"
+                  - generic [ref=e129]: "1"
+                  - generic [ref=e131]: "2"
+                  - generic [ref=e133]: "3"
+                  - generic [ref=e135]: "4"
+          - generic [ref=e136]:
+            - heading "Animais por Lote" [level=3] [ref=e137]
+            - application [ref=e140]:
+              - generic [ref=e152]:
+                - generic [ref=e153]:
+                  - generic [ref=e155]: pasto norte
+                  - generic [ref=e157]: pasto sul
+                - generic [ref=e158]:
+                  - generic [ref=e160]: "0"
+                  - generic [ref=e162]: "0.25"
+                  - generic [ref=e164]: "0.5"
+                  - generic [ref=e166]: "0.75"
+                  - generic [ref=e168]: "1"
+  - generic [ref=e169]: "0.25"

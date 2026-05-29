@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import api, { Animal, Lote } from '../services/api'
 import Modal from '../components/Modal'
 import { useToast } from '../components/Toast'
+import { formatKg } from '../utils/format'
+import { todayLocal } from '../utils/date'
+import { apiErrorMessage } from '../utils/apiError'
 
 const statusLabel: Record<string, string> = {
   ativo: 'Ativo', vendido: 'Vendido', morto: 'Morto', transferido: 'Transferido'
@@ -11,8 +14,18 @@ const statusBadge: Record<string, string> = {
   ativo: 'badge-green', vendido: 'badge-blue', morto: 'badge-gray', transferido: 'badge-amber'
 }
 
+const categorias = ['bezerro', 'garrote', 'novilha', 'vaca', 'boi_magro', 'boi_gordo'] as const
+const categoriaLabel: Record<string, string> = {
+  bezerro: 'Bezerro', garrote: 'Garrote', novilha: 'Novilha',
+  vaca: 'Vaca', boi_magro: 'Boi Magro', boi_gordo: 'Boi Gordo'
+}
+const categoriaBadge: Record<string, string> = {
+  bezerro: 'badge-blue', garrote: 'badge-teal', novilha: 'badge-pink',
+  vaca: 'badge-amber', boi_magro: 'badge-gray', boi_gordo: 'badge-green'
+}
+
 const emptyForm = {
-  brinco: '', nome: '', raca: '', sexo: 'macho',
+  brinco: '', nome: '', raca: '', sexo: 'femea', categoria: '',
   data_nascimento: '', peso_entrada: '', origem: 'nascido', lote_id: '', observacoes: '',
   // Compra (movimentação)
   registrar_compra: false,
@@ -31,17 +44,78 @@ export default function Animais() {
   const pageSize = 50
   const [lotes, setLotes] = useState<Lote[]>([])
   const [showModal, setShowModal] = useState(false)
-  const [filtros, setFiltros] = useState({ status: '', sexo: '', lote_id: '', busca: '' })
+  const [filtros, setFiltros] = useState({ status: '', sexo: '', categoria: '', lote_id: '', busca: '' })
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
   const [erro, setErro] = useState('')
   const [showLoteModal, setShowLoteModal] = useState(false)
-  const [loteForm, setLoteForm] = useState({ lote_id: '', quantidade: '', raca: '', sexo: 'macho', peso_medio: '', origem: 'nascido', observacoes: '' })
+  const [loteForm, setLoteForm] = useState({ lote_id: '', quantidade: '', raca: '', sexo: 'femea', peso_medio: '', origem: 'nascido', observacoes: '' })
+
+  // Bulk selection
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+  const [bulkAction, setBulkAction] = useState<'' | 'lote' | 'status' | 'categoria' | 'delete'>('')
+  const [bulkLoteId, setBulkLoteId] = useState<string>('')
+  const [bulkStatus, setBulkStatus] = useState<string>('')
+  const [bulkCategoria, setBulkCategoria] = useState<string>('')
+
+  function toggleSelect(id: number) {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id); else next.add(id)
+      return next
+    })
+  }
+
+  function toggleAllVisible() {
+    const visibleIds = animais.map(a => a.id)
+    const allSelected = visibleIds.every(id => selectedIds.has(id))
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (allSelected) {
+        visibleIds.forEach(id => next.delete(id))
+      } else {
+        visibleIds.forEach(id => next.add(id))
+      }
+      return next
+    })
+  }
+
+  function clearSelection() {
+    setSelectedIds(new Set())
+  }
+
+  async function executarBulk() {
+    const ids = Array.from(selectedIds)
+    if (ids.length === 0) return
+    setSaving(true)
+    try {
+      if (bulkAction === 'delete') {
+        const r = await api.post('/animais/bulk-delete', { ids })
+        success(`${r.data.afetados} animal(is) excluído(s)`)
+      } else {
+        const payload: any = { ids }
+        if (bulkAction === 'lote') payload.lote_id = bulkLoteId ? parseInt(bulkLoteId) : 0
+        if (bulkAction === 'status') payload.status = bulkStatus
+        if (bulkAction === 'categoria') payload.categoria = bulkCategoria
+        const r = await api.post('/animais/bulk-update', payload)
+        success(`${r.data.afetados} animal(is) atualizado(s)`)
+      }
+      setBulkAction('')
+      setBulkLoteId(''); setBulkStatus(''); setBulkCategoria('')
+      clearSelection()
+      load()
+    } catch (err: any) {
+      toastError(apiErrorMessage(err, 'Erro na operação em massa'))
+    } finally {
+      setSaving(false)
+    }
+  }
 
   function load(p = page) {
     const params: Record<string, string | number> = { page: p, page_size: pageSize }
     if (filtros.status) params.status = filtros.status
     if (filtros.sexo) params.sexo = filtros.sexo
+    if (filtros.categoria) params.categoria = filtros.categoria
     if (filtros.lote_id) params.lote_id = filtros.lote_id
     if (filtros.busca) params.busca = filtros.busca
     api.get('/animais', { params }).then(r => {
@@ -51,7 +125,7 @@ export default function Animais() {
   }
 
   useEffect(() => { api.get('/lotes').then(r => setLotes(r.data)) }, [])
-  useEffect(() => { setPage(1); load(1) }, [filtros.status, filtros.sexo, filtros.lote_id, filtros.busca])
+  useEffect(() => { setPage(1); load(1) }, [filtros.status, filtros.sexo, filtros.categoria, filtros.lote_id, filtros.busca])
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -62,6 +136,7 @@ export default function Animais() {
       nome: form.nome || undefined,
       raca: form.raca || undefined,
       sexo: form.sexo,
+      categoria: form.categoria || undefined,
       data_nascimento: form.data_nascimento || undefined,
       peso_entrada: form.peso_entrada ? parseFloat(form.peso_entrada) : undefined,
       origem: form.origem || undefined,
@@ -71,7 +146,7 @@ export default function Animais() {
     try {
       const res = await api.post('/animais', payload)
       const animalId = res.data.id
-      const hoje = new Date().toISOString().split('T')[0]
+      const hoje = todayLocal()
       // Register purchase if checked
       if (form.registrar_compra && form.compra_valor) {
         await api.post('/movimentacoes', {
@@ -96,7 +171,7 @@ export default function Animais() {
       load()
       success('Animal cadastrado com sucesso!')
     } catch (err: any) {
-      setErro(err.response?.data?.detail || 'Erro ao cadastrar animal')
+      setErro(apiErrorMessage(err, 'Erro ao cadastrar animal'))
       toastError('Erro ao cadastrar animal')
     } finally {
       setSaving(false)
@@ -120,7 +195,7 @@ export default function Animais() {
       load()
       success(`${res.data.criados} animais criados no lote ${res.data.lote}!`)
     } catch (err: any) {
-      setErro(err.response?.data?.detail || 'Erro ao criar animais em lote')
+      setErro(apiErrorMessage(err, 'Erro ao criar animais em lote'))
       toastError('Erro ao criar animais em lote')
     } finally {
       setSaving(false)
@@ -134,7 +209,7 @@ export default function Animais() {
       <div className="page-header">
         <div>
           <div className="page-title">Animais</div>
-          <div className="page-subtitle">{animais.length} animal(is) no rebanho</div>
+          <div className="page-subtitle">{total} animal(is) no rebanho</div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="btn btn-ghost btn-xl" onClick={() => { setLoteForm({ lote_id: '', quantidade: '', raca: '', sexo: 'macho', peso_medio: '', origem: 'nascido', observacoes: '' }); setErro(''); setShowLoteModal(true) }}>
@@ -148,6 +223,27 @@ export default function Animais() {
           </button>
         </div>
       </div>
+
+      {/* Bulk action bar */}
+      {selectedIds.size > 0 && (
+        <div
+          style={{
+            display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
+            padding: '12px 16px', marginBottom: 16, borderRadius: 'var(--radius)',
+            background: 'var(--green-50)', border: '1px solid var(--green-100)',
+          }}
+        >
+          <span style={{ fontWeight: 700, color: 'var(--green-800)' }}>
+            {selectedIds.size} selecionado(s)
+          </span>
+          <button className="btn btn-ghost btn-sm" onClick={clearSelection}>Limpar</button>
+          <div style={{ flex: 1 }} />
+          <button className="btn btn-outline btn-sm" onClick={() => { setBulkLoteId(''); setBulkAction('lote') }}>Mover de lote</button>
+          <button className="btn btn-outline btn-sm" onClick={() => { setBulkStatus(''); setBulkAction('status') }}>Mudar status</button>
+          <button className="btn btn-outline btn-sm" onClick={() => { setBulkCategoria(''); setBulkAction('categoria') }}>Mudar categoria</button>
+          <button className="btn btn-danger btn-sm" onClick={() => setBulkAction('delete')}>Excluir</button>
+        </div>
+      )}
 
       {/* Filtros */}
       <div className="filters-bar">
@@ -173,6 +269,10 @@ export default function Animais() {
           <option value="macho">♂ Macho</option>
           <option value="femea">♀ Fêmea</option>
         </select>
+        <select className="form-select" style={{ width: 'auto' }} value={filtros.categoria} onChange={e => setFiltros(f => ({ ...f, categoria: e.target.value }))}>
+          <option value="">Todas as categorias</option>
+          {categorias.map(c => <option key={c} value={c}>{categoriaLabel[c]}</option>)}
+        </select>
         <select className="form-select" style={{ width: 'auto' }} value={filtros.lote_id} onChange={e => setFiltros(f => ({ ...f, lote_id: e.target.value }))}>
           <option value="">Todos os lotes</option>
           {lotes.map(l => <option key={l.id} value={l.id}>{l.nome}</option>)}
@@ -184,10 +284,28 @@ export default function Animais() {
         <table className="data-table data-table-big">
           <thead>
             <tr>
+              <th style={{ width: 40, textAlign: 'center' }}>
+                <input
+                  type="checkbox"
+                  aria-label="Selecionar todos os animais visíveis"
+                  checked={animais.length > 0 && animais.every(a => selectedIds.has(a.id))}
+                  ref={el => {
+                    if (el) {
+                      const visible = animais.map(a => a.id)
+                      const some = visible.some(id => selectedIds.has(id))
+                      const all = visible.length > 0 && visible.every(id => selectedIds.has(id))
+                      el.indeterminate = some && !all
+                    }
+                  }}
+                  onChange={toggleAllVisible}
+                  style={{ cursor: 'pointer', width: 16, height: 16 }}
+                />
+              </th>
               <th>Brinco</th>
               <th>Nome</th>
               <th>Raça</th>
               <th>Sexo</th>
+              <th>Categoria</th>
               <th>Lote</th>
               <th>Peso Entrada</th>
               <th>Status</th>
@@ -196,16 +314,26 @@ export default function Animais() {
           </thead>
           <tbody>
             {animais.length === 0 && (
-              <tr><td colSpan={8} className="table-empty" style={{ fontSize: 16, padding: 56 }}>Nenhum animal encontrado</td></tr>
+              <tr><td colSpan={10} className="table-empty" style={{ fontSize: 16, padding: 56 }}>Nenhum animal encontrado</td></tr>
             )}
             {animais.map(a => (
-              <tr key={a.id} className="clickable" onClick={() => navigate(`/animais/${a.id}`)}>
+              <tr key={a.id} className="clickable" onClick={() => navigate(`/animais/${a.id}`)} style={selectedIds.has(a.id) ? { background: 'var(--green-50)' } : undefined}>
+                <td style={{ textAlign: 'center' }} onClick={e => e.stopPropagation()}>
+                  <input
+                    type="checkbox"
+                    aria-label={`Selecionar animal ${a.brinco || a.id}`}
+                    checked={selectedIds.has(a.id)}
+                    onChange={() => toggleSelect(a.id)}
+                    style={{ cursor: 'pointer', width: 16, height: 16 }}
+                  />
+                </td>
                 <td style={{ fontWeight: 800, color: 'var(--gray-900)' }}>{a.brinco ? `#${a.brinco}` : <span style={{ color: 'var(--gray-400)' }}>—</span>}</td>
                 <td style={{ fontWeight: 600 }}>{a.nome || <span style={{ color: 'var(--gray-400)' }}>—</span>}</td>
                 <td style={{ color: 'var(--gray-600)' }}>{a.raca || '—'}</td>
                 <td style={{ fontWeight: 600 }}>{a.sexo === 'macho' ? 'Macho' : 'Fêmea'}</td>
+                <td>{a.categoria ? <span className={`badge ${categoriaBadge[a.categoria]}`}>{categoriaLabel[a.categoria]}</span> : <span style={{ color: 'var(--gray-400)' }}>—</span>}</td>
                 <td style={{ color: 'var(--gray-600)' }}>{a.lote_id ? (lotesMap[a.lote_id] || '—') : '—'}</td>
-                <td style={{ fontWeight: 700, color: 'var(--gray-800)' }}>{a.peso_entrada ? `${a.peso_entrada} kg` : '—'}</td>
+                <td style={{ fontWeight: 700, color: 'var(--gray-800)' }}>{a.peso_entrada != null ? formatKg(a.peso_entrada) : '—'}</td>
                 <td><span className={`badge ${statusBadge[a.status]}`} style={{ fontSize: 13, padding: '5px 12px' }}>{statusLabel[a.status]}</span></td>
                 <td style={{ color: 'var(--green-700)', fontWeight: 700, fontSize: 14 }}>Ver →</td>
               </tr>
@@ -278,7 +406,7 @@ export default function Animais() {
               </select>
             </div>
           </div>
-          <div className="grid-2" style={{ marginBottom: 0 }}>
+          <div className="grid-3" style={{ marginBottom: 0 }}>
             <div className="form-group">
               <label className="form-label">Data de Nascimento</label>
               <input className="form-input" type="date" value={form.data_nascimento} onChange={e => setForm(p => ({ ...p, data_nascimento: e.target.value }))} />
@@ -286,6 +414,13 @@ export default function Animais() {
             <div className="form-group">
               <label className="form-label">Peso de Entrada (kg)</label>
               <input className="form-input" type="number" step="0.1" value={form.peso_entrada} onChange={e => setForm(p => ({ ...p, peso_entrada: e.target.value }))} placeholder="Ex: 280" />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Categoria</label>
+              <select className="form-select" value={form.categoria} onChange={e => setForm(p => ({ ...p, categoria: e.target.value }))}>
+                <option value="">Selecionar</option>
+                {categorias.map(c => <option key={c} value={c}>{categoriaLabel[c]}</option>)}
+              </select>
             </div>
           </div>
           <div className="form-group">
@@ -403,6 +538,87 @@ export default function Animais() {
             </div>
           </div>
         </form>
+      </Modal>
+
+      {/* Modal de operacao em massa */}
+      <Modal
+        open={bulkAction !== ''}
+        onClose={() => setBulkAction('')}
+        title={
+          bulkAction === 'delete' ? 'Excluir animais selecionados'
+          : bulkAction === 'lote' ? 'Mover para outro lote'
+          : bulkAction === 'status' ? 'Mudar status'
+          : bulkAction === 'categoria' ? 'Mudar categoria'
+          : ''
+        }
+        size="sm"
+        footer={
+          <>
+            <button className="btn btn-ghost" onClick={() => setBulkAction('')}>Cancelar</button>
+            <button
+              className={bulkAction === 'delete' ? 'btn btn-danger' : 'btn btn-primary'}
+              onClick={executarBulk}
+              disabled={
+                saving
+                || (bulkAction === 'status' && !bulkStatus)
+                || (bulkAction === 'categoria' && !bulkCategoria)
+              }
+            >
+              {saving ? <><span className="spinner" /> Aplicando...</>
+                : bulkAction === 'delete' ? `Excluir ${selectedIds.size} animal(is)`
+                : 'Aplicar'}
+            </button>
+          </>
+        }
+      >
+        {bulkAction === 'delete' && (
+          <div>
+            <p style={{ marginBottom: 12 }}>
+              Você está prestes a excluir <strong>{selectedIds.size}</strong> animal(is).
+            </p>
+            <p style={{ fontSize: 13, color: 'var(--gray-600)' }}>
+              Os animais serão arquivados (soft-delete). Esta ação não removerá pesagens, vacinas ou movimentações já registradas.
+            </p>
+          </div>
+        )}
+        {bulkAction === 'lote' && (
+          <div className="form-group">
+            <label className="form-label">Novo lote para {selectedIds.size} animal(is)</label>
+            <select className="form-select" value={bulkLoteId} onChange={e => setBulkLoteId(e.target.value)}>
+              <option value="">— Sem lote —</option>
+              {lotes.map(l => <option key={l.id} value={l.id}>{l.nome}</option>)}
+            </select>
+            <div style={{ fontSize: 12, color: 'var(--gray-500)', marginTop: 6 }}>
+              Selecione "Sem lote" para remover do lote atual.
+            </div>
+          </div>
+        )}
+        {bulkAction === 'status' && (
+          <div className="form-group">
+            <label className="form-label">Novo status para {selectedIds.size} animal(is) *</label>
+            <select className="form-select" value={bulkStatus} onChange={e => setBulkStatus(e.target.value)} required>
+              <option value="">Selecione...</option>
+              <option value="ativo">Ativo</option>
+              <option value="vendido">Vendido</option>
+              <option value="morto">Morto</option>
+              <option value="transferido">Transferido</option>
+            </select>
+            {(bulkStatus === 'vendido' || bulkStatus === 'morto') && (
+              <div style={{ fontSize: 12, color: 'var(--amber-600)', marginTop: 8, padding: '8px 12px', background: 'var(--amber-100)', borderRadius: 6 }}>
+                Será criada uma movimentação automática de {bulkStatus} para cada animal.
+              </div>
+            )}
+          </div>
+        )}
+        {bulkAction === 'categoria' && (
+          <div className="form-group">
+            <label className="form-label">Nova categoria para {selectedIds.size} animal(is) *</label>
+            <select className="form-select" value={bulkCategoria} onChange={e => setBulkCategoria(e.target.value)} required>
+              <option value="">Selecione...</option>
+              {categorias.map(c => <option key={c} value={c}>{categoriaLabel[c]}</option>)}
+            </select>
+          </div>
+        )}
       </Modal>
     </div>
   )

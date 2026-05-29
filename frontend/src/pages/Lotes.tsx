@@ -2,8 +2,10 @@ import { useEffect, useState, FormEvent } from 'react'
 import api, { Lote } from '../services/api'
 import Modal from '../components/Modal'
 import { useToast } from '../components/Toast'
+import { todayLocal } from '../utils/date'
+import { apiErrorMessage } from '../utils/apiError'
 
-const emptyForm = { nome: '', area_hectares: '', descricao: '', rendimento_carcaca: '52' }
+const emptyForm = { nome: '', descricao: '', rendimento_carcaca: '52', data_entrada: todayLocal() }
 
 export default function Lotes() {
   const { success, error: toastError } = useToast()
@@ -17,11 +19,16 @@ export default function Lotes() {
   function load() { api.get('/lotes').then(r => setLotes(r.data)) }
   useEffect(load, [])
 
-  function openNew() { setForm(emptyForm); setEditing(null); setErro(''); setShowModal(true) }
+  function openNew() { setForm({ ...emptyForm, data_entrada: todayLocal() }); setEditing(null); setErro(''); setShowModal(true) }
 
   function openEdit(l: Lote) {
     setEditing(l)
-    setForm({ nome: l.nome, area_hectares: l.area_hectares?.toString() || '', descricao: l.descricao || '', rendimento_carcaca: l.rendimento_carcaca?.toString() || '52' })
+    setForm({
+      nome: l.nome,
+      descricao: l.descricao || '',
+      rendimento_carcaca: l.rendimento_carcaca?.toString() || '52',
+      data_entrada: l.data_entrada || '',
+    })
     setErro('')
     setShowModal(true)
   }
@@ -32,9 +39,9 @@ export default function Lotes() {
     setSaving(true)
     const payload = {
       nome: form.nome,
-      area_hectares: form.area_hectares ? parseFloat(form.area_hectares) : undefined,
       descricao: form.descricao || undefined,
       rendimento_carcaca: form.rendimento_carcaca ? parseFloat(form.rendimento_carcaca) : 52.0,
+      data_entrada: form.data_entrada || undefined,
     }
     try {
       if (editing) {
@@ -48,7 +55,7 @@ export default function Lotes() {
       }
       setShowModal(false)
     } catch (err: any) {
-      setErro(err.response?.data?.detail || 'Erro ao salvar')
+      setErro(apiErrorMessage(err, 'Erro ao salvar'))
       toastError('Erro ao salvar lote')
     } finally {
       setSaving(false)
@@ -72,8 +79,8 @@ export default function Lotes() {
     <div>
       <div className="page-header">
         <div>
-          <div className="page-title">Lotes / Pastos</div>
-          <div className="page-subtitle">{lotes.length} lote(s) cadastrado(s)</div>
+          <div className="page-title">Lotes</div>
+          <div className="page-subtitle">Grupos de animais que podem ser movidos entre pastos — {lotes.length} lote(s)</div>
         </div>
         <button className="btn btn-primary" onClick={openNew}>
           <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -85,9 +92,13 @@ export default function Lotes() {
 
       {lotes.length === 0 && (
         <div className="card card-padded" style={{ textAlign: 'center', padding: 48 }}>
-          <div style={{ fontSize: 40, marginBottom: 12 }}>🌿</div>
+          <svg width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="var(--green-700)" strokeWidth={1.5} style={{ margin: '0 auto 12px', display: 'block' }}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+          </svg>
           <div style={{ fontWeight: 600, color: 'var(--gray-700)', marginBottom: 6 }}>Nenhum lote cadastrado</div>
-          <div style={{ fontSize: 13, color: 'var(--gray-400)', marginBottom: 20 }}>Crie lotes para organizar seu rebanho por pasto ou área</div>
+          <div style={{ fontSize: 13, color: 'var(--gray-500)', marginBottom: 20, maxWidth: 360, margin: '0 auto 20px' }}>
+            Um lote é um grupo de animais. Você pode alocar o grupo em diferentes pastos ao longo do tempo.
+          </div>
           <button className="btn btn-primary" onClick={openNew}>Criar primeiro lote</button>
         </div>
       )}
@@ -95,7 +106,6 @@ export default function Lotes() {
       <div className="grid-auto">
         {lotes.map((l, i) => (
           <div key={l.id} className="card card-padded" style={{ position: 'relative', overflow: 'hidden' }}>
-            {/* Color stripe at top */}
             <div style={{
               position: 'absolute', top: 0, left: 0, right: 0, height: 4,
               background: colors[i % colors.length]
@@ -103,7 +113,7 @@ export default function Lotes() {
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginTop: 8 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
                   <span style={{
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                     width: 32, height: 32, borderRadius: 8,
@@ -111,23 +121,41 @@ export default function Lotes() {
                     color: colors[i % colors.length], flexShrink: 0
                   }}>
                     <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 7l9-4 9 4M3 7v10l9 4m0-14v14m9-10v10l-9 4"/>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
                     </svg>
                   </span>
                   <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--gray-900)' }}>{l.nome}</div>
                 </div>
-                {l.area_hectares && (
-                  <div style={{ fontSize: 13, color: 'var(--gray-500)', marginBottom: 4 }}>
-                    📐 {l.area_hectares} hectares
-                  </div>
-                )}
-                {l.rendimento_carcaca && (
-                  <div style={{ fontSize: 13, color: 'var(--gray-500)', marginBottom: 4 }}>
-                    🥩 Rendimento: {l.rendimento_carcaca}%
-                  </div>
-                )}
+
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 8 }}>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--gray-900)' }}>{l.total_animais ?? 0}</div>
+                  <div style={{ fontSize: 13, color: 'var(--gray-500)' }}>{l.total_animais === 1 ? 'animal' : 'animais'}</div>
+                </div>
+
+                <div style={{ fontSize: 13, color: 'var(--gray-600)', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  </svg>
+                  {l.pasto_atual_nome
+                    ? <>Em <strong style={{ color: 'var(--gray-800)' }}>{l.pasto_atual_nome}</strong></>
+                    : <span style={{ fontStyle: 'italic' }}>Sem pasto alocado</span>}
+                </div>
+
+                {l.data_entrada && (() => {
+                  const dias = Math.floor((Date.now() - new Date(l.data_entrada + 'T00:00').getTime()) / 86400000)
+                  return (
+                    <div style={{ fontSize: 13, color: 'var(--gray-500)', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                      </svg>
+                      Formado em {new Date(l.data_entrada + 'T00:00').toLocaleDateString('pt-BR')}
+                      {dias >= 0 && <span style={{ color: 'var(--gray-500)', marginLeft: 6 }}>· {dias} dias</span>}
+                    </div>
+                  )
+                })()}
                 {l.descricao && (
-                  <div style={{ fontSize: 12, color: 'var(--gray-400)', marginTop: 4, lineHeight: 1.4 }}>{l.descricao}</div>
+                  <div style={{ fontSize: 12, color: 'var(--gray-500)', marginTop: 6, lineHeight: 1.4 }}>{l.descricao}</div>
                 )}
               </div>
               <div style={{ display: 'flex', gap: 6, flexShrink: 0, marginLeft: 8 }}>
@@ -171,25 +199,26 @@ export default function Lotes() {
       >
         {erro && <div className="alert alert-error">{erro}</div>}
         <form id="form-lote" onSubmit={handleSubmit}>
-          <div className="grid-2" style={{ marginBottom: 0 }}>
-            <div className="form-group">
-              <label className="form-label">Nome *</label>
-              <input className="form-input" value={form.nome} onChange={e => setForm(p => ({ ...p, nome: e.target.value }))} required autoFocus placeholder="Ex: Pasto Norte" />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Área (ha)</label>
-              <input className="form-input" type="number" step="0.1" value={form.area_hectares} onChange={e => setForm(p => ({ ...p, area_hectares: e.target.value }))} placeholder="Ex: 120" />
-            </div>
+          <div className="form-group">
+            <label className="form-label">Nome *</label>
+            <input className="form-input" value={form.nome} onChange={e => setForm(p => ({ ...p, nome: e.target.value }))} required autoFocus placeholder="Ex: Bezerros 2026" />
           </div>
           <div className="grid-2" style={{ marginBottom: 0 }}>
             <div className="form-group">
-              <label className="form-label">Rendimento Carcaca (%)</label>
+              <label className="form-label">Rendimento Carcaça (%)</label>
               <input className="form-input" type="number" step="0.1" value={form.rendimento_carcaca} onChange={e => setForm(p => ({ ...p, rendimento_carcaca: e.target.value }))} placeholder="Ex: 52" />
             </div>
             <div className="form-group">
-              <label className="form-label">Descricao</label>
-              <input className="form-input" value={form.descricao} onChange={e => setForm(p => ({ ...p, descricao: e.target.value }))} placeholder="Opcional..." />
+              <label className="form-label">Data de Formação</label>
+              <input className="form-input" type="date" value={form.data_entrada} onChange={e => setForm(p => ({ ...p, data_entrada: e.target.value }))} />
             </div>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Descrição</label>
+            <input className="form-input" value={form.descricao} onChange={e => setForm(p => ({ ...p, descricao: e.target.value }))} placeholder="Opcional..." />
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--gray-500)', marginTop: 4, lineHeight: 1.4 }}>
+            Para alocar este lote em um pasto, vá em <strong>Pastagens</strong> e use a ação <strong>Ocupar</strong>.
           </div>
         </form>
       </Modal>

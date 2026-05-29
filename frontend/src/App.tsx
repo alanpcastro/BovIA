@@ -22,6 +22,7 @@ import Relatorios from './pages/Relatorios'
 import Graficos from './pages/Graficos'
 import Configuracoes from './pages/Configuracoes'
 import Simulador from './pages/Simulador'
+import Agenda from './pages/Agenda'
 
 export default function App() {
   return (
@@ -56,6 +57,7 @@ export default function App() {
             <Route path="graficos" element={<Graficos />} />
             <Route path="relatorios" element={<Relatorios />} />
             <Route path="simulador" element={<Simulador />} />
+            <Route path="agenda" element={<Agenda />} />
             <Route path="configuracoes" element={<Configuracoes />} />
           </Route>
           <Route path="*" element={<Navigate to="/dashboard" replace />} />

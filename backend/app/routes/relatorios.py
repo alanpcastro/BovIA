@@ -1,18 +1,81 @@
 import csv
 import io
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
+from typing import Optional
 from datetime import date
+
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Alignment
+from openpyxl.utils import get_column_letter
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4, landscape
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import cm
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+
 from ..database import get_db
 from ..models.animal import Animal, StatusEnum, SexoEnum
 from ..models.pesagem import Pesagem
 from ..models.saude import Saude
 from ..models.movimentacao import Movimentacao
+from ..models.despesa_fixa import DespesaFixa
 from ..auth import get_current_user
 from ..models.user import User
 
 router = APIRouter()
+
+
+# ── Helpers ──────────────────────────────────────────────────────────────────
+
+def _xlsx_response(wb: Workbook, filename: str) -> StreamingResponse:
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    return StreamingResponse(
+        buf,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+def _pdf_response(buf: io.BytesIO, filename: str) -> StreamingResponse:
+    buf.seek(0)
+    return StreamingResponse(
+        buf,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+HEADER_FILL = PatternFill(start_color="2D6A4F", end_color="2D6A4F", fill_type="solid")
+HEADER_FONT = Font(bold=True, color="FFFFFF")
+
+
+def _format_header(ws, row: int = 1):
+    for cell in ws[row]:
+        cell.fill = HEADER_FILL
+        cell.font = HEADER_FONT
+        cell.alignment = Alignment(horizontal="left", vertical="center")
+
+
+def _autosize(ws, max_w: int = 40):
+    for col in ws.columns:
+        max_len = 0
+        col_letter = get_column_letter(col[0].column)
+        for cell in col:
+            if cell.value is not None:
+                v = str(cell.value)
+                if len(v) > max_len:
+                    max_len = len(v)
+        ws.column_dimensions[col_letter].width = min(max_len + 2, max_w)
+
+
+def _overlap_days(rec_inicio: date, rec_fim: Optional[date], per_inicio: date, per_fim: date) -> int:
+    inicio = max(rec_inicio, per_inicio)
+    fim = min(rec_fim or per_fim, per_fim)
+    return max(0, (fim - inicio).days + 1) if fim >= inicio else 0
 
 
 @router.get("/animais.csv")
@@ -125,6 +188,362 @@ def exportar_financeiro(
         media_type="text/csv",
         headers={"Content-Disposition": f"attachment; filename=financeiro_{date.today()}.csv"},
     )
+
+
+# ── Excel exports ────────────────────────────────────────────────────────────
+
+@router.get("/animais.xlsx")
+def exportar_animais_xlsx(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    animais = (
+        db.query(Animal)
+        .filter(Animal.user_id == current_user.id, Animal.deletado_em == None)
+        .order_by(Animal.brinco)
+        .all()
+    )
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Animais"
+    ws.append([
+        "Brinco", "Nome", "Raça", "Sexo", "Categoria", "Status", "Lote ID",
+        "Data Nascimento", "Peso Entrada (kg)", "Origem", "Observações", "Cadastrado em",
+    ])
+    for a in animais:
+        ws.append([
+            a.brinco, a.nome or "", a.raca or "", a.sexo.value if hasattr(a.sexo, "value") else str(a.sexo),
+            a.categoria.value if a.categoria else "",
+            a.status.value if hasattr(a.status, "value") else str(a.status),
+            a.lote_id or "",
+            a.data_nascimento.isoformat() if a.data_nascimento else "",
+            a.peso_entrada or "",
+            a.origem or "", a.observacoes or "",
+            a.created_at.strftime("%d/%m/%Y") if a.created_at else "",
+        ])
+    _format_header(ws)
+    _autosize(ws)
+    return _xlsx_response(wb, f"animais_{date.today()}.xlsx")
+
+
+@router.get("/pesagens.xlsx")
+def exportar_pesagens_xlsx(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    pesagens = (
+        db.query(Pesagem).join(Animal)
+        .filter(Animal.user_id == current_user.id)
+        .order_by(Animal.brinco, Pesagem.data)
+        .all()
+    )
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Pesagens"
+    ws.append(["Brinco", "Data", "Peso (kg)", "Observações"])
+    for p in pesagens:
+        ws.append([
+            p.animal.brinco if p.animal else str(p.animal_id),
+            p.data.isoformat() if p.data else "",
+            p.peso_kg, p.observacoes or "",
+        ])
+    _format_header(ws)
+    _autosize(ws)
+    return _xlsx_response(wb, f"pesagens_{date.today()}.xlsx")
+
+
+@router.get("/financeiro.xlsx")
+def exportar_financeiro_xlsx(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    movs = (
+        db.query(Movimentacao).join(Animal)
+        .filter(Animal.user_id == current_user.id)
+        .order_by(Movimentacao.data.desc())
+        .all()
+    )
+    saudes = (
+        db.query(Saude).join(Animal)
+        .filter(Animal.user_id == current_user.id, Saude.custo != None)
+        .order_by(Saude.data.desc())
+        .all()
+    )
+
+    wb = Workbook()
+    ws_mov = wb.active
+    ws_mov.title = "Movimentações"
+    ws_mov.append([
+        "Data", "Tipo", "Brinco", "Valor (R$)", "Frete (R$)", "Desconto (R$)",
+        "Peso (kg)", "Preço @ (R$)", "Origem", "Destino", "Observações",
+    ])
+    for m in movs:
+        ws_mov.append([
+            m.data.isoformat() if m.data else "",
+            m.tipo.value if hasattr(m.tipo, "value") else str(m.tipo),
+            m.animal.brinco if m.animal else str(m.animal_id),
+            m.valor or "", m.frete or "", m.desconto or "",
+            m.peso_kg or "", m.preco_arroba or "",
+            m.origem or "", m.destino or "", m.observacoes or "",
+        ])
+    _format_header(ws_mov)
+    _autosize(ws_mov)
+
+    ws_saude = wb.create_sheet("Custos de Saúde")
+    ws_saude.append(["Data", "Brinco", "Tipo", "Descrição", "Custo (R$)"])
+    for s in saudes:
+        ws_saude.append([
+            s.data.isoformat() if s.data else "",
+            s.animal.brinco if s.animal else str(s.animal_id),
+            s.tipo.value if hasattr(s.tipo, "value") else str(s.tipo),
+            s.descricao, s.custo or "",
+        ])
+    _format_header(ws_saude)
+    _autosize(ws_saude)
+
+    return _xlsx_response(wb, f"financeiro_{date.today()}.xlsx")
+
+
+# ── PDF exports ──────────────────────────────────────────────────────────────
+
+def _styles():
+    base = getSampleStyleSheet()
+    return {
+        "title": ParagraphStyle("title", parent=base["Title"], fontSize=18, textColor=colors.HexColor("#2D6A4F")),
+        "h2": ParagraphStyle("h2", parent=base["Heading2"], fontSize=12, textColor=colors.HexColor("#1B4332"), spaceAfter=6),
+        "body": ParagraphStyle("body", parent=base["BodyText"], fontSize=9.5),
+        "muted": ParagraphStyle("muted", parent=base["BodyText"], fontSize=8.5, textColor=colors.HexColor("#6b7280")),
+    }
+
+
+def _table_style(header_bg: str = "#2D6A4F"):
+    return TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor(header_bg)),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTSIZE", (0, 0), (-1, 0), 9),
+        ("FONTSIZE", (0, 1), (-1, -1), 8.5),
+        ("ALIGN", (0, 0), (-1, 0), "LEFT"),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F0FDF4")]),
+        ("GRID", (0, 0), (-1, -1), 0.25, colors.HexColor("#D8F3DC")),
+        ("LEFTPADDING", (0, 0), (-1, -1), 6),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+        ("TOPPADDING", (0, 0), (-1, -1), 5),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+    ])
+
+
+@router.get("/animais.pdf")
+def exportar_animais_pdf(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    animais = (
+        db.query(Animal)
+        .filter(Animal.user_id == current_user.id, Animal.deletado_em == None)
+        .order_by(Animal.brinco)
+        .all()
+    )
+
+    buf = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buf, pagesize=landscape(A4),
+        leftMargin=1.2 * cm, rightMargin=1.2 * cm,
+        topMargin=1.2 * cm, bottomMargin=1.2 * cm,
+        title="Rebanho", author="BovIA",
+    )
+    st = _styles()
+    elems = [
+        Paragraph(f"Rebanho — {current_user.fazenda_nome or ''}", st["title"]),
+        Paragraph(f"{len(animais)} animal(is) ativos · gerado em {date.today().strftime('%d/%m/%Y')}", st["muted"]),
+        Spacer(1, 0.4 * cm),
+    ]
+
+    data_rows = [["Brinco", "Nome", "Raça", "Sexo", "Categoria", "Status", "Peso (kg)", "Nasc.", "Origem"]]
+    for a in animais:
+        data_rows.append([
+            a.brinco or "—",
+            a.nome or "—",
+            a.raca or "—",
+            "Macho" if (a.sexo and a.sexo.value if hasattr(a.sexo, "value") else str(a.sexo)) == "macho" else "Fêmea",
+            (a.categoria.value.replace("_", " ").title() if a.categoria else "—"),
+            (a.status.value if hasattr(a.status, "value") else str(a.status)).title(),
+            f"{a.peso_entrada:.0f}" if a.peso_entrada else "—",
+            a.data_nascimento.strftime("%d/%m/%y") if a.data_nascimento else "—",
+            a.origem or "—",
+        ])
+    table = Table(data_rows, repeatRows=1, colWidths=[2.2 * cm, 4 * cm, 3 * cm, 1.8 * cm, 2.6 * cm, 2 * cm, 1.8 * cm, 2 * cm, 3 * cm])
+    table.setStyle(_table_style())
+    elems.append(table)
+
+    doc.build(elems)
+    return _pdf_response(buf, f"rebanho_{date.today()}.pdf")
+
+
+@router.get("/resumo-contador.pdf")
+def resumo_contador_pdf(
+    data_inicio: date = Query(..., description="Início do período (YYYY-MM-DD)"),
+    data_fim: date = Query(..., description="Fim do período (YYYY-MM-DD)"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if data_fim < data_inicio:
+        raise HTTPException(400, "data_fim anterior a data_inicio")
+
+    uid = current_user.id
+
+    # Movimentações no período
+    movs = (
+        db.query(Movimentacao).join(Animal)
+        .filter(
+            Animal.user_id == uid,
+            Movimentacao.data >= data_inicio,
+            Movimentacao.data <= data_fim,
+        )
+        .order_by(Movimentacao.data)
+        .all()
+    )
+    vendas = [m for m in movs if (m.tipo.value if hasattr(m.tipo, "value") else str(m.tipo)) == "venda"]
+    compras = [m for m in movs if (m.tipo.value if hasattr(m.tipo, "value") else str(m.tipo)) == "compra"]
+
+    receita_bruta = sum(v.valor or 0 for v in vendas)
+    descontos = sum(v.desconto or 0 for v in vendas)
+    receita_liquida = receita_bruta - descontos
+    custo_compras = sum(c.valor or 0 for c in compras)
+    fretes = sum(c.frete or 0 for c in compras)
+
+    # Custos de saúde
+    saudes = (
+        db.query(Saude).join(Animal)
+        .filter(
+            Animal.user_id == uid, Saude.custo != None,
+            Saude.data >= data_inicio, Saude.data <= data_fim,
+        )
+        .all()
+    )
+    custo_saude = sum(s.custo or 0 for s in saudes)
+
+    # Despesas fixas pro-rata por dias do periodo
+    dias_periodo = (data_fim - data_inicio).days + 1
+    despesas = db.query(DespesaFixa).filter(DespesaFixa.user_id == uid).all()
+    custo_despesas_op = 0.0
+    custo_impostos = 0.0
+    for d in despesas:
+        dias = _overlap_days(d.data_inicio, d.data_fim, data_inicio, data_fim)
+        if dias <= 0:
+            continue
+        valor_diario = (d.valor_mensal or 0) / 30.0
+        rateio = valor_diario * dias
+        cat = d.categoria.value if hasattr(d.categoria, "value") else str(d.categoria)
+        if cat == "impostos":
+            custo_impostos += rateio
+        else:
+            custo_despesas_op += rateio
+
+    custo_total = custo_compras + fretes + custo_saude + custo_despesas_op
+    lucro_bruto = receita_liquida - custo_total
+    lucro_liquido = lucro_bruto - custo_impostos
+
+    # PDF
+    buf = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buf, pagesize=A4,
+        leftMargin=1.5 * cm, rightMargin=1.5 * cm,
+        topMargin=1.5 * cm, bottomMargin=1.5 * cm,
+        title="Resumo Contábil", author="BovIA",
+    )
+    st = _styles()
+    elems = [
+        Paragraph("Resumo Contábil", st["title"]),
+        Paragraph(
+            f"{current_user.fazenda_nome or ''} · período {data_inicio.strftime('%d/%m/%Y')} a {data_fim.strftime('%d/%m/%Y')} ({dias_periodo} dias)",
+            st["muted"],
+        ),
+        Spacer(1, 0.5 * cm),
+    ]
+
+    def _money(v: float) -> str:
+        return f"R$ {v:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+    # Receita
+    elems.append(Paragraph("Receita", st["h2"]))
+    receita_table = Table([
+        ["Vendas brutas", _money(receita_bruta)],
+        ["(–) Descontos concedidos", _money(descontos)],
+        ["Receita líquida", _money(receita_liquida)],
+    ], colWidths=[12 * cm, 5 * cm])
+    receita_table.setStyle(TableStyle([
+        ("FONTSIZE", (0, 0), (-1, -1), 10),
+        ("ALIGN", (1, 0), (1, -1), "RIGHT"),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+        ("LINEABOVE", (0, -1), (-1, -1), 0.75, colors.HexColor("#2D6A4F")),
+        ("FONTNAME", (0, -1), (-1, -1), "Helvetica-Bold"),
+    ]))
+    elems.append(receita_table)
+    elems.append(Spacer(1, 0.4 * cm))
+
+    # Custos
+    elems.append(Paragraph("Custos operacionais", st["h2"]))
+    custos_table = Table([
+        ["Compras de animais", _money(custo_compras)],
+        ["Fretes", _money(fretes)],
+        ["Saúde / sanidade", _money(custo_saude)],
+        ["Despesas fixas operacionais (pro rata)", _money(custo_despesas_op)],
+        ["Custo total operacional", _money(custo_total)],
+    ], colWidths=[12 * cm, 5 * cm])
+    custos_table.setStyle(TableStyle([
+        ("FONTSIZE", (0, 0), (-1, -1), 10),
+        ("ALIGN", (1, 0), (1, -1), "RIGHT"),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+        ("LINEABOVE", (0, -1), (-1, -1), 0.75, colors.HexColor("#2D6A4F")),
+        ("FONTNAME", (0, -1), (-1, -1), "Helvetica-Bold"),
+    ]))
+    elems.append(custos_table)
+    elems.append(Spacer(1, 0.4 * cm))
+
+    # Resultado
+    elems.append(Paragraph("Resultado", st["h2"]))
+    res_color = "#1B4332" if lucro_liquido >= 0 else "#dc2626"
+    resultado_table = Table([
+        ["Lucro bruto (receita líquida – custos op.)", _money(lucro_bruto)],
+        ["(–) Impostos (despesas fixas)", _money(custo_impostos)],
+        ["Lucro líquido", _money(lucro_liquido)],
+    ], colWidths=[12 * cm, 5 * cm])
+    resultado_table.setStyle(TableStyle([
+        ("FONTSIZE", (0, 0), (-1, -1), 10),
+        ("ALIGN", (1, 0), (1, -1), "RIGHT"),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+        ("LINEABOVE", (0, -1), (-1, -1), 1.0, colors.HexColor(res_color)),
+        ("FONTNAME", (0, -1), (-1, -1), "Helvetica-Bold"),
+        ("FONTSIZE", (0, -1), (-1, -1), 12),
+        ("TEXTCOLOR", (0, -1), (-1, -1), colors.HexColor(res_color)),
+    ]))
+    elems.append(resultado_table)
+    elems.append(Spacer(1, 0.6 * cm))
+
+    # Detalhamento de movimentacoes
+    elems.append(Paragraph(f"Movimentações do período ({len(movs)})", st["h2"]))
+    if movs:
+        rows = [["Data", "Tipo", "Brinco", "Valor", "Frete", "Desc.", "Observações"]]
+        for m in movs:
+            rows.append([
+                m.data.strftime("%d/%m/%Y"),
+                (m.tipo.value if hasattr(m.tipo, "value") else str(m.tipo)).title(),
+                m.animal.brinco if m.animal else str(m.animal_id),
+                _money(m.valor or 0),
+                _money(m.frete or 0) if m.frete else "—",
+                _money(m.desconto or 0) if m.desconto else "—",
+                (m.observacoes or "")[:40],
+            ])
+        movs_table = Table(rows, repeatRows=1, colWidths=[2 * cm, 2 * cm, 2 * cm, 2.5 * cm, 2 * cm, 2 * cm, 5 * cm])
+        movs_table.setStyle(_table_style())
+        elems.append(movs_table)
+    else:
+        elems.append(Paragraph("Nenhuma movimentação no período.", st["muted"]))
+
+    doc.build(elems)
+    return _pdf_response(buf, f"resumo_contabil_{data_inicio}_{data_fim}.pdf")
 
 
 @router.post("/animais/importar")

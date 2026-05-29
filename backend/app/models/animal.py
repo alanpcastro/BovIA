@@ -17,6 +17,15 @@ class StatusEnum(str, enum.Enum):
     transferido = "transferido"
 
 
+class CategoriaAnimalEnum(str, enum.Enum):
+    bezerro = "bezerro"        # macho ate desmame (~8 meses, ~200kg)
+    garrote = "garrote"        # macho desmamado ate ~24 meses (200-360kg)
+    novilha = "novilha"        # femea jovem que ainda nao pariu
+    vaca = "vaca"              # femea adulta (ja pariu)
+    boi_magro = "boi_magro"    # macho adulto em recria/engorda inicial
+    boi_gordo = "boi_gordo"    # macho adulto pronto para abate
+
+
 class Animal(Base):
     __tablename__ = "animais"
 
@@ -28,6 +37,7 @@ class Animal(Base):
     nome = Column(String, nullable=True)
     raca = Column(String, nullable=True)
     sexo = Column(Enum(SexoEnum), nullable=False)
+    categoria = Column(Enum(CategoriaAnimalEnum), nullable=True)
     data_nascimento = Column(Date, nullable=True)
     peso_entrada = Column(Float, nullable=True)
     origem = Column(String, nullable=True)  # nascido, comprado

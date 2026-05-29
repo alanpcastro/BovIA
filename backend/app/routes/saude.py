@@ -2,12 +2,22 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import date
+from pydantic import BaseModel
 from ..database import get_db
 from ..models.saude import Saude
 from ..models.animal import Animal
 from ..schemas.saude import SaudeCreate, SaudeUpdate, SaudeOut
 from ..auth import get_current_user
 from ..models.user import User
+
+
+class BulkDeleteIn(BaseModel):
+    ids: List[int]
+
+
+class BulkResult(BaseModel):
+    total: int
+    afetados: int
 
 router = APIRouter()
 
@@ -61,6 +71,24 @@ def atualizar_saude(saude_id: int, data: SaudeUpdate, db: Session = Depends(get_
     db.commit()
     db.refresh(saude)
     return saude
+
+
+@router.post("/bulk-delete", response_model=BulkResult)
+def bulk_delete_saude(
+    data: BulkDeleteIn,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if not data.ids:
+        raise HTTPException(status_code=400, detail="Nenhum registro selecionado")
+    registros = db.query(Saude).join(Animal).filter(
+        Saude.id.in_(data.ids),
+        Animal.user_id == current_user.id,
+    ).all()
+    for r in registros:
+        db.delete(r)
+    db.commit()
+    return BulkResult(total=len(data.ids), afetados=len(registros))
 
 
 @router.delete("/{saude_id}", status_code=204)

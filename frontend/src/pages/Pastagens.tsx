@@ -2,9 +2,12 @@ import { useEffect, useState, FormEvent } from 'react'
 import api, { Pasto, Lote, HistoricoOcupacao, AlertaPasto } from '../services/api'
 import Modal from '../components/Modal'
 import { useToast } from '../components/Toast'
+import { formatPct } from '../utils/format'
+import { apiErrorMessage } from '../utils/apiError'
+import { todayLocal } from '../utils/date'
 
 const emptyForm = { nome: '', area_ha: '', capacidade_ua_ha: '1.5', descricao: '' }
-const hoje = () => new Date().toISOString().slice(0, 10)
+const hoje = todayLocal
 
 export default function Pastagens() {
   const { success, error: toastError } = useToast()
@@ -71,7 +74,7 @@ export default function Pastagens() {
       setShowForm(false)
       await load()
     } catch (err: any) {
-      toastError(err.response?.data?.detail || 'Erro ao salvar pasto')
+      toastError(apiErrorMessage(err, 'Erro ao salvar pasto'))
     } finally {
       setSaving(false)
     }
@@ -84,7 +87,7 @@ export default function Pastagens() {
       success('Pasto excluído')
       load()
     } catch (err: any) {
-      toastError(err.response?.data?.detail || 'Erro ao excluir')
+      toastError(apiErrorMessage(err, 'Erro ao excluir'))
     }
   }
 
@@ -106,7 +109,7 @@ export default function Pastagens() {
       setOcupandoPasto(null)
       load()
     } catch (err: any) {
-      toastError(err.response?.data?.detail || 'Erro ao ocupar pasto')
+      toastError(apiErrorMessage(err, 'Erro ao ocupar pasto'))
     }
   }
 
@@ -120,7 +123,7 @@ export default function Pastagens() {
       success('Lote desocupado — pasto em descanso')
       load()
     } catch (err: any) {
-      toastError(err.response?.data?.detail || 'Erro ao desocupar')
+      toastError(apiErrorMessage(err, 'Erro ao desocupar'))
     }
   }
 
@@ -182,9 +185,11 @@ export default function Pastagens() {
 
       {pastos.length === 0 && (
         <div className="card card-padded" style={{ textAlign: 'center', padding: 48 }}>
-          <div style={{ fontSize: 40, marginBottom: 12 }}>🌾</div>
+          <svg width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="var(--green-700)" strokeWidth={1.5} style={{ margin: '0 auto 12px', display: 'block' }}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v8m0 0c-4 0-7 3-7 7v5h14v-5c0-4-3-7-7-7zM8 10c-2 0-4 1-5 3M16 10c2 0 4 1 5 3"/>
+          </svg>
           <div style={{ fontWeight: 600, color: 'var(--gray-700)', marginBottom: 6 }}>Nenhum pasto cadastrado</div>
-          <div style={{ fontSize: 13, color: 'var(--gray-400)', marginBottom: 20 }}>
+          <div style={{ fontSize: 13, color: 'var(--gray-500)', marginBottom: 20 }}>
             Cadastre seus pastos para controlar lotação, rotação e descanso
           </div>
           <button className="btn btn-primary" onClick={openNew}>Criar primeiro pasto</button>
@@ -249,7 +254,7 @@ export default function Pastagens() {
               <div style={{ marginBottom: 12 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--gray-600)', marginBottom: 4 }}>
                   <span>Ocupação</span>
-                  <span style={{ fontWeight: 700 }}>{p.ocupacao_pct.toFixed(0)}%</span>
+                  <span style={{ fontWeight: 700 }}>{formatPct(p.ocupacao_pct, 0)}</span>
                 </div>
                 <div style={{ height: 8, background: 'var(--gray-200)', borderRadius: 4, overflow: 'hidden' }}>
                   <div style={{

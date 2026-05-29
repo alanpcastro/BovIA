@@ -38,10 +38,11 @@ export interface User {
 export interface Lote {
   id: number
   nome: string
-  area_hectares?: number
   descricao?: string
   rendimento_carcaca?: number
+  data_entrada?: string | null
   pasto_atual_id?: number | null
+  pasto_atual_nome?: string | null
   data_entrada_pasto?: string | null
   created_at: string
   total_animais?: number
@@ -94,12 +95,36 @@ export interface AlertaPasto {
   severidade: 'alta' | 'media' | 'baixa'
 }
 
+export type AlertaTipo =
+  | 'vacina'
+  | 'superlotacao'
+  | 'sem_rotacao'
+  | 'descanso_excedido'
+  | 'abate'
+  | 'parto'
+
+export interface Alerta {
+  tipo: AlertaTipo
+  severidade: 'alta' | 'media' | 'baixa'
+  titulo: string
+  mensagem: string
+  data?: string | null
+  dias?: number | null
+  entidade_tipo: 'animal' | 'pasto' | 'lote'
+  entidade_id: number
+  entidade_nome?: string | null
+  link: string
+}
+
+export type CategoriaAnimal = 'bezerro' | 'garrote' | 'novilha' | 'vaca' | 'boi_magro' | 'boi_gordo'
+
 export interface Animal {
   id: number
   brinco?: string
   nome?: string
   raca?: string
   sexo: 'macho' | 'femea'
+  categoria?: CategoriaAnimal | null
   data_nascimento?: string
   peso_entrada?: number
   origem?: string

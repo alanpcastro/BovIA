@@ -3,6 +3,8 @@ import { useSearchParams } from 'react-router-dom'
 import api, { Reproducao as ReproducaoType, Animal } from '../services/api'
 import Modal from '../components/Modal'
 import { useToast } from '../components/Toast'
+import { todayLocal } from '../utils/date'
+import { apiErrorMessage } from '../utils/apiError'
 
 const tipos = ['cobertura_natural', 'inseminacao', 'transferencia_embriao', 'parto']
 const tipoLabel: Record<string, string> = {
@@ -20,9 +22,11 @@ const resultadoBadge: Record<string, string> = {
 }
 
 const emptyForm = {
-  animal_id: '', tipo: 'inseminacao',
-  data: new Date().toISOString().split('T')[0],
-  touro_brinco: '', resultado: '', data_prevista_parto: '', bezerro_brinco: '', observacoes: ''
+  animal_id: '', brinco_vaca: '', tipo: 'inseminacao',
+  data: todayLocal(),
+  touro_brinco: '', resultado: '', data_prevista_parto: '',
+  bezerro_brinco: '', bezerro_sexo: 'femea', bezerro_peso_kg: '',
+  observacoes: ''
 }
 
 export default function Reproducao() {
@@ -37,15 +41,10 @@ export default function Reproducao() {
   const [form, setForm] = useState({ ...emptyForm, animal_id: animalIdParam || '' })
   const [erro, setErro] = useState('')
   const [saving, setSaving] = useState(false)
-  const [lotes, setLotes] = useState<any[]>([])
-  const [showLoteModal, setShowLoteModal] = useState(false)
-  const emptyLoteForm = { lote_id: '', tipo: 'inseminacao', data: new Date().toISOString().split('T')[0], touro_brinco: '', resultado: '', data_prevista_parto: '', observacoes: '' }
-  const [loteForm, setLoteForm] = useState(emptyLoteForm)
-  const [loteConfirm, setLoteConfirm] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
 
   useEffect(() => {
     api.get('/animais', { params: { sexo: 'femea', page_size: 200 } }).then(r => setAnimais(r.data.items))
-    api.get('/lotes').then(r => setLotes(r.data))
   }, [])
   function load() {
     const p: any = {}
@@ -54,51 +53,44 @@ export default function Reproducao() {
   }
   useEffect(load, [filtroAnimal])
 
+  // Quando seleciona uma fêmea, pre-preenche o brinco com o atual
+  function selecionarFemea(id: string) {
+    const a = animais.find(x => String(x.id) === id)
+    setForm(f => ({ ...f, animal_id: id, brinco_vaca: a?.brinco || '' }))
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setErro('')
     setSaving(true)
     try {
+      const animalAtual = animais.find(a => String(a.id) === form.animal_id)
+      const brincoAtual = animalAtual?.brinco || ''
+      const brincoNovo = form.brinco_vaca.trim()
+      // Se mudou ou adicionou brinco, atualiza o animal primeiro
+      if (brincoNovo !== brincoAtual && form.animal_id) {
+        await api.put(`/animais/${form.animal_id}`, { brinco: brincoNovo || null })
+      }
       await api.post('/reproducao', {
         animal_id: parseInt(form.animal_id), tipo: form.tipo, data: form.data,
         touro_brinco: form.touro_brinco || undefined,
         resultado: form.resultado || undefined,
         data_prevista_parto: form.data_prevista_parto || undefined,
         bezerro_brinco: form.bezerro_brinco || undefined,
+        bezerro_sexo: form.bezerro_sexo || undefined,
+        bezerro_peso_kg: form.bezerro_peso_kg ? parseFloat(form.bezerro_peso_kg) : undefined,
         observacoes: form.observacoes || undefined
       })
       setShowModal(false)
       setForm(emptyForm)
+      // Recarrega lista de animais para refletir brinco atualizado
+      const r = await api.get('/animais', { params: { sexo: 'femea', page_size: 200 } })
+      setAnimais(r.data.items)
       load()
       success('Registro reprodutivo salvo!')
     } catch (err: any) {
-      setErro(err.response?.data?.detail || 'Erro ao registrar')
+      setErro(apiErrorMessage(err, 'Erro ao registrar'))
       toastError('Erro ao salvar registro reprodutivo')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  async function handleLoteSubmit(e: FormEvent) {
-    e.preventDefault()
-    if (!loteConfirm) { setLoteConfirm(true); return }
-    setErro('')
-    setSaving(true)
-    try {
-      const res = await api.post(`/lotes/${loteForm.lote_id}/reproducao`, {
-        tipo: loteForm.tipo, data: loteForm.data,
-        touro_brinco: loteForm.touro_brinco || undefined,
-        resultado: loteForm.resultado || undefined,
-        data_prevista_parto: loteForm.data_prevista_parto || undefined,
-        observacoes: loteForm.observacoes || undefined,
-      })
-      setShowLoteModal(false)
-      setLoteConfirm(false)
-      load()
-      success(`Reprodução registrada para ${res.data.registrados} animais!`)
-    } catch (err: any) {
-      setErro(err.response?.data?.detail || 'Erro ao registrar em lote')
-      toastError('Erro ao registrar reprodução em lote')
     } finally {
       setSaving(false)
     }
@@ -111,6 +103,41 @@ export default function Reproducao() {
     success('Registro excluído')
   }
 
+  function toggleSelect(id: number) {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id); else next.add(id)
+      return next
+    })
+  }
+  function toggleAllVisible() {
+    const visibleIds = registros.map(r => r.id)
+    const allSelected = visibleIds.length > 0 && visibleIds.every(id => selectedIds.has(id))
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (allSelected) visibleIds.forEach(id => next.delete(id))
+      else visibleIds.forEach(id => next.add(id))
+      return next
+    })
+  }
+  function clearSelection() { setSelectedIds(new Set()) }
+  async function bulkDelete() {
+    const ids = Array.from(selectedIds)
+    if (ids.length === 0) return
+    if (!confirm(`Excluir ${ids.length} registro(s)?`)) return
+    setSaving(true)
+    try {
+      const r = await api.post('/reproducao/bulk-delete', { ids })
+      success(`${r.data.afetados} registro(s) excluído(s)`)
+      clearSelection()
+      load()
+    } catch (err: any) {
+      toastError(apiErrorMessage(err, 'Erro ao excluir em massa'))
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const animaisMap = Object.fromEntries(animais.map(a => [a.id, a]))
 
   return (
@@ -120,15 +147,27 @@ export default function Reproducao() {
           <div className="page-title">Reprodução</div>
           <div className="page-subtitle">Controle de cobertura, inseminação e partos</div>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn btn-ghost" onClick={() => { setLoteForm(emptyLoteForm); setErro(''); setLoteConfirm(false); setShowLoteModal(true) }}>
-            Por Lote
-          </button>
-          <button className="btn btn-primary" onClick={() => { setErro(''); setForm(emptyForm); setShowModal(true) }}>
-            + Registrar
-          </button>
-        </div>
+        <button className="btn btn-primary" onClick={() => { setErro(''); setForm(emptyForm); setShowModal(true) }}>
+          + Registrar
+        </button>
       </div>
+
+      {selectedIds.size > 0 && (
+        <div
+          style={{
+            display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
+            padding: '12px 16px', marginBottom: 16, borderRadius: 'var(--radius)',
+            background: 'var(--green-50)', border: '1px solid var(--green-100)',
+          }}
+        >
+          <span style={{ fontWeight: 700, color: 'var(--green-800)' }}>
+            {selectedIds.size} selecionado(s)
+          </span>
+          <button className="btn btn-ghost btn-sm" onClick={clearSelection}>Limpar</button>
+          <div style={{ flex: 1 }} />
+          <button className="btn btn-danger btn-sm" onClick={bulkDelete} disabled={saving}>Excluir selecionados</button>
+        </div>
+      )}
 
       {/* Filtro */}
       <div className="filters-bar">
@@ -143,6 +182,13 @@ export default function Reproducao() {
         <table className="data-table">
           <thead>
             <tr>
+              <th style={{ width: 36 }}>
+                <input
+                  type="checkbox"
+                  checked={registros.length > 0 && registros.every(r => selectedIds.has(r.id))}
+                  onChange={toggleAllVisible}
+                />
+              </th>
               <th>Animal</th>
               <th>Data</th>
               <th>Tipo</th>
@@ -155,12 +201,19 @@ export default function Reproducao() {
           </thead>
           <tbody>
             {registros.length === 0 && (
-              <tr><td colSpan={8} className="table-empty">Nenhum registro encontrado</td></tr>
+              <tr><td colSpan={9} className="table-empty">Nenhum registro encontrado</td></tr>
             )}
             {registros.map(r => {
               const a = animaisMap[r.animal_id]
               return (
-                <tr key={r.id}>
+                <tr key={r.id} style={{ background: selectedIds.has(r.id) ? 'var(--green-50)' : undefined }}>
+                  <td>
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(r.id)}
+                      onChange={() => toggleSelect(r.id)}
+                    />
+                  </td>
                   <td style={{ fontWeight: 600 }}>#{a ? a.brinco : r.animal_id}</td>
                   <td>{new Date(r.data + 'T00:00').toLocaleDateString('pt-BR')}</td>
                   <td><span className="badge badge-teal">{tipoLabel[r.tipo] || r.tipo}</span></td>
@@ -206,14 +259,36 @@ export default function Reproducao() {
       >
         {erro && <div className="alert alert-error">{erro}</div>}
         <form id="form-repro" onSubmit={handleSubmit}>
-          <div className="grid-3" style={{ marginBottom: 0 }}>
+          <div className="grid-2" style={{ marginBottom: 0 }}>
             <div className="form-group">
               <label className="form-label">Fêmea *</label>
-              <select className="form-select" value={form.animal_id} onChange={e => setForm(f => ({ ...f, animal_id: e.target.value }))} required autoFocus>
+              <select className="form-select" value={form.animal_id} onChange={e => selecionarFemea(e.target.value)} required autoFocus>
                 <option value="">Selecione...</option>
-                {animais.map(a => <option key={a.id} value={a.id}>#{a.brinco}{a.nome ? ` — ${a.nome}` : ''}</option>)}
+                {animais.map(a => <option key={a.id} value={a.id}>#{a.brinco || '(sem brinco)'}{a.nome ? ` — ${a.nome}` : ''}</option>)}
               </select>
             </div>
+            <div className="form-group">
+              <label className="form-label">Brinco da Vaca</label>
+              <input
+                className="form-input"
+                value={form.brinco_vaca}
+                onChange={e => setForm(f => ({ ...f, brinco_vaca: e.target.value }))}
+                placeholder="Adicionar ou alterar brinco"
+                disabled={!form.animal_id}
+              />
+              {form.animal_id && (() => {
+                const a = animais.find(x => String(x.id) === form.animal_id)
+                const atual = a?.brinco || ''
+                if (form.brinco_vaca.trim() === atual) return null
+                return (
+                  <div style={{ fontSize: 11, color: 'var(--amber-700, #b45309)', marginTop: 4 }}>
+                    Será atualizado de "{atual || '(vazio)'}" para "{form.brinco_vaca.trim() || '(vazio)'}"
+                  </div>
+                )
+              })()}
+            </div>
+          </div>
+          <div className="grid-3" style={{ marginBottom: 0 }}>
             <div className="form-group">
               <label className="form-label">Tipo *</label>
               <select className="form-select" value={form.tipo} onChange={e => setForm(f => ({ ...f, tipo: e.target.value }))} required>
@@ -224,12 +299,12 @@ export default function Reproducao() {
               <label className="form-label">Data *</label>
               <input className="form-input" type="date" value={form.data} onChange={e => setForm(f => ({ ...f, data: e.target.value }))} required />
             </div>
-          </div>
-          <div className="grid-3" style={{ marginBottom: 0 }}>
             <div className="form-group">
               <label className="form-label">Brinco do Touro</label>
               <input className="form-input" value={form.touro_brinco} onChange={e => setForm(f => ({ ...f, touro_brinco: e.target.value }))} placeholder="Ex: T-001" />
             </div>
+          </div>
+          <div className="grid-2" style={{ marginBottom: 0 }}>
             <div className="form-group">
               <label className="form-label">Resultado</label>
               <select className="form-select" value={form.resultado} onChange={e => setForm(f => ({ ...f, resultado: e.target.value }))}>
@@ -242,81 +317,39 @@ export default function Reproducao() {
               <input className="form-input" type="date" value={form.data_prevista_parto} onChange={e => setForm(f => ({ ...f, data_prevista_parto: e.target.value }))} />
             </div>
           </div>
-          <div className="grid-2" style={{ marginBottom: 0 }}>
-            <div className="form-group">
-              <label className="form-label">Brinco do Bezerro</label>
-              <input className="form-input" value={form.bezerro_brinco} onChange={e => setForm(f => ({ ...f, bezerro_brinco: e.target.value }))} placeholder="Após nascimento" />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Observações</label>
-              <input className="form-input" value={form.observacoes} onChange={e => setForm(f => ({ ...f, observacoes: e.target.value }))} placeholder="Opcional..." />
-            </div>
-          </div>
-        </form>
-      </Modal>
 
-      {/* Modal reprodução por lote */}
-      <Modal
-        open={showLoteModal}
-        onClose={() => { setShowLoteModal(false); setLoteConfirm(false) }}
-        title="Reprodução por Lote"
-        size="lg"
-        footer={
-          <>
-            <button className="btn btn-ghost" onClick={() => { setShowLoteModal(false); setLoteConfirm(false) }}>Cancelar</button>
-            <button className="btn btn-primary" form="form-repro-lote" type="submit" disabled={saving}>
-              {saving ? <><span className="spinner" /> Salvando...</> : loteConfirm ? 'Confirmar' : 'Registrar'}
-            </button>
-          </>
-        }
-      >
-        {erro && <div className="alert alert-error">{erro}</div>}
-        {loteConfirm && (
-          <div className="alert alert-warning" style={{ marginBottom: 16 }}>
-            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ flexShrink: 0 }}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
-            Isso vai registrar para <strong>todas as femeas</strong> do lote <strong>{lotes.find(l => String(l.id) === loteForm.lote_id)?.nome}</strong> ({lotes.find(l => String(l.id) === loteForm.lote_id)?.total_animais} animais). Confirmar?
-          </div>
-        )}
-        <form id="form-repro-lote" onSubmit={handleLoteSubmit}>
-          <div className="grid-3" style={{ marginBottom: 0 }}>
-            <div className="form-group">
-              <label className="form-label">Lote *</label>
-              <select className="form-select" value={loteForm.lote_id} onChange={e => setLoteForm(f => ({ ...f, lote_id: e.target.value }))} required>
-                <option value="">Selecione...</option>
-                {lotes.map(l => <option key={l.id} value={l.id}>{l.nome} ({l.total_animais} animais)</option>)}
-              </select>
+          {/* Bezerro nascido — só aparece quando faz sentido */}
+          {(form.resultado === 'nasceu bezerro' || (form.tipo === 'parto' && form.resultado !== 'aborto')) && (
+            <div style={{ borderTop: '1px solid var(--gray-200)', marginTop: 12, paddingTop: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, fontSize: 13, fontWeight: 600, color: 'var(--green-800)' }}>
+                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Bezerro nascido — será criado automaticamente em Animais
+              </div>
+              <div className="grid-3" style={{ marginBottom: 0 }}>
+                <div className="form-group">
+                  <label className="form-label">Brinco do Bezerro</label>
+                  <input className="form-input" value={form.bezerro_brinco} onChange={e => setForm(f => ({ ...f, bezerro_brinco: e.target.value }))} placeholder="Opcional" />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Sexo</label>
+                  <select className="form-select" value={form.bezerro_sexo} onChange={e => setForm(f => ({ ...f, bezerro_sexo: e.target.value }))}>
+                    <option value="femea">♀ Fêmea</option>
+                    <option value="macho">♂ Macho</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Peso ao Nascer (kg)</label>
+                  <input className="form-input" type="number" step="0.1" value={form.bezerro_peso_kg} onChange={e => setForm(f => ({ ...f, bezerro_peso_kg: e.target.value }))} placeholder="Opcional" />
+                </div>
+              </div>
             </div>
-            <div className="form-group">
-              <label className="form-label">Tipo *</label>
-              <select className="form-select" value={loteForm.tipo} onChange={e => setLoteForm(f => ({ ...f, tipo: e.target.value }))} required>
-                {tipos.map(t => <option key={t} value={t}>{tipoLabel[t]}</option>)}
-              </select>
-            </div>
-            <div className="form-group">
-              <label className="form-label">Data *</label>
-              <input className="form-input" type="date" value={loteForm.data} onChange={e => setLoteForm(f => ({ ...f, data: e.target.value }))} required />
-            </div>
-          </div>
-          <div className="grid-3" style={{ marginBottom: 0 }}>
-            <div className="form-group">
-              <label className="form-label">Brinco do Touro</label>
-              <input className="form-input" value={loteForm.touro_brinco} onChange={e => setLoteForm(f => ({ ...f, touro_brinco: e.target.value }))} placeholder="Ex: T-001" />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Resultado</label>
-              <select className="form-select" value={loteForm.resultado} onChange={e => setLoteForm(f => ({ ...f, resultado: e.target.value }))}>
-                <option value="">Pendente</option>
-                {resultados.map(r => <option key={r} value={r}>{resultadoLabel[r]}</option>)}
-              </select>
-            </div>
-            <div className="form-group">
-              <label className="form-label">Previsão de Parto</label>
-              <input className="form-input" type="date" value={loteForm.data_prevista_parto} onChange={e => setLoteForm(f => ({ ...f, data_prevista_parto: e.target.value }))} />
-            </div>
-          </div>
+          )}
+
           <div className="form-group">
             <label className="form-label">Observações</label>
-            <input className="form-input" value={loteForm.observacoes} onChange={e => setLoteForm(f => ({ ...f, observacoes: e.target.value }))} placeholder="Opcional..." />
+            <input className="form-input" value={form.observacoes} onChange={e => setForm(f => ({ ...f, observacoes: e.target.value }))} placeholder="Opcional..." />
           </div>
         </form>
       </Modal>

@@ -3,6 +3,9 @@ import { useSearchParams } from 'react-router-dom'
 import api, { Saude as SaudeType, Animal } from '../services/api'
 import Modal from '../components/Modal'
 import { useToast } from '../components/Toast'
+import { formatBRL } from '../utils/format'
+import { todayLocal } from '../utils/date'
+import { apiErrorMessage } from '../utils/apiError'
 
 const tipos = ['vacinacao', 'vermifugacao', 'tratamento', 'exame', 'cirurgia']
 
@@ -18,7 +21,7 @@ const tipoBadge: Record<string, string> = {
 
 const emptyForm = {
   animal_id: '', tipo: 'vacinacao',
-  data: new Date().toISOString().split('T')[0],
+  data: todayLocal(),
   descricao: '', medicamento: '', dose: '',
   custo: '', responsavel: '', proxima_data: '', observacoes: ''
 }
@@ -38,9 +41,10 @@ export default function Saude() {
   const [saving, setSaving] = useState(false)
   const [lotes, setLotes] = useState<any[]>([])
   const [showLoteModal, setShowLoteModal] = useState(false)
-  const emptyLoteForm = { lote_id: '', tipo: 'vacinacao', data: new Date().toISOString().split('T')[0], descricao: '', medicamento: '', dose: '', custo_total: '', responsavel: '', proxima_data: '', observacoes: '' }
+  const emptyLoteForm = { lote_id: '', tipo: 'vacinacao', data: todayLocal(), descricao: '', medicamento: '', dose: '', custo_total: '', responsavel: '', proxima_data: '', observacoes: '' }
   const [loteForm, setLoteForm] = useState(emptyLoteForm)
   const [loteConfirm, setLoteConfirm] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
 
   useEffect(() => {
     api.get('/animais', { params: { page_size: 200 } }).then(r => setAnimais(r.data.items))
@@ -72,7 +76,7 @@ export default function Saude() {
       load()
       success('Registro de saúde salvo com sucesso!')
     } catch (err: any) {
-      setErro(err.response?.data?.detail || 'Erro ao registrar')
+      setErro(apiErrorMessage(err, 'Erro ao registrar'))
       toastError('Erro ao salvar registro de saúde')
     } finally {
       setSaving(false)
@@ -98,7 +102,7 @@ export default function Saude() {
       load()
       success(`Saúde registrada para ${res.data.registrados} animais!`)
     } catch (err: any) {
-      setErro(err.response?.data?.detail || 'Erro ao registrar em lote')
+      setErro(apiErrorMessage(err, 'Erro ao registrar em lote'))
       toastError('Erro ao registrar saúde em lote')
     } finally {
       setSaving(false)
@@ -116,6 +120,41 @@ export default function Saude() {
 
   const registrosFiltrados = registros.filter(r => !filtroTipo || r.tipo === filtroTipo)
 
+  function toggleSelect(id: number) {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id); else next.add(id)
+      return next
+    })
+  }
+  function toggleAllVisible() {
+    const visibleIds = registrosFiltrados.map(r => r.id)
+    const allSelected = visibleIds.length > 0 && visibleIds.every(id => selectedIds.has(id))
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (allSelected) visibleIds.forEach(id => next.delete(id))
+      else visibleIds.forEach(id => next.add(id))
+      return next
+    })
+  }
+  function clearSelection() { setSelectedIds(new Set()) }
+  async function bulkDelete() {
+    const ids = Array.from(selectedIds)
+    if (ids.length === 0) return
+    if (!confirm(`Excluir ${ids.length} registro(s)?`)) return
+    setSaving(true)
+    try {
+      const r = await api.post('/saude/bulk-delete', { ids })
+      success(`${r.data.afetados} registro(s) excluído(s)`)
+      clearSelection()
+      load()
+    } catch (err: any) {
+      toastError(apiErrorMessage(err, 'Erro ao excluir em massa'))
+    } finally {
+      setSaving(false)
+    }
+  }
+
   // Resumo de custos
   const totalCustos = registros.reduce((acc, r) => acc + (r.custo || 0), 0)
 
@@ -125,7 +164,7 @@ export default function Saude() {
         <div>
           <div className="page-title">Saúde do Rebanho</div>
           <div className="page-subtitle">
-            {registros.length} registro(s) · Custo total: <strong style={{ color: 'var(--red-600)' }}>R$ {totalCustos.toFixed(2)}</strong>
+            {registros.length} registro(s) · Custo total: <strong style={{ color: totalCustos > 0 ? 'var(--red-600)' : 'var(--gray-500)' }}>{formatBRL(totalCustos)}</strong>
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
@@ -140,6 +179,24 @@ export default function Saude() {
           </button>
         </div>
       </div>
+
+      {/* Barra de seleção em massa */}
+      {selectedIds.size > 0 && (
+        <div
+          style={{
+            display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
+            padding: '12px 16px', marginBottom: 16, borderRadius: 'var(--radius)',
+            background: 'var(--green-50)', border: '1px solid var(--green-100)',
+          }}
+        >
+          <span style={{ fontWeight: 700, color: 'var(--green-800)' }}>
+            {selectedIds.size} selecionado(s)
+          </span>
+          <button className="btn btn-ghost btn-sm" onClick={clearSelection}>Limpar</button>
+          <div style={{ flex: 1 }} />
+          <button className="btn btn-danger btn-sm" onClick={bulkDelete} disabled={saving}>Excluir selecionados</button>
+        </div>
+      )}
 
       {/* Filtros */}
       <div className="filters-bar">
@@ -159,6 +216,13 @@ export default function Saude() {
         <table className="data-table data-table-big">
           <thead>
             <tr>
+              <th style={{ width: 36 }}>
+                <input
+                  type="checkbox"
+                  checked={registrosFiltrados.length > 0 && registrosFiltrados.every(r => selectedIds.has(r.id))}
+                  onChange={toggleAllVisible}
+                />
+              </th>
               <th>Animal</th>
               <th>Data</th>
               <th>Tipo</th>
@@ -171,20 +235,27 @@ export default function Saude() {
           </thead>
           <tbody>
             {registrosFiltrados.length === 0 && (
-              <tr><td colSpan={8} className="table-empty">Nenhum registro encontrado</td></tr>
+              <tr><td colSpan={9} className="table-empty">Nenhum registro encontrado</td></tr>
             )}
             {registrosFiltrados.map(s => {
               const a = animaisMap[s.animal_id]
               const vencendo = s.proxima_data && Math.ceil((new Date(s.proxima_data + 'T00:00').getTime() - Date.now()) / 86400000) <= 7
               return (
-                <tr key={s.id}>
+                <tr key={s.id} style={{ background: selectedIds.has(s.id) ? 'var(--green-50)' : undefined }}>
+                  <td>
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(s.id)}
+                      onChange={() => toggleSelect(s.id)}
+                    />
+                  </td>
                   <td style={{ fontWeight: 600 }}>#{a ? a.brinco : s.animal_id}</td>
                   <td>{new Date(s.data + 'T00:00').toLocaleDateString('pt-BR')}</td>
                   <td><span className={`badge ${tipoBadge[s.tipo] || 'badge-gray'}`}>{tipoLabel[s.tipo] || s.tipo}</span></td>
                   <td style={{ maxWidth: 200 }}>{s.descricao}</td>
                   <td style={{ color: 'var(--gray-500)', fontSize: 13 }}>{s.medicamento || '—'}</td>
                   <td style={{ fontWeight: 600, color: s.custo ? 'var(--red-600)' : 'var(--gray-400)' }}>
-                    {s.custo != null ? `R$ ${s.custo.toFixed(2)}` : '—'}
+                    {s.custo != null ? formatBRL(s.custo) : '—'}
                   </td>
                   <td>
                     {s.proxima_data ? (

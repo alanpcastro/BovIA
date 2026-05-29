@@ -1,0 +1,166 @@
+- generic [ref=e3]:
+  - complementary [ref=e4]:
+    - generic [ref=e5]:
+      - img "BovIA" [ref=e6]
+      - generic [ref=e7]: Fazenda BovIA
+    - navigation [ref=e8]:
+      - generic [ref=e9]: Menu
+      - link "Dashboard" [ref=e10] [cursor=pointer]:
+        - /url: /dashboard
+        - img [ref=e11]
+        - generic [ref=e16]: Dashboard
+      - link "Agenda" [ref=e17] [cursor=pointer]:
+        - /url: /agenda
+        - img [ref=e18]
+        - generic [ref=e20]: Agenda
+      - link "Animais" [ref=e21] [cursor=pointer]:
+        - /url: /animais
+        - img [ref=e22]
+        - generic [ref=e24]: Animais
+      - link "Lotes" [ref=e25] [cursor=pointer]:
+        - /url: /lotes
+        - img [ref=e26]
+        - generic [ref=e28]: Lotes
+      - link "Pastagens" [ref=e29] [cursor=pointer]:
+        - /url: /pastagens
+        - img [ref=e30]
+        - generic [ref=e32]: Pastagens
+      - link "Pesagens" [ref=e33] [cursor=pointer]:
+        - /url: /pesagens
+        - img [ref=e34]
+        - generic [ref=e36]: Pesagens
+      - link "Saúde" [ref=e37] [cursor=pointer]:
+        - /url: /saude
+        - img [ref=e38]
+        - generic [ref=e40]: Saúde
+      - link "Reprodução" [ref=e41] [cursor=pointer]:
+        - /url: /reproducao
+        - img [ref=e42]
+        - generic [ref=e44]: Reprodução
+      - link "Movimentações" [ref=e45] [cursor=pointer]:
+        - /url: /movimentacoes
+        - img [ref=e46]
+        - generic [ref=e48]: Movimentações
+      - link "Financeiro" [ref=e49] [cursor=pointer]:
+        - /url: /financeiro
+        - img [ref=e50]
+        - generic [ref=e52]: Financeiro
+      - link "Simulador" [ref=e53] [cursor=pointer]:
+        - /url: /simulador
+        - img [ref=e54]
+        - generic [ref=e56]: Simulador
+      - link "Custos Nutri" [ref=e57] [cursor=pointer]:
+        - /url: /custos-nutricionais
+        - img [ref=e58]
+        - generic [ref=e60]: Custos Nutri
+      - link "Despesas Fixas" [ref=e61] [cursor=pointer]:
+        - /url: /despesas-fixas
+        - img [ref=e62]
+        - generic [ref=e64]: Despesas Fixas
+      - link "Gráficos" [ref=e65] [cursor=pointer]:
+        - /url: /graficos
+        - img [ref=e66]
+        - generic [ref=e68]: Gráficos
+      - link "Relatórios" [ref=e69] [cursor=pointer]:
+        - /url: /relatorios
+        - img [ref=e70]
+        - generic [ref=e72]: Relatórios
+      - link "Configurações" [ref=e73] [cursor=pointer]:
+        - /url: /configuracoes
+        - img [ref=e74]
+        - generic [ref=e77]: Configurações
+    - generic [ref=e78]:
+      - generic [ref=e79]: Admin Teste
+      - button "Alternar tema" [ref=e80] [cursor=pointer]:
+        - img [ref=e81]
+        - text: Modo escuro
+      - button "Sair" [ref=e83] [cursor=pointer]:
+        - img [ref=e84]
+        - text: Sair
+  - main [ref=e86]:
+    - generic [ref=e87]:
+      - generic [ref=e89]:
+        - generic [ref=e90]: Simulador de Compra e Venda
+        - generic [ref=e91]: Projete cenarios e calcule a rentabilidade antes de decidir
+      - generic [ref=e92]:
+        - generic [ref=e93]: "Cenario:"
+        - button "Confinamento" [ref=e94] [cursor=pointer]
+        - button "Semiconfinamento" [ref=e95] [cursor=pointer]
+        - button "Pasto" [ref=e96] [cursor=pointer]
+      - generic [ref=e97]:
+        - generic [ref=e98]:
+          - generic [ref=e99]:
+            - generic [ref=e100]:
+              - img [ref=e101]
+              - text: Compra
+            - generic [ref=e103]:
+              - generic [ref=e104]:
+                - generic [ref=e105]: Qtd animais
+                - generic [ref=e106]:
+                  - spinbutton [ref=e107]: "100"
+                  - generic: cab
+              - generic [ref=e108]:
+                - generic [ref=e109]: Peso compra
+                - generic [ref=e110]:
+                  - spinbutton [ref=e111]: "360"
+                  - generic: kg
+              - generic [ref=e112]:
+                - generic [ref=e113]: Preco/@ compra
+                - generic [ref=e114]:
+                  - spinbutton [ref=e115]: "310"
+                  - generic: R$/@
+              - generic [ref=e116]:
+                - generic [ref=e117]: Frete compra
+                - generic [ref=e118]:
+                  - spinbutton [ref=e119]: "3000"
+                  - generic: R$
+          - generic [ref=e120]:
+            - generic [ref=e121]:
+              - img [ref=e122]
+              - text: Venda
+            - generic [ref=e124]:
+              - generic [ref=e125]:
+                - generic [ref=e126]: Peso venda
+                - generic [ref=e127]:
+                  - spinbutton [ref=e128]: "540"
+                  - generic: kg
+              - generic [ref=e129]:
+                - generic [ref=e130]: Preco/@ venda
+                - generic [ref=e131]:
+                  - spinbutton [ref=e132]: "330"
+                  - generic: R$/@
+              - generic [ref=e133]:
+                - generic [ref=e134]: Frete venda
+                - generic [ref=e135]:
+                  - spinbutton [ref=e136]: "3000"
+                  - generic: R$
+              - generic [ref=e137]:
+                - generic [ref=e138]: Mortalidade
+                - generic [ref=e139]:
+                  - spinbutton [ref=e140]: "1"
+                  - generic: "%"
+          - generic [ref=e141]:
+            - generic [ref=e142]:
+              - img [ref=e143]
+              - text: Operacao
+            - generic [ref=e146]:
+              - generic [ref=e147]:
+                - generic [ref=e148]: GMD esperado
+                - generic [ref=e149]:
+                  - spinbutton [ref=e150]: "1.5"
+                  - generic: kg/dia
+              - generic [ref=e151]:
+                - generic [ref=e152]: Rend. carcaca
+                - generic [ref=e153]:
+                  - spinbutton [ref=e154]: "52"
+                  - generic: "%"
+              - generic [ref=e156]:
+                - generic [ref=e157]: Custo diario/cab
+                - generic [ref=e158]:
+                  - spinbutton [ref=e159]: "15"
+                  - generic: R$/dia
+          - button "Simular" [ref=e161] [cursor=pointer]
+        - generic [ref=e163]:
+          - img [ref=e164]
+          - generic [ref=e166]: Preencha os dados e clique em Simular
+          - generic [ref=e167]: Os calculos sao feitos localmente, sem enviar dados ao servidor

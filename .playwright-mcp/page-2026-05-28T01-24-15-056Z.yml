@@ -1,0 +1,138 @@
+- generic [ref=e29]:
+  - complementary [ref=e30]:
+    - generic [ref=e31]:
+      - img "BovIA" [ref=e32]
+      - generic [ref=e33]: Fazenda BovIA
+    - navigation [ref=e34]:
+      - generic [ref=e35]: Menu
+      - link "Dashboard" [ref=e36] [cursor=pointer]:
+        - /url: /dashboard
+        - img [ref=e37]
+        - generic [ref=e42]: Dashboard
+      - link "Agenda" [ref=e43] [cursor=pointer]:
+        - /url: /agenda
+        - img [ref=e44]
+        - generic [ref=e46]: Agenda
+      - link "Animais" [ref=e47] [cursor=pointer]:
+        - /url: /animais
+        - img [ref=e48]
+        - generic [ref=e50]: Animais
+      - link "Lotes" [ref=e51] [cursor=pointer]:
+        - /url: /lotes
+        - img [ref=e52]
+        - generic [ref=e54]: Lotes
+      - link "Pastagens" [ref=e55] [cursor=pointer]:
+        - /url: /pastagens
+        - img [ref=e56]
+        - generic [ref=e58]: Pastagens
+      - link "Pesagens" [ref=e59] [cursor=pointer]:
+        - /url: /pesagens
+        - img [ref=e60]
+        - generic [ref=e62]: Pesagens
+      - link "Saúde" [ref=e63] [cursor=pointer]:
+        - /url: /saude
+        - img [ref=e64]
+        - generic [ref=e66]: Saúde
+      - link "Reprodução" [ref=e67] [cursor=pointer]:
+        - /url: /reproducao
+        - img [ref=e68]
+        - generic [ref=e70]: Reprodução
+      - link "Movimentações" [ref=e71] [cursor=pointer]:
+        - /url: /movimentacoes
+        - img [ref=e72]
+        - generic [ref=e74]: Movimentações
+      - link "Financeiro" [ref=e75] [cursor=pointer]:
+        - /url: /financeiro
+        - img [ref=e76]
+        - generic [ref=e78]: Financeiro
+      - link "Simulador" [ref=e79] [cursor=pointer]:
+        - /url: /simulador
+        - img [ref=e80]
+        - generic [ref=e82]: Simulador
+      - link "Custos Nutri" [ref=e83] [cursor=pointer]:
+        - /url: /custos-nutricionais
+        - img [ref=e84]
+        - generic [ref=e86]: Custos Nutri
+      - link "Despesas Fixas" [ref=e87] [cursor=pointer]:
+        - /url: /despesas-fixas
+        - img [ref=e88]
+        - generic [ref=e90]: Despesas Fixas
+      - link "Gráficos" [ref=e91] [cursor=pointer]:
+        - /url: /graficos
+        - img [ref=e92]
+        - generic [ref=e94]: Gráficos
+      - link "Relatórios" [ref=e95] [cursor=pointer]:
+        - /url: /relatorios
+        - img [ref=e96]
+        - generic [ref=e98]: Relatórios
+      - link "Configurações" [ref=e99] [cursor=pointer]:
+        - /url: /configuracoes
+        - img [ref=e100]
+        - generic [ref=e103]: Configurações
+    - generic [ref=e104]:
+      - generic [ref=e105]: Admin Teste
+      - button "Alternar tema" [ref=e106] [cursor=pointer]:
+        - img [ref=e107]
+        - text: Modo claro
+      - button "Sair" [ref=e109] [cursor=pointer]:
+        - img [ref=e110]
+        - text: Sair
+  - main [ref=e112]:
+    - generic [ref=e113]:
+      - generic [ref=e114]:
+        - generic [ref=e116]: Seu Rebanho
+        - generic [ref=e117]:
+          - generic [ref=e118]:
+            - generic [ref=e119]: "2"
+            - generic [ref=e120]: Animais
+          - generic [ref=e121]:
+            - generic [ref=e122]: "2"
+            - generic [ref=e123]: Machos
+          - generic [ref=e124]:
+            - generic [ref=e125]: "0"
+            - generic [ref=e126]: Fêmeas
+      - generic [ref=e127]: O que você quer fazer?
+      - generic [ref=e128]:
+        - button "Cadastrar Animal" [ref=e129] [cursor=pointer]:
+          - img [ref=e131]
+          - generic [ref=e133]: Cadastrar Animal
+        - button "Registrar Pesagem" [ref=e134] [cursor=pointer]:
+          - img [ref=e136]
+          - generic [ref=e138]: Registrar Pesagem
+        - button "Vacinar" [ref=e139] [cursor=pointer]:
+          - img [ref=e141]
+          - generic [ref=e143]: Vacinar
+        - button "Comprar / Vender" [ref=e144] [cursor=pointer]:
+          - img [ref=e146]
+          - generic [ref=e148]: Comprar / Vender
+        - button "Financeiro" [ref=e149] [cursor=pointer]:
+          - img [ref=e151]
+          - generic [ref=e153]: Financeiro
+      - generic [ref=e154]: Resultado do Mês
+      - generic [ref=e155]:
+        - generic [ref=e156]:
+          - img [ref=e158]
+          - generic [ref=e160]:
+            - generic [ref=e161]: Lucro do Mês
+            - generic [ref=e162]: R$ 0
+        - generic [ref=e163]:
+          - img [ref=e165]
+          - generic [ref=e167]:
+            - generic [ref=e168]: Custo / @
+            - generic [ref=e169]: —
+        - generic [ref=e170]:
+          - img [ref=e172]
+          - generic [ref=e174]:
+            - generic [ref=e175]: Rentabilidade
+            - generic [ref=e176]: —
+      - generic [ref=e177]:
+        - generic [ref=e178]:
+          - generic [ref=e179]:
+            - img [ref=e181]
+            - text: Próximas Vacinas
+          - generic [ref=e183]: Nenhuma vacina agendada
+        - generic [ref=e184]:
+          - generic [ref=e185]:
+            - img [ref=e187]
+            - text: Partos Previstos
+          - generic [ref=e189]: Nenhum parto previsto

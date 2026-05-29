@@ -2,6 +2,9 @@ import { useEffect, useState, FormEvent } from 'react'
 import api, { DespesaFixa } from '../services/api'
 import Modal from '../components/Modal'
 import { useToast } from '../components/Toast'
+import { formatBRL } from '../utils/format'
+import { todayLocal } from '../utils/date'
+import { apiErrorMessage } from '../utils/apiError'
 
 const categorias = ['mao_de_obra', 'manutencao', 'energia', 'arrendamento', 'impostos', 'sal_mineral', 'suplemento', 'vermifugo', 'combustivel', 'outros']
 const categoriaLabel: Record<string, string> = {
@@ -19,7 +22,7 @@ const categoriaBadge: Record<string, string> = {
 
 const emptyForm = {
   categoria: 'mao_de_obra', descricao: '', valor_mensal: '',
-  data_inicio: new Date().toISOString().split('T')[0], data_fim: '', observacoes: ''
+  data_inicio: todayLocal(), data_fim: '', observacoes: ''
 }
 
 export default function DespesasFixas() {
@@ -31,6 +34,7 @@ export default function DespesasFixas() {
   const [erro, setErro] = useState('')
   const [saving, setSaving] = useState(false)
   const [filtroCategoria, setFiltroCategoria] = useState('')
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
 
   function load() {
     const p: any = {}
@@ -74,7 +78,7 @@ export default function DespesasFixas() {
       }
       setShowModal(false); load()
     } catch (err: any) {
-      setErro(err.response?.data?.detail || 'Erro ao salvar')
+      setErro(apiErrorMessage(err, 'Erro ao salvar'))
       toastError('Erro ao salvar despesa')
     } finally { setSaving(false) }
   }
@@ -83,6 +87,41 @@ export default function DespesasFixas() {
     if (!confirm('Excluir esta despesa?')) return
     await api.delete(`/despesas-fixas/${id}`)
     load(); success('Despesa excluida')
+  }
+
+  function toggleSelect(id: number) {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id); else next.add(id)
+      return next
+    })
+  }
+  function toggleAllVisible() {
+    const visibleIds = despesas.map(d => d.id)
+    const allSelected = visibleIds.length > 0 && visibleIds.every(id => selectedIds.has(id))
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (allSelected) visibleIds.forEach(id => next.delete(id))
+      else visibleIds.forEach(id => next.add(id))
+      return next
+    })
+  }
+  function clearSelection() { setSelectedIds(new Set()) }
+  async function bulkDelete() {
+    const ids = Array.from(selectedIds)
+    if (ids.length === 0) return
+    if (!confirm(`Excluir ${ids.length} despesa(s)?`)) return
+    setSaving(true)
+    try {
+      const r = await api.post('/despesas-fixas/bulk-delete', { ids })
+      success(`${r.data.afetados} despesa(s) excluída(s)`)
+      clearSelection()
+      load()
+    } catch (err: any) {
+      toastError(apiErrorMessage(err, 'Erro ao excluir em massa'))
+    } finally {
+      setSaving(false)
+    }
   }
 
   const totalMensal = despesas.filter(d => !d.data_fim).reduce((s, d) => s + d.valor_mensal, 0)
@@ -107,18 +146,35 @@ export default function DespesasFixas() {
       {/* Resumo */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16, marginBottom: 24 }}>
         <div className="card card-padded" style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--gray-400)', textTransform: 'uppercase', marginBottom: 4 }}>Total Mensal</div>
-          <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--gray-900)' }}>R$ {totalMensal.toFixed(2)}</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: 4 }}>Total Mensal</div>
+          <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--gray-900)' }}>{formatBRL(totalMensal)}</div>
         </div>
         <div className="card card-padded" style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--gray-400)', textTransform: 'uppercase', marginBottom: 4 }}>Operacional</div>
-          <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--amber-600)' }}>R$ {totalOperacional.toFixed(2)}</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: 4 }}>Operacional</div>
+          <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--amber-600)' }}>{formatBRL(totalOperacional)}</div>
         </div>
         <div className="card card-padded" style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--gray-400)', textTransform: 'uppercase', marginBottom: 4 }}>Impostos</div>
-          <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--red-600)' }}>R$ {totalImpostos.toFixed(2)}</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--gray-500)', textTransform: 'uppercase', marginBottom: 4 }}>Impostos</div>
+          <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--red-600)' }}>{formatBRL(totalImpostos)}</div>
         </div>
       </div>
+
+      {selectedIds.size > 0 && (
+        <div
+          style={{
+            display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
+            padding: '12px 16px', marginBottom: 16, borderRadius: 'var(--radius)',
+            background: 'var(--green-50)', border: '1px solid var(--green-100)',
+          }}
+        >
+          <span style={{ fontWeight: 700, color: 'var(--green-800)' }}>
+            {selectedIds.size} selecionado(s)
+          </span>
+          <button className="btn btn-ghost btn-sm" onClick={clearSelection}>Limpar</button>
+          <div style={{ flex: 1 }} />
+          <button className="btn btn-danger btn-sm" onClick={bulkDelete} disabled={saving}>Excluir selecionados</button>
+        </div>
+      )}
 
       {/* Filtro */}
       <div className="filters-bar">
@@ -133,6 +189,13 @@ export default function DespesasFixas() {
         <table className="data-table">
           <thead>
             <tr>
+              <th style={{ width: 36 }}>
+                <input
+                  type="checkbox"
+                  checked={despesas.length > 0 && despesas.every(d => selectedIds.has(d.id))}
+                  onChange={toggleAllVisible}
+                />
+              </th>
               <th>Categoria</th>
               <th>Descricao</th>
               <th>Valor Mensal</th>
@@ -143,13 +206,20 @@ export default function DespesasFixas() {
           </thead>
           <tbody>
             {despesas.length === 0 && (
-              <tr><td colSpan={6} className="table-empty">Nenhuma despesa cadastrada</td></tr>
+              <tr><td colSpan={7} className="table-empty">Nenhuma despesa cadastrada</td></tr>
             )}
             {despesas.map(d => (
-              <tr key={d.id}>
+              <tr key={d.id} style={{ background: selectedIds.has(d.id) ? 'var(--green-50)' : undefined }}>
+                <td>
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(d.id)}
+                    onChange={() => toggleSelect(d.id)}
+                  />
+                </td>
                 <td><span className={`badge ${categoriaBadge[d.categoria] || 'badge-gray'}`}>{categoriaLabel[d.categoria] || d.categoria}</span></td>
                 <td style={{ fontWeight: 600 }}>{d.descricao}</td>
-                <td style={{ fontWeight: 700, color: 'var(--red-600)' }}>R$ {d.valor_mensal.toFixed(2)}</td>
+                <td style={{ fontWeight: 700, color: 'var(--red-600)' }}>{formatBRL(d.valor_mensal)}</td>
                 <td style={{ fontSize: 13 }}>{new Date(d.data_inicio + 'T00:00').toLocaleDateString('pt-BR')}</td>
                 <td style={{ fontSize: 13, color: d.data_fim ? 'var(--gray-600)' : 'var(--green-700)' }}>
                   {d.data_fim ? new Date(d.data_fim + 'T00:00').toLocaleDateString('pt-BR') : 'Vigente'}

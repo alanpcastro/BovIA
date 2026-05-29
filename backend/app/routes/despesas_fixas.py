@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
+from pydantic import BaseModel
 from ..database import get_db
 from ..models.despesa_fixa import DespesaFixa
 from ..schemas.despesa_fixa import DespesaFixaCreate, DespesaFixaUpdate, DespesaFixaOut
@@ -8,6 +9,15 @@ from ..auth import get_current_user
 from ..models.user import User
 
 router = APIRouter()
+
+
+class BulkDeleteIn(BaseModel):
+    ids: List[int]
+
+
+class BulkResult(BaseModel):
+    total: int
+    afetados: int
 
 
 @router.get("", response_model=List[DespesaFixaOut])
@@ -52,6 +62,24 @@ def atualizar(
     db.commit()
     db.refresh(desp)
     return desp
+
+
+@router.post("/bulk-delete", response_model=BulkResult)
+def bulk_delete_despesas(
+    data: BulkDeleteIn,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if not data.ids:
+        raise HTTPException(status_code=400, detail="Nenhuma despesa selecionada")
+    despesas = db.query(DespesaFixa).filter(
+        DespesaFixa.id.in_(data.ids),
+        DespesaFixa.user_id == current_user.id,
+    ).all()
+    for d in despesas:
+        db.delete(d)
+    db.commit()
+    return BulkResult(total=len(data.ids), afetados=len(despesas))
 
 
 @router.delete("/{desp_id}", status_code=204)

@@ -6,7 +6,6 @@ export interface LocalLote {
   id?: number
   serverId?: number
   nome: string
-  area_hectares?: number
   descricao?: string
   rendimento_carcaca?: number
   created_at?: string

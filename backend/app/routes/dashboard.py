@@ -22,22 +22,22 @@ def dashboard(db: Session = Depends(get_db), current_user: User = Depends(get_cu
     proximos_30 = hoje + timedelta(days=30)
 
     total_animais = db.query(func.count(Animal.id)).filter(
-        Animal.user_id == uid, Animal.status == StatusEnum.ativo
+        Animal.user_id == uid, Animal.status == StatusEnum.ativo, Animal.deletado_em == None  # noqa: E711
     ).scalar()
 
     total_machos = db.query(func.count(Animal.id)).filter(
-        Animal.user_id == uid, Animal.status == StatusEnum.ativo, Animal.sexo == "macho"
+        Animal.user_id == uid, Animal.status == StatusEnum.ativo, Animal.deletado_em == None, Animal.sexo == "macho"  # noqa: E711
     ).scalar()
 
     total_femeas = db.query(func.count(Animal.id)).filter(
-        Animal.user_id == uid, Animal.status == StatusEnum.ativo, Animal.sexo == "femea"
+        Animal.user_id == uid, Animal.status == StatusEnum.ativo, Animal.deletado_em == None, Animal.sexo == "femea"  # noqa: E711
     ).scalar()
 
     # Peso médio: última pesagem de cada animal ativo
     subq = (
         db.query(Pesagem.animal_id, func.max(Pesagem.data).label("ultima_data"))
         .join(Animal)
-        .filter(Animal.user_id == uid, Animal.status == StatusEnum.ativo)
+        .filter(Animal.user_id == uid, Animal.status == StatusEnum.ativo, Animal.deletado_em == None)  # noqa: E711
         .group_by(Pesagem.animal_id)
         .subquery()
     )

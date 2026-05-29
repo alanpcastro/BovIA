@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, Request
 from sqlalchemy.orm import Session
 from datetime import timedelta
 from pydantic import BaseModel, EmailStr
@@ -8,6 +8,7 @@ from ..schemas.user import UserCreate, UserLogin, UserOut, Token
 from ..auth import hash_senha, verificar_senha, criar_token, get_current_user
 from ..config import settings
 from ..email_service import enviar_reset_senha
+from ..rate_limit import limiter
 
 router = APIRouter()
 
@@ -22,7 +23,8 @@ class ResetSenha(BaseModel):
 
 
 @router.post("/register", response_model=Token, status_code=status.HTTP_201_CREATED)
-def register(data: UserCreate, db: Session = Depends(get_db)):
+@limiter.limit("5/hour")
+def register(request: Request, data: UserCreate, db: Session = Depends(get_db)):
     if db.query(User).filter(User.email == data.email).first():
         raise HTTPException(status_code=400, detail="Email já cadastrado")
 
@@ -41,7 +43,8 @@ def register(data: UserCreate, db: Session = Depends(get_db)):
 
 
 @router.post("/login", response_model=Token)
-def login(data: UserLogin, db: Session = Depends(get_db)):
+@limiter.limit("5/5minutes")
+def login(request: Request, data: UserLogin, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == data.email).first()
     if not user or not verificar_senha(data.senha, user.senha_hash):
         raise HTTPException(status_code=401, detail="Email ou senha inválidos")
@@ -56,7 +59,8 @@ def me(current_user: User = Depends(get_current_user)):
 
 
 @router.post("/solicitar-reset")
-async def solicitar_reset(data: ResetSolicitacao, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+@limiter.limit("3/hour")
+async def solicitar_reset(request: Request, data: ResetSolicitacao, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == data.email).first()
     # Sempre retorna sucesso para não revelar se o email existe
     if user:

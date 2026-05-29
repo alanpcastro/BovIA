@@ -3,6 +3,7 @@ import farmBg from '../assets/farm_bg.png'
 import logo from '../assets/logo.png'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { apiErrorMessage } from '../utils/apiError'
 
 export default function Register() {
   const { register } = useAuth()
@@ -22,7 +23,7 @@ export default function Register() {
       await register(nome, email, senha, fazenda)
       navigate('/dashboard')
     } catch (err: any) {
-      setErro(err.response?.data?.detail || 'Erro ao criar conta')
+      setErro(apiErrorMessage(err, 'Erro ao criar conta'))
     } finally {
       setLoading(false)
     }

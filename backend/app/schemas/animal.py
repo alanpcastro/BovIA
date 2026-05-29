@@ -16,11 +16,21 @@ class StatusEnum(str, Enum):
     transferido = "transferido"
 
 
+class CategoriaAnimalEnum(str, Enum):
+    bezerro = "bezerro"
+    garrote = "garrote"
+    novilha = "novilha"
+    vaca = "vaca"
+    boi_magro = "boi_magro"
+    boi_gordo = "boi_gordo"
+
+
 class AnimalCreate(BaseModel):
     brinco: Optional[str] = None
     nome: Optional[str] = None
     raca: Optional[str] = None
     sexo: SexoEnum
+    categoria: Optional[CategoriaAnimalEnum] = None
     data_nascimento: Optional[date] = None
     peso_entrada: Optional[float] = None
     origem: Optional[str] = None
@@ -57,6 +67,7 @@ class AnimalUpdate(BaseModel):
     nome: Optional[str] = None
     raca: Optional[str] = None
     sexo: Optional[SexoEnum] = None
+    categoria: Optional[CategoriaAnimalEnum] = None
     data_nascimento: Optional[date] = None
     peso_entrada: Optional[float] = None
     origem: Optional[str] = None
@@ -95,6 +106,7 @@ class AnimalOut(BaseModel):
     nome: Optional[str]
     raca: Optional[str]
     sexo: SexoEnum
+    categoria: Optional[CategoriaAnimalEnum] = None
     data_nascimento: Optional[date]
     peso_entrada: Optional[float]
     origem: Optional[str]

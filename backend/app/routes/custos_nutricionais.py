@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
+from pydantic import BaseModel
 from ..database import get_db
 from ..models.custo_nutricional import CustoNutricional
 from ..schemas.custo_nutricional import CustoNutricionalCreate, CustoNutricionalUpdate, CustoNutricionalOut
@@ -8,6 +9,15 @@ from ..auth import get_current_user
 from ..models.user import User
 
 router = APIRouter()
+
+
+class BulkDeleteIn(BaseModel):
+    ids: List[int]
+
+
+class BulkResult(BaseModel):
+    total: int
+    afetados: int
 
 
 def _to_out(c: CustoNutricional) -> CustoNutricionalOut:
@@ -58,6 +68,24 @@ def atualizar(
     db.commit()
     db.refresh(custo)
     return _to_out(custo)
+
+
+@router.post("/bulk-delete", response_model=BulkResult)
+def bulk_delete_custos(
+    data: BulkDeleteIn,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if not data.ids:
+        raise HTTPException(status_code=400, detail="Nenhum custo selecionado")
+    custos = db.query(CustoNutricional).filter(
+        CustoNutricional.id.in_(data.ids),
+        CustoNutricional.user_id == current_user.id,
+    ).all()
+    for c in custos:
+        db.delete(c)
+    db.commit()
+    return BulkResult(total=len(data.ids), afetados=len(custos))
 
 
 @router.delete("/{custo_id}", status_code=204)

@@ -30,25 +30,26 @@ def _get_pasto_or_404(pasto_id: int, db: Session, user: User) -> Pasto:
     return p
 
 
-def _ultima_pesagem_animal(animal_id: int, db: Session) -> float | None:
+def _ultima_pesagem_animal(animal_id: int, db: Session, user_id: int) -> float | None:
     p = (
-        db.query(Pesagem)
-        .filter(Pesagem.animal_id == animal_id)
+        db.query(Pesagem).join(Animal)
+        .filter(Pesagem.animal_id == animal_id, Animal.user_id == user_id)
         .order_by(desc(Pesagem.data))
         .first()
     )
     return p.peso_kg if p else None
 
 
-def _peso_total_lote(lote_id: int, db: Session) -> tuple[int, float]:
+def _peso_total_lote(lote_id: int, db: Session, user_id: int) -> tuple[int, float]:
     animais = db.query(Animal).filter(
         Animal.lote_id == lote_id,
+        Animal.user_id == user_id,
         Animal.deletado_em == None,
         Animal.status == StatusEnum.ativo,
     ).all()
     total = 0.0
     for a in animais:
-        peso = _ultima_pesagem_animal(a.id, db) or a.peso_entrada or 0
+        peso = _ultima_pesagem_animal(a.id, db, user_id) or a.peso_entrada or 0
         total += peso
     return len(animais), total
 
@@ -62,7 +63,7 @@ def _build_pasto_out(pasto: Pasto, db: Session) -> PastoOut:
     peso_total = 0.0
     lotes_out: List[LoteNoPasto] = []
     for l in lotes:
-        qtd, peso = _peso_total_lote(l.id, db)
+        qtd, peso = _peso_total_lote(l.id, db, pasto.user_id)
         peso_medio = peso / qtd if qtd else None
         total_animais += qtd
         peso_total += peso

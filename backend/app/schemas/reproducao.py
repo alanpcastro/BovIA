@@ -19,6 +19,8 @@ class ReproducaoCreate(BaseModel):
     resultado: Optional[str] = None
     data_prevista_parto: Optional[date] = None
     bezerro_brinco: Optional[str] = None
+    bezerro_sexo: Optional[str] = None         # transiente: usado quando cria animal automatico
+    bezerro_peso_kg: Optional[float] = None    # transiente: idem
     observacoes: Optional[str] = None
 
     @field_validator('data')

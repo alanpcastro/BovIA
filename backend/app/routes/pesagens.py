@@ -11,19 +11,40 @@ from ..models.user import User
 router = APIRouter()
 
 
-def _calcular_gmd(db: Session, animal_id: int, nova_pesagem: Pesagem) -> Optional[float]:
+def _calcular_gmd(db: Session, animal_id: int, nova_pesagem: Pesagem, user_id: int) -> Optional[float]:
     anterior = (
-        db.query(Pesagem)
-        .filter(Pesagem.animal_id == animal_id, Pesagem.data < nova_pesagem.data)
+        db.query(Pesagem).join(Animal)
+        .filter(
+            Pesagem.animal_id == animal_id,
+            Pesagem.data < nova_pesagem.data,
+            Animal.user_id == user_id,
+        )
         .order_by(Pesagem.data.desc())
         .first()
     )
-    if not anterior:
-        return None
-    dias = (nova_pesagem.data - anterior.data).days
+
+    if anterior:
+        peso_anterior = anterior.peso_kg
+        data_anterior = anterior.data
+    else:
+        # Fallback: usa peso_entrada do cadastro como ponto de partida (1a pesagem)
+        animal = db.query(Animal).filter(
+            Animal.id == animal_id, Animal.user_id == user_id,
+        ).first()
+        if not animal or animal.peso_entrada is None:
+            return None
+        peso_anterior = animal.peso_entrada
+        if animal.data_nascimento:
+            data_anterior = animal.data_nascimento
+        elif animal.created_at:
+            data_anterior = animal.created_at.date()
+        else:
+            return None
+
+    dias = (nova_pesagem.data - data_anterior).days
     if dias <= 0:
         return None
-    return round((nova_pesagem.peso_kg - anterior.peso_kg) / dias, 3)
+    return round((nova_pesagem.peso_kg - peso_anterior) / dias, 3)
 
 
 @router.get("", response_model=List[PesagemOut])
@@ -40,7 +61,7 @@ def listar_pesagens(
     result = []
     for p in pesagens:
         out = PesagemOut.model_validate(p)
-        out.gmd = _calcular_gmd(db, p.animal_id, p)
+        out.gmd = _calcular_gmd(db, p.animal_id, p, current_user.id)
         result.append(out)
     return result
 
@@ -57,7 +78,7 @@ def criar_pesagem(data: PesagemCreate, db: Session = Depends(get_db), current_us
     db.refresh(pesagem)
 
     out = PesagemOut.model_validate(pesagem)
-    out.gmd = _calcular_gmd(db, pesagem.animal_id, pesagem)
+    out.gmd = _calcular_gmd(db, pesagem.animal_id, pesagem, current_user.id)
     return out
 
 

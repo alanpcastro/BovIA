@@ -5,6 +5,49 @@ Basta dizer: "Faca o item 1.1" ou "Faca o bloco 3" etc.
 
 ---
 
+## BLOCO 0 — PRODUCAO / COMERCIALIZACAO (PRIORIDADE MAXIMA, auditoria 03/05/2026)
+
+Identificados como **bloqueantes para venda do BovIA como SaaS**. Devem ser feitos antes do 7.8 (Inteligencia/Extras).
+Cada um destes itens, se quebrado, destroi a confianca do cliente ou expoe dados.
+
+### 0.1 Auditoria de multi-tenancy (CRITICO) ✅ (concluido 03/05/2026)
+**Resultado**: Nenhum vazamento de dados entre tenants em endpoints HTTP. Os 16 arquivos de rota foram inspecionados linha-a-linha (todas as ~70 queries SQLAlchemy).
+**Documentacao**: ver `SECURITY-AUDIT.md` para tabela completa.
+**Hardening aplicado** (defense-in-depth) — 8 helpers que dependiam apenas de caller correctness foram explicitamente filtrados por user_id:
+- `pastos.py:_ultima_pesagem_animal` — agora requer `user_id` e faz JOIN com Animal
+- `pastos.py:_peso_total_lote` — agora filtra `Animal.user_id`
+- `pastos.py:_build_pasto_out` — passa `pasto.user_id` para os helpers
+- `pesagens.py:_calcular_gmd` — agora requer `user_id` e faz JOIN com Animal
+- `lotes.py:_animais_ativos` — agora requer `user_id` e filtra; 4 callers atualizados
+- `animais.py:historico_animal` — Pesagem/Saude/Reproducao com JOIN+filtro; Movimentacao com filtro direto
+**Issues fora de escopo de multi-tenancy** (anotados em SECURITY-AUDIT.md):
+- A. Fotos de animais expostas via static (info disclosure se URL vazar) — recomendado endpoint autenticado
+- B. Senha minima de 6 chars (fraco para producao)
+- D. Movimentacao aceita `data` arbitraria (impacta relatorios do proprio user)
+
+### 0.2 Rate limit + brute-force protection no `/auth/login` (CRITICO) ✅ (concluido 26/05/2026)
+- `slowapi==0.1.9` adicionado em requirements.txt
+- `backend/app/rate_limit.py` (novo): Limiter com `get_remote_address` como key_func
+- `main.py`: registrado `app.state.limiter`, handler de `RateLimitExceeded` (retorna 429 com JSON), `SlowAPIMiddleware`
+- Limites por IP aplicados em `routes/auth.py`:
+  - `POST /auth/login` -> **5 tentativas / 5 min** (depois 429)
+  - `POST /auth/register` -> 5 / hora (impede spam de contas)
+  - `POST /auth/solicitar-reset` -> 3 / hora (impede flood de email)
+- Resposta uniforme em login ja existia ("Email ou senha invalidos" pra ambos os casos)
+- Testado: 5 tentativas com senha errada -> 401; 6a tentativa -> 429 `{"error":"Rate limit exceeded: 5 per 5 minute"}`
+- **Nao feito** (deliberado): contador de tentativas falhas por email + lockout no DB. Adiciona uma migration e cobre o caso de atacante girando IPs (botnet); por enquanto o limite por IP cobre 99% e evita custo de schema.
+
+### 0.3 Backup automatizado verificado (CRITICO)
+**Por que**: Cliente com 200 animais cadastrados perdendo o DB e catastrofico (responsabilidade legal + perda de cliente).
+**O que fazer**:
+- Verificar `backend/app/routes/backup.py` — esta agendado? por quem?
+- Configurar cron diario (Render Cron Job ou GitHub Actions) gerando dump pg_dump
+- Armazenar dumps em S3/R2/Backblaze (criptografados)
+- Documentar procedimento de restore em `RESTORE.md`
+- **Testar o restore pelo menos uma vez** — backup que nunca foi restaurado nao e backup
+
+---
+
 ## BLOCO 1 — CRITICO: Mobile e Responsividade ✅ (concluido 13/04/2026)
 
 ### 1.1 Menu hamburger no mobile ✅
@@ -199,13 +242,14 @@ Cobertura estimada: ~60%. Abaixo as lacunas por prioridade.
 - Responsivo: 2 colunas desktop, 1 coluna mobile
 - Arquivo: `frontend/src/pages/Simulador.tsx`
 
-### 7.3 Relatorios em PDF e Excel (alta prioridade)
-Hoje `relatorios.py` so exporta CSV.
-- Adicionar `reportlab` (PDF) e `openpyxl` (Excel) ao requirements
-- Endpoints `/relatorios/animais.pdf`, `/animais.xlsx`, `/financeiro.pdf`, `/pesagens.xlsx`
-- Template "resumo para contador": movimentacoes do periodo + despesas + lucro consolidado
-- Historico anual: relatorio agregado ano fiscal (jan-dez)
-- Arquivos: `backend/app/routes/relatorios.py`, `requirements.txt`
+### 7.3 Relatorios em PDF e Excel (alta prioridade) ✅ (concluido 26/04/2026)
+- `requirements.txt`: reportlab==4.2.2 + openpyxl==3.1.5 (deps transitivas: pillow, et-xmlfile, chardet)
+- `routes/relatorios.py` refatorado com helpers `_xlsx_response`, `_pdf_response`, `_format_header`, `_autosize`, `_styles`, `_table_style`, `_overlap_days`
+- Excel: `/relatorios/animais.xlsx`, `/pesagens.xlsx`, `/financeiro.xlsx` (financeiro com 2 sheets: Movimentações + Custos de Saúde) — header verde-800 com font branca, autosize de colunas
+- PDF rebanho: `/animais.pdf` em A4 landscape, tabela com brinco/nome/raça/sexo/categoria/status/peso/nascimento/origem, header verde + zebra em verde-50
+- PDF resumo contábil: `/resumo-contador.pdf?data_inicio&data_fim` — receita líquida (vendas - descontos), custos (compras + fretes + saúde + despesas pro rata por dias do período), lucro bruto e líquido (descontando impostos), e tabela detalhada de movimentações
+- Para "anual" basta passar 1º jan a 31 dez (não precisei criar endpoint separado)
+- Frontend `Relatorios.tsx`: cada card de relatório agora tem botões CSV/Excel/PDF inline; novo card "Para o contador" com seletor de período + PDF; emojis 📤 📂 ⬇️ removidos e trocados por SVG (carry-over da auditoria UI)
 
 ### 7.4 Campos financeiros faltantes (media prioridade) ✅ (concluido 16/04/2026)
 - `Movimentacao`: colunas `frete` e `desconto` (Float, nullable) em `models/movimentacao.py`
@@ -216,25 +260,35 @@ Hoje `relatorios.py` so exporta CSV.
 - Frontend: form de Movimentacoes mostra Frete (compra) e Desconto (venda); coluna R$/kg na tabela
 - Frontend: DespesasFixas com 4 novas categorias no select e badges
 
-### 7.5 Categoria do Animal (media prioridade)
-Escopo original pede campo "Categoria: bezerro, garrote, novilha, vaca, boi magro, boi gordo".
-- Adicionar `CategoriaAnimalEnum` em `models/animal.py`
-- Campo derivavel de sexo + idade + peso, mas deixar editavel
-- Filtro por categoria em `Animais.tsx`
-- Migration alembic
+### 7.5 Categoria do Animal (media prioridade) ✅ (concluido 26/04/2026)
+- `CategoriaAnimalEnum` (bezerro, garrote, novilha, vaca, boi_magro, boi_gordo) em `models/animal.py`
+- Coluna `categoria` (Enum, nullable) em `animais` + schema Create/Update/Out
+- Filtro `?categoria=` em `GET /animais`
+- Migration `c9e6f1a2d4b5_categoria_animal.py` aplicada (cria enum `categoriaanimalenum`)
+- Frontend `Animais.tsx`: filtro novo, coluna na tabela com badge, campo no form com sugestao automatica (sexo+idade+peso) deixando o usuario sobrescrever
+- Frontend `AnimalDetalhe.tsx`: categoria no header e no modal de edicao
+- Heuristica: femea <24m=novilha, >=24m=vaca; macho <8m=bezerro; macho >=450kg=boi_gordo, >=360kg=boi_magro, senao garrote
 
-### 7.6 Campos do Lote faltantes (baixa prioridade)
-- `pasto_atual_id` (FK para pasto — depende de 7.1)
-- `data_entrada` (Date) — quando o lote comecou
-- Ja temos `area_hectares` e quantidade (computada via count animais)
+### 7.6 Campos do Lote faltantes (baixa prioridade) ✅ (concluido 26/04/2026)
+- `pasto_atual_id` ja existia (criado em 7.1) — agora exposto em `LoteOut` junto com `data_entrada_pasto`
+- `data_entrada` (Date) adicionado em `models/lote.py` + Create/Update/Out
+- Migration `d2b8a7e4f013_lote_data_entrada.py` aplicada
+- Frontend `Lotes.tsx`: campo `Data de Entrada` no form (default hoje) e card mostra "Iniciado em X · N dias"
+- `area_hectares` ja existia; quantidade de animais ja vinha como `total_animais` (computada via count)
 
-### 7.7 Agenda de Alertas completa (media prioridade)
-Hoje so ha alerta de vacinas urgentes no dashboard.
-- Rotacao de pasto (depende de 7.1): alertar quando dias_ocupacao > limite
-- Data ideal de venda: quando animal atinge peso/categoria de abate
-- Contas a pagar: alertas de despesas_fixas com vencimento proximo
-- Meta de peso por lote: definir meta e alertar progresso
-- Consolidar em `/dashboard/alertas` e em uma pagina `/agenda`
+### 7.7 Agenda de Alertas completa (media prioridade) ✅ (concluido 26/04/2026)
+- Backend `routes/alertas.py`: endpoint unificado `GET /alertas` agregando 4 fontes em um schema unico (`Alerta` com tipo, severidade, titulo, mensagem, data, dias, link)
+  - **Vacinas**: `saude.proxima_data` em [-7d, +30d]; severidade alta se atrasada/<=3d, media <=14d, baixa >=15d
+  - **Pastos**: superlotacao (alta), sem rotacao >45d (media), descanso >90d (baixa) — reusa `_build_pasto_out` de `routes/pastos.py`
+  - **Abate**: machos ativos com categoria `boi_gordo` OU peso atual >= 480kg
+  - **Partos**: `reproducao.data_prevista_parto` em [-7d, +30d]
+  - Ordenacao final: severidade alta > media > baixa, depois por dias asc
+- Frontend `pages/Agenda.tsx`: lista cronologica com badges de tipo/severidade, contadores no topo, filtro por tipo+severidade, link clicavel para entidade
+- Frontend `Dashboard.tsx`: alerta-big "X alertas criticos" agora consolida tudo (nao so vacinas) e aponta para `/agenda`; fallback de "X alertas de atencao" se so houver media
+- Nav `Layout.tsx`: novo item "Agenda" entre Dashboard e Animais
+- **Pendente / pos-MVP** (deixei fora desse bloco pra evitar mudanca de schema):
+  - Contas a pagar: precisa adicionar `dia_vencimento` em `DespesaFixa`
+  - Meta de peso por lote: precisa adicionar `meta_peso_kg` em `Lote`
 
 ### 7.8 Inteligencia / Extras Diferencial (pos-MVP)
 Bloco "Extra" das imagens — o que diferencia a BovIA.

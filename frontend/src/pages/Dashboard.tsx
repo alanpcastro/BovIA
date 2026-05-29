@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import api, { Dashboard as DashboardData, AnaliseFinanceira } from '../services/api'
+import api, { Dashboard as DashboardData, AnaliseFinanceira, Alerta } from '../services/api'
 import { useToast } from '../components/Toast'
+import { formatBRL, formatNumber } from '../utils/format'
 
-const fmt = (v: number | undefined | null) =>
-  v != null ? `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'
+const fmt = (v: number | undefined | null) => v != null ? formatBRL(v) : '—'
 
 const fmtCompact = (v: number | undefined | null) => {
   if (v == null) return '—'
-  if (Math.abs(v) >= 1000) return `R$ ${(v / 1000).toFixed(1)}k`
-  return `R$ ${v.toFixed(0)}`
+  if (Math.abs(v) >= 1000) return `R$ ${formatNumber(v / 1000, 1)}k`
+  return `R$ ${formatNumber(v, 0)}`
 }
 
 // ── Ícones SVG ────────────────────────────────────────────────────────────────
@@ -57,6 +57,7 @@ const IconChart = () => (
 export default function Dashboard() {
   const [data, setData] = useState<DashboardData | null>(null)
   const [fin, setFin] = useState<AnaliseFinanceira | null>(null)
+  const [alertas, setAlertas] = useState<Alerta[]>([])
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
   const { error: toastError } = useToast()
@@ -68,6 +69,7 @@ export default function Dashboard() {
     api.get('/financeiro/analise', {
       params: { data_inicio: mesAtras.toISOString().split('T')[0], data_fim: hoje.toISOString().split('T')[0] }
     }).then(r => setFin(r.data)).catch(() => {})
+    api.get('/alertas').then(r => setAlertas(r.data)).catch(() => {})
   }, [])
 
   if (loading) return (
@@ -80,10 +82,8 @@ export default function Dashboard() {
 
   const isNewUser = data.total_animais === 0
 
-  const vacinasUrgentes = data.proximas_vacinas.filter(v => {
-    const dias = Math.ceil((new Date(v.proxima_data + 'T00:00').getTime() - Date.now()) / 86400000)
-    return dias <= 7
-  })
+  const alertasAlta = alertas.filter(a => a.severidade === 'alta')
+  const alertasMedia = alertas.filter(a => a.severidade === 'media')
 
   // ── Onboarding ────────────────────────────────────────────────────────────
   if (isNewUser) {
@@ -131,8 +131,7 @@ export default function Dashboard() {
       {/* HERO: nome + total */}
       <div className="field-hero">
         <div>
-          <div className="field-hero-label">Seu Rebanho</div>
-          <div className="field-hero-title">Bom dia!</div>
+          <div className="field-hero-title">Seu Rebanho</div>
         </div>
         <div className="field-hero-stats" style={{ display: 'flex', gap: 32 }}>
           <div className="field-hero-stat">
@@ -156,15 +155,33 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* ALERTA URGENTE */}
-      {vacinasUrgentes.length > 0 && (
-        <div className="alert-big alert-urgent" onClick={() => navigate('/saude')}>
+      {/* ALERTAS CRÍTICOS — agenda consolidada */}
+      {alertasAlta.length > 0 && (
+        <div className="alert-big alert-urgent" onClick={() => navigate('/agenda')}>
           <div className="alert-big-icon"><IconWarn /></div>
           <div style={{ flex: 1 }}>
-            <div className="alert-big-title">Atenção! {vacinasUrgentes.length} vacinação(ões) urgente(s)</div>
-            <div className="alert-big-desc">Vencendo nos próximos 7 dias — toque para ver</div>
+            <div className="alert-big-title">{alertasAlta.length} alerta(s) crítico(s)</div>
+            <div className="alert-big-desc">
+              {alertasAlta.slice(0, 3).map(a => a.titulo).join(' · ')}
+              {alertasAlta.length > 3 && ` · +${alertasAlta.length - 3}`}
+            </div>
           </div>
           <div className="alert-big-arrow"><IconArrow /></div>
+        </div>
+      )}
+      {alertasAlta.length === 0 && alertasMedia.length > 0 && (
+        <div
+          className="card card-padded"
+          onClick={() => navigate('/agenda')}
+          style={{ cursor: 'pointer', borderLeft: '4px solid var(--amber-600)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}
+        >
+          <div>
+            <div style={{ fontWeight: 700, color: 'var(--gray-900)' }}>{alertasMedia.length} alerta(s) de atenção</div>
+            <div style={{ fontSize: 13, color: 'var(--gray-600)', marginTop: 2 }}>Toque para ver na Agenda</div>
+          </div>
+          <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="var(--gray-400)" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/>
+          </svg>
         </div>
       )}
 

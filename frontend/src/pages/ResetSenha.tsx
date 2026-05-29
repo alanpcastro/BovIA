@@ -2,6 +2,7 @@ import { useState, FormEvent } from 'react'
 import { Link, useSearchParams, useNavigate } from 'react-router-dom'
 import logo from '../assets/logo.png'
 import api from '../services/api'
+import { apiErrorMessage } from '../utils/apiError'
 
 export default function ResetSenha() {
   const [searchParams] = useSearchParams()
@@ -33,7 +34,7 @@ export default function ResetSenha() {
       setSucesso(true)
       setTimeout(() => navigate('/login'), 3000)
     } catch (err: any) {
-      setErro(err.response?.data?.detail || 'Erro ao redefinir senha. O link pode ter expirado.')
+      setErro(apiErrorMessage(err, 'Erro ao redefinir senha. O link pode ter expirado.'))
     } finally {
       setLoading(false)
     }

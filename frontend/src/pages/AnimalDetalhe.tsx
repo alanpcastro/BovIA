@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom'
 import api, { Animal, Pesagem, Saude, Reproducao, Movimentacao, Lote } from '../services/api'
 import Modal from '../components/Modal'
 import { useToast } from '../components/Toast'
+import { formatKg, formatBRL } from '../utils/format'
+import { apiErrorMessage } from '../utils/apiError'
 
 interface Historico {
   animal: Animal
@@ -42,7 +44,7 @@ export default function AnimalDetalhe() {
   const [saving, setSaving] = useState(false)
   const [showEdit, setShowEdit] = useState(false)
   const [editForm, setEditForm] = useState({
-    brinco: '', nome: '', raca: '', sexo: 'macho',
+    brinco: '', nome: '', raca: '', sexo: 'macho', categoria: '',
     data_nascimento: '', peso_entrada: '', lote_id: '', observacoes: ''
   })
 
@@ -68,6 +70,7 @@ export default function AnimalDetalhe() {
     const a = hist.animal
     setEditForm({
       brinco: a.brinco || '', nome: a.nome || '', raca: a.raca || '', sexo: a.sexo,
+      categoria: a.categoria || '',
       data_nascimento: a.data_nascimento || '', peso_entrada: a.peso_entrada?.toString() || '',
       lote_id: a.lote_id?.toString() || '', observacoes: a.observacoes || ''
     })
@@ -83,6 +86,7 @@ export default function AnimalDetalhe() {
         nome: editForm.nome || undefined,
         raca: editForm.raca || undefined,
         sexo: editForm.sexo,
+        categoria: editForm.categoria || null,
         data_nascimento: editForm.data_nascimento || undefined,
         peso_entrada: editForm.peso_entrada ? parseFloat(editForm.peso_entrada) : undefined,
         lote_id: editForm.lote_id ? parseInt(editForm.lote_id) : null,
@@ -92,7 +96,7 @@ export default function AnimalDetalhe() {
       load()
       success('Animal atualizado com sucesso!')
     } catch (err: any) {
-      toastError(err.response?.data?.detail || 'Erro ao atualizar')
+      toastError(apiErrorMessage(err, 'Erro ao atualizar'))
     } finally {
       setSaving(false)
     }
@@ -112,7 +116,7 @@ export default function AnimalDetalhe() {
       load()
       success('Foto atualizada')
     } catch (err: any) {
-      toastError(err.response?.data?.detail || 'Erro ao enviar foto')
+      toastError(apiErrorMessage(err, 'Erro ao enviar foto'))
     } finally {
       setUploadingFoto(false)
       e.target.value = ''
@@ -136,8 +140,19 @@ export default function AnimalDetalhe() {
     navigate('/animais')
   }
 
+  async function deletarPesagem(pesagemId: number) {
+    if (!confirm('Excluir esta pesagem?')) return
+    try {
+      await api.delete(`/pesagens/${pesagemId}`)
+      load()
+      success('Pesagem excluída')
+    } catch (err: any) {
+      toastError(apiErrorMessage(err, 'Erro ao excluir pesagem'))
+    }
+  }
+
   if (!hist) return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: 'var(--gray-400)', padding: 40 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: 'var(--gray-500)', padding: 40 }}>
       <span className="spinner spinner-dark" /> Carregando...
     </div>
   )
@@ -215,11 +230,30 @@ export default function AnimalDetalhe() {
                 Brinco #{animal.brinco}
                 {animal.nome && <span style={{ color: 'var(--gray-500)', fontWeight: 500, fontSize: 16 }}> — {animal.nome}</span>}
               </div>
-              <div style={{ color: 'var(--gray-500)', marginTop: 4, fontSize: 14, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+              <div style={{ color: 'var(--gray-500)', marginTop: 4, fontSize: 14, display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
                 <span>{animal.raca || 'Raça não informada'}</span>
-                {loteNome && <span>· 🌿 {loteNome}</span>}
+                {animal.categoria && (
+                  <span style={{ fontWeight: 600, color: 'var(--gray-700)', textTransform: 'capitalize' }}>
+                    · {animal.categoria.replace('_', ' ')}
+                  </span>
+                )}
+                {loteNome && (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    ·
+                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 7l9-4 9 4M3 7v10l9 4m0-14v14m9-10v10l-9 4"/>
+                    </svg>
+                    {loteNome}
+                  </span>
+                )}
                 {animal.data_nascimento && (
-                  <span>· 📅 {new Date(animal.data_nascimento + 'T00:00').toLocaleDateString('pt-BR')}</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    ·
+                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    {new Date(animal.data_nascimento + 'T00:00').toLocaleDateString('pt-BR')}
+                  </span>
                 )}
               </div>
             </div>
@@ -260,13 +294,13 @@ export default function AnimalDetalhe() {
         {/* Stats rápidas */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 16, marginTop: 24, paddingTop: 20, borderTop: '1px solid var(--gray-100)' }}>
           {[
-            { label: 'Peso de Entrada', value: animal.peso_entrada ? `${animal.peso_entrada} kg` : '—' },
-            { label: 'Último Peso', value: ultimaPesagem ? `${ultimaPesagem.peso_kg} kg` : '—' },
+            { label: 'Peso de Entrada', value: animal.peso_entrada != null ? formatKg(animal.peso_entrada) : '—' },
+            { label: 'Último Peso', value: ultimaPesagem ? formatKg(ultimaPesagem.peso_kg, 1) : '—' },
             { label: 'Origem', value: animal.origem === 'nascido' ? 'Nascido na fazenda' : animal.origem === 'comprado' ? 'Comprado' : animal.origem || '—' },
             { label: 'Cadastrado em', value: new Date(animal.created_at).toLocaleDateString('pt-BR') },
           ].map(i => (
             <div key={i.label}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--gray-400)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>{i.label}</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--gray-500)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>{i.label}</div>
               <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--gray-900)' }}>{i.value}</div>
             </div>
           ))}
@@ -327,24 +361,31 @@ export default function AnimalDetalhe() {
             </button>
           </div>
           {hist.pesagens.length === 0
-            ? <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--gray-400)', fontSize: 13 }}>Sem pesagens registradas</div>
+            ? <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--gray-500)', fontSize: 13 }}>Sem pesagens registradas</div>
             : (
               <div className="table-wrapper">
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th>Data</th><th>Peso</th><th>GMD (kg/dia)</th><th>Observações</th>
+                    <th>Data</th><th>Peso</th><th>GMD (kg/dia)</th><th>Observações</th><th></th>
                   </tr>
                 </thead>
                 <tbody>
                   {hist.pesagens.map(p => (
                     <tr key={p.id}>
                       <td>{new Date(p.data + 'T00:00').toLocaleDateString('pt-BR')}</td>
-                      <td style={{ fontWeight: 700, color: 'var(--green-700)' }}>{p.peso_kg} kg</td>
+                      <td style={{ fontWeight: 700, color: 'var(--green-700)' }}>{formatKg(p.peso_kg, 1)}</td>
                       <td style={{ fontWeight: 700, color: p.gmd && p.gmd > 0 ? 'var(--green-700)' : 'var(--red-600)' }}>
                         {p.gmd != null ? `${p.gmd > 0 ? '+' : ''}${p.gmd}` : '—'}
                       </td>
                       <td style={{ color: 'var(--gray-400)', fontSize: 13 }}>{p.observacoes || '—'}</td>
+                      <td>
+                        <button className="btn btn-danger btn-sm btn-icon" onClick={() => deletarPesagem(p.id)} title="Excluir">
+                          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                          </svg>
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -365,7 +406,7 @@ export default function AnimalDetalhe() {
             </button>
           </div>
           {hist.saudes.length === 0
-            ? <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--gray-400)', fontSize: 13 }}>Sem registros de saúde</div>
+            ? <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--gray-500)', fontSize: 13 }}>Sem registros de saúde</div>
             : (
               <div className="table-wrapper">
               <table className="data-table">
@@ -379,7 +420,7 @@ export default function AnimalDetalhe() {
                       <td><span className={`badge ${tipoSaudeBadge[s.tipo] || 'badge-gray'}`}>{tipoSaudeLabel[s.tipo] || s.tipo}</span></td>
                       <td>{s.descricao}</td>
                       <td style={{ color: 'var(--gray-500)', fontSize: 13 }}>{s.medicamento || '—'}</td>
-                      <td style={{ fontWeight: 600, color: s.custo ? 'var(--red-600)' : 'var(--gray-400)' }}>{s.custo != null ? `R$ ${s.custo.toFixed(2)}` : '—'}</td>
+                      <td style={{ fontWeight: 600, color: s.custo ? 'var(--red-600)' : 'var(--gray-400)' }}>{s.custo != null ? formatBRL(s.custo) : '—'}</td>
                       <td style={{ color: s.proxima_data ? 'var(--amber-600)' : 'var(--gray-400)', fontWeight: 600, fontSize: 13 }}>
                         {s.proxima_data ? new Date(s.proxima_data + 'T00:00').toLocaleDateString('pt-BR') : '—'}
                       </td>
@@ -403,7 +444,7 @@ export default function AnimalDetalhe() {
             </button>
           </div>
           {hist.reproducoes.length === 0
-            ? <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--gray-400)', fontSize: 13 }}>Sem registros reprodutivos</div>
+            ? <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--gray-500)', fontSize: 13 }}>Sem registros reprodutivos</div>
             : (
               <div className="table-wrapper">
               <table className="data-table">
@@ -440,7 +481,7 @@ export default function AnimalDetalhe() {
         <div className="card card-padded">
           <h3 style={{ fontWeight: 700, fontSize: 15, marginBottom: 16 }}>Movimentações</h3>
           {hist.movimentacoes.length === 0
-            ? <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--gray-400)', fontSize: 13 }}>Sem movimentações</div>
+            ? <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--gray-500)', fontSize: 13 }}>Sem movimentações</div>
             : (
               <div className="table-wrapper">
               <table className="data-table">
@@ -452,8 +493,8 @@ export default function AnimalDetalhe() {
                     <tr key={m.id}>
                       <td>{new Date(m.data + 'T00:00').toLocaleDateString('pt-BR')}</td>
                       <td>{m.tipo}</td>
-                      <td style={{ fontWeight: 600 }}>{m.valor != null ? `R$ ${m.valor.toFixed(2)}` : '—'}</td>
-                      <td style={{ fontSize: 13 }}>{m.peso_kg ? `${m.peso_kg} kg` : '—'}</td>
+                      <td style={{ fontWeight: 600 }}>{m.valor != null ? formatBRL(m.valor) : '—'}</td>
+                      <td style={{ fontSize: 13 }}>{m.peso_kg ? formatKg(m.peso_kg) : '—'}</td>
                       <td style={{ color: 'var(--gray-400)', fontSize: 13 }}>{m.observacoes || '—'}</td>
                     </tr>
                   ))}
@@ -521,9 +562,21 @@ export default function AnimalDetalhe() {
               </select>
             </div>
             <div className="form-group">
-              <label className="form-label">Observações</label>
-              <input className="form-input" value={editForm.observacoes} onChange={e => setEditForm(p => ({ ...p, observacoes: e.target.value }))} placeholder="Opcional..." />
+              <label className="form-label">Categoria</label>
+              <select className="form-select" value={editForm.categoria} onChange={e => setEditForm(p => ({ ...p, categoria: e.target.value }))}>
+                <option value="">— Nenhuma —</option>
+                <option value="bezerro">Bezerro</option>
+                <option value="garrote">Garrote</option>
+                <option value="novilha">Novilha</option>
+                <option value="vaca">Vaca</option>
+                <option value="boi_magro">Boi Magro</option>
+                <option value="boi_gordo">Boi Gordo</option>
+              </select>
             </div>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Observações</label>
+            <input className="form-input" value={editForm.observacoes} onChange={e => setEditForm(p => ({ ...p, observacoes: e.target.value }))} placeholder="Opcional..." />
           </div>
         </form>
       </Modal>

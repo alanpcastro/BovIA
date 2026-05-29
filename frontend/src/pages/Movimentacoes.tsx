@@ -2,6 +2,9 @@ import { useEffect, useState, FormEvent } from 'react'
 import api, { Movimentacao, Animal } from '../services/api'
 import Modal from '../components/Modal'
 import { useToast } from '../components/Toast'
+import { formatBRL, formatKg } from '../utils/format'
+import { todayLocal } from '../utils/date'
+import { apiErrorMessage } from '../utils/apiError'
 
 const tipos = ['compra', 'venda', 'transferencia', 'nascimento', 'morte']
 const tipoLabel: Record<string, string> = {
@@ -15,7 +18,7 @@ const tipoBadge: Record<string, string> = {
 
 const emptyForm = {
   animal_id: '', tipo: 'compra',
-  data: new Date().toISOString().split('T')[0],
+  data: todayLocal(),
   valor: '', peso_kg: '', preco_arroba: '', agio_compra: '', frete: '', desconto: '', origem: '', destino: '', observacoes: ''
 }
 
@@ -30,7 +33,7 @@ export default function Movimentacoes() {
   const [saving, setSaving] = useState(false)
   const [lotes, setLotes] = useState<any[]>([])
   const [showLoteModal, setShowLoteModal] = useState(false)
-  const emptyLoteForm = { lote_id: '', tipo: 'compra', data: new Date().toISOString().split('T')[0], valor_total: '', peso_medio_kg: '', origem: '', destino: '', observacoes: '' }
+  const emptyLoteForm = { lote_id: '', tipo: 'compra', data: todayLocal(), valor_total: '', peso_medio_kg: '', origem: '', destino: '', observacoes: '' }
   const [loteForm, setLoteForm] = useState(emptyLoteForm)
   const [loteConfirm, setLoteConfirm] = useState(false)
 
@@ -67,7 +70,7 @@ export default function Movimentacoes() {
       load()
       success('Movimentação registrada com sucesso!')
     } catch (err: any) {
-      setErro(err.response?.data?.detail || 'Erro ao registrar')
+      setErro(apiErrorMessage(err, 'Erro ao registrar'))
       toastError('Erro ao registrar movimentação')
     } finally {
       setSaving(false)
@@ -92,7 +95,7 @@ export default function Movimentacoes() {
       load()
       success(`Movimentação registrada para ${res.data.registrados} animais!`)
     } catch (err: any) {
-      setErro(err.response?.data?.detail || 'Erro ao registrar em lote')
+      setErro(apiErrorMessage(err, 'Erro ao registrar em lote'))
       toastError('Erro ao registrar movimentação em lote')
     } finally {
       setSaving(false)
@@ -125,9 +128,9 @@ export default function Movimentacoes() {
       {/* Resumo financeiro */}
       <div className="grid-3" style={{ marginBottom: 24 }}>
         {[
-          { label: 'Total em Vendas', value: `R$ ${totalVendas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, color: 'var(--green-700)', bg: 'var(--green-100)' },
-          { label: 'Total em Compras', value: `R$ ${totalCompras.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, color: 'var(--blue-600)', bg: 'var(--blue-100)' },
-          { label: 'Saldo', value: `R$ ${saldo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, color: saldo >= 0 ? 'var(--green-700)' : 'var(--red-600)', bg: saldo >= 0 ? 'var(--green-50)' : 'var(--red-100)' },
+          { label: 'Total em Vendas', value: formatBRL(totalVendas), color: 'var(--green-700)', bg: 'var(--green-100)' },
+          { label: 'Total em Compras', value: formatBRL(totalCompras), color: 'var(--blue-600)', bg: 'var(--blue-100)' },
+          { label: 'Saldo', value: formatBRL(saldo), color: saldo >= 0 ? 'var(--green-700)' : 'var(--red-600)', bg: saldo >= 0 ? 'var(--green-50)' : 'var(--red-100)' },
         ].map(c => (
           <div key={c.label} className="stat-card">
             <div className="stat-card-icon" style={{ background: c.bg }}>
@@ -180,11 +183,11 @@ export default function Movimentacoes() {
                   <td>{new Date(m.data + 'T00:00').toLocaleDateString('pt-BR')}</td>
                   <td><span className={`badge ${tipoBadge[m.tipo] || 'badge-gray'}`}>{tipoLabel[m.tipo] || m.tipo}</span></td>
                   <td style={{ fontWeight: 700, color: m.tipo === 'venda' ? 'var(--green-700)' : m.tipo === 'compra' ? 'var(--blue-600)' : 'var(--gray-700)' }}>
-                    {m.valor != null ? `R$ ${m.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '—'}
+                    {m.valor != null ? formatBRL(m.valor) : '—'}
                   </td>
-                  <td style={{ color: 'var(--gray-500)', fontSize: 13 }}>{m.peso_kg ? `${m.peso_kg} kg` : '—'}</td>
-                  <td style={{ color: 'var(--amber-600)', fontSize: 13, fontWeight: 600 }}>{m.preco_arroba ? `R$ ${m.preco_arroba.toFixed(2)}` : '—'}</td>
-                  <td style={{ color: 'var(--gray-500)', fontSize: 13 }}>{m.custo_kg != null ? `R$ ${m.custo_kg.toFixed(2)}` : '—'}</td>
+                  <td style={{ color: 'var(--gray-500)', fontSize: 13 }}>{m.peso_kg ? formatKg(m.peso_kg) : '—'}</td>
+                  <td style={{ color: 'var(--amber-600)', fontSize: 13, fontWeight: 600 }}>{m.preco_arroba ? formatBRL(m.preco_arroba) : '—'}</td>
+                  <td style={{ color: 'var(--gray-500)', fontSize: 13 }}>{m.custo_kg != null ? formatBRL(m.custo_kg) : '—'}</td>
                   <td style={{ color: 'var(--gray-500)', fontSize: 13 }}>{m.origem || '—'}</td>
                   <td style={{ color: 'var(--gray-500)', fontSize: 13 }}>{m.destino || '—'}</td>
                   <td style={{ color: 'var(--gray-400)', fontSize: 13 }}>{m.observacoes || '—'}</td>

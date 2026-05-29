@@ -2,14 +2,24 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import date
+from pydantic import BaseModel
 from ..database import get_db
 from ..models.reproducao import Reproducao
-from ..models.animal import Animal
-from ..schemas.reproducao import ReproducaoCreate, ReproducaoUpdate, ReproducaoOut
+from ..models.animal import Animal, CategoriaAnimalEnum
+from ..schemas.reproducao import ReproducaoCreate, ReproducaoUpdate, ReproducaoOut, TipoReproducaoEnum
 from ..auth import get_current_user
 from ..models.user import User
 
 router = APIRouter()
+
+
+class BulkDeleteIn(BaseModel):
+    ids: List[int]
+
+
+class BulkResult(BaseModel):
+    total: int
+    afetados: int
 
 
 @router.get("", response_model=List[ReproducaoOut])
@@ -36,8 +46,43 @@ def criar_reproducao(data: ReproducaoCreate, db: Session = Depends(get_db), curr
     if not animal:
         raise HTTPException(status_code=404, detail="Animal não encontrado")
 
-    repro = Reproducao(**data.model_dump(), user_id=current_user.id)
+    # Campos transientes do bezerro nao pertencem ao model Reproducao
+    payload = data.model_dump()
+    bezerro_sexo = payload.pop('bezerro_sexo', None)
+    bezerro_peso_kg = payload.pop('bezerro_peso_kg', None)
+
+    repro = Reproducao(**payload, user_id=current_user.id)
     db.add(repro)
+
+    # Cria automaticamente um animal "bezerro" quando o evento e um parto ou houve nascimento
+    deve_criar_bezerro = (
+        data.resultado == "nasceu bezerro"
+        or (data.tipo == TipoReproducaoEnum.parto and data.resultado != "aborto")
+    )
+    if deve_criar_bezerro:
+        if data.bezerro_brinco:
+            existe = db.query(Animal).filter(
+                Animal.user_id == current_user.id,
+                Animal.brinco == data.bezerro_brinco,
+                Animal.deletado_em.is_(None),
+            ).first()
+            if existe:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Brinco '{data.bezerro_brinco}' ja cadastrado em outro animal",
+                )
+        bezerro = Animal(
+            user_id=current_user.id,
+            brinco=data.bezerro_brinco,
+            sexo=bezerro_sexo or "femea",
+            categoria=CategoriaAnimalEnum.bezerro,
+            data_nascimento=data.data,
+            peso_entrada=bezerro_peso_kg,
+            lote_id=animal.lote_id,
+            origem=(f"Filho(a) de #{animal.brinco}" if animal.brinco else "Nascido na fazenda"),
+        )
+        db.add(bezerro)
+
     db.commit()
     db.refresh(repro)
     return repro
@@ -61,6 +106,24 @@ def atualizar_reproducao(repro_id: int, data: ReproducaoUpdate, db: Session = De
     db.commit()
     db.refresh(repro)
     return repro
+
+
+@router.post("/bulk-delete", response_model=BulkResult)
+def bulk_delete_reproducao(
+    data: BulkDeleteIn,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if not data.ids:
+        raise HTTPException(status_code=400, detail="Nenhum registro selecionado")
+    registros = db.query(Reproducao).join(Animal).filter(
+        Reproducao.id.in_(data.ids),
+        Animal.user_id == current_user.id,
+    ).all()
+    for r in registros:
+        db.delete(r)
+    db.commit()
+    return BulkResult(total=len(data.ids), afetados=len(registros))
 
 
 @router.delete("/{repro_id}", status_code=204)

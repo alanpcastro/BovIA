@@ -1,6 +1,8 @@
 import { useState, useRef } from 'react'
 import api from '../services/api'
 import { useToast } from '../components/Toast'
+import { todayLocal } from '../utils/date'
+import { apiErrorMessage } from '../utils/apiError'
 
 export default function Configuracoes() {
   const { success, error: toastError } = useToast()
@@ -16,7 +18,7 @@ export default function Configuracoes() {
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `bovia-backup-${new Date().toISOString().split('T')[0]}.json`
+      a.download = `bovia-backup-${todayLocal()}.json`
       a.click()
       URL.revokeObjectURL(url)
       success('Backup exportado')
@@ -43,7 +45,7 @@ export default function Configuracoes() {
       const total = Object.values(counts).reduce((a, b) => a + b, 0)
       success(`Importação concluída: ${total} registro(s)`)
     } catch (err: any) {
-      toastError(err.response?.data?.detail || 'Erro ao importar backup')
+      toastError(apiErrorMessage(err, 'Erro ao importar backup'))
     } finally {
       setImporting(false)
       e.target.value = ''

@@ -1,12 +1,16 @@
-import { useEffect, useState, FormEvent } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useEffect, useState, FormEvent, useMemo } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import api, { Pesagem, Animal } from '../services/api'
 import Modal from '../components/Modal'
 import { useToast } from '../components/Toast'
+import { formatKg, formatNumber } from '../utils/format'
+import { todayLocal } from '../utils/date'
+import { apiErrorMessage } from '../utils/apiError'
 
 export default function Pesagens() {
   const [params] = useSearchParams()
   const animalIdParam = params.get('animal_id')
+  const navigate = useNavigate()
   const { success, error: toastError } = useToast()
 
   const [pesagens, setPesagens] = useState<Pesagem[]>([])
@@ -15,14 +19,14 @@ export default function Pesagens() {
   const [filtroAnimal, setFiltroAnimal] = useState(animalIdParam || '')
   const [form, setForm] = useState({
     animal_id: animalIdParam || '',
-    data: new Date().toISOString().split('T')[0],
+    data: todayLocal(),
     peso_kg: '', observacoes: ''
   })
   const [erro, setErro] = useState('')
   const [saving, setSaving] = useState(false)
   const [lotes, setLotes] = useState<any[]>([])
   const [showLoteModal, setShowLoteModal] = useState(false)
-  const [loteForm, setLoteForm] = useState({ lote_id: '', data: new Date().toISOString().split('T')[0], peso_medio_kg: '', observacoes: '' })
+  const [loteForm, setLoteForm] = useState({ lote_id: '', data: todayLocal(), peso_medio_kg: '', observacoes: '' })
   const [loteConfirm, setLoteConfirm] = useState(false)
 
   useEffect(() => {
@@ -61,7 +65,7 @@ export default function Pesagens() {
       load()
       success('Pesagem registrada com sucesso!')
     } catch (err: any) {
-      setErro(err.response?.data?.detail || 'Erro ao registrar pesagem')
+      setErro(apiErrorMessage(err, 'Erro ao registrar pesagem'))
       toastError('Erro ao registrar pesagem')
     } finally {
       setSaving(false)
@@ -87,21 +91,29 @@ export default function Pesagens() {
       load()
       success(`Pesagem registrada para ${res.data.registrados} animais!`)
     } catch (err: any) {
-      setErro(err.response?.data?.detail || 'Erro ao registrar pesagem em lote')
+      setErro(apiErrorMessage(err, 'Erro ao registrar pesagem em lote'))
       toastError('Erro ao registrar pesagem em lote')
     } finally {
       setSaving(false)
     }
   }
 
-  async function deletar(id: number) {
-    if (!confirm('Excluir esta pesagem?')) return
-    await api.delete(`/pesagens/${id}`)
-    load()
-    success('Pesagem excluída')
-  }
-
   const animaisMap = Object.fromEntries(animais.map(a => [a.id, a]))
+
+  // Agrupa pesagens por animal: pega a mais recente + total de pesagens
+  // (Pesagens vêm ordenadas DESC pela API, entao a primeira de cada animal e a mais recente)
+  const resumoPorAnimal = useMemo(() => {
+    const map = new Map<number, { latest: Pesagem; total: number }>()
+    for (const p of pesagens) {
+      const existing = map.get(p.animal_id)
+      if (existing) {
+        existing.total += 1
+      } else {
+        map.set(p.animal_id, { latest: p, total: 1 })
+      }
+    }
+    return Array.from(map.values())
+  }, [pesagens])
 
   return (
     <div>
@@ -111,7 +123,7 @@ export default function Pesagens() {
           <div className="page-subtitle">Controle de peso e GMD do rebanho</div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn btn-ghost btn-xl" onClick={() => { setLoteForm({ lote_id: '', data: new Date().toISOString().split('T')[0], peso_medio_kg: '', observacoes: '' }); setErro(''); setLoteConfirm(false); setShowLoteModal(true) }}>
+          <button className="btn btn-ghost btn-xl" onClick={() => { setLoteForm({ lote_id: '', data: todayLocal(), peso_medio_kg: '', observacoes: '' }); setErro(''); setLoteConfirm(false); setShowLoteModal(true) }}>
             Pesar Lote Inteiro
           </button>
           <button className="btn btn-primary btn-xl" onClick={() => { setErro(''); setShowModal(true) }}>
@@ -137,53 +149,59 @@ export default function Pesagens() {
           <thead>
             <tr>
               <th>Animal</th>
-              <th>Data</th>
-              <th>Peso</th>
+              <th>Última Pesagem</th>
+              <th>Peso Atual</th>
               <th>GMD (kg/dia)</th>
-              <th>Observações</th>
+              <th>Pesagens</th>
               <th></th>
             </tr>
           </thead>
           <tbody>
-            {pesagens.length === 0 && (
+            {resumoPorAnimal.length === 0 && (
               <tr><td colSpan={6} className="table-empty">Nenhuma pesagem registrada</td></tr>
             )}
-            {pesagens.map(p => {
+            {resumoPorAnimal.map(({ latest: p, total }) => {
               const animal = animaisMap[p.animal_id]
               const gmdPositivo = p.gmd != null && p.gmd > 0
               const gmdNegativo = p.gmd != null && p.gmd < 0
               return (
-                <tr key={p.id}>
+                <tr
+                  key={p.animal_id}
+                  onClick={() => navigate(`/animais/${p.animal_id}`)}
+                  style={{ cursor: 'pointer' }}
+                >
                   <td style={{ fontWeight: 600 }}>
                     #{animal?.brinco || p.animal_id}
                     {animal?.nome && <span style={{ color: 'var(--gray-400)', fontWeight: 400 }}> — {animal.nome}</span>}
                   </td>
                   <td>{new Date(p.data + 'T00:00').toLocaleDateString('pt-BR')}</td>
-                  <td style={{ fontWeight: 700, color: 'var(--green-700)' }}>{p.peso_kg} kg</td>
+                  <td style={{ fontWeight: 700, color: 'var(--green-700)' }}>{formatKg(p.peso_kg, 1)}</td>
                   <td>
                     {p.gmd != null ? (
                       <span style={{
                         fontWeight: 700,
                         color: gmdPositivo ? 'var(--green-700)' : gmdNegativo ? 'var(--red-600)' : 'var(--gray-500)'
                       }}>
-                        {gmdPositivo ? '+' : ''}{p.gmd} kg/dia
+                        {gmdPositivo ? '+' : ''}{formatNumber(p.gmd, 3)} kg/dia
                       </span>
                     ) : <span style={{ color: 'var(--gray-400)' }}>—</span>}
                   </td>
-                  <td style={{ color: 'var(--gray-400)', fontSize: 13 }}>{p.observacoes || '—'}</td>
                   <td>
-                    <button className="btn btn-danger btn-sm btn-icon" onClick={() => deletar(p.id)} title="Excluir">
-                      <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                      </svg>
-                    </button>
+                    <span className="badge badge-gray" style={{ fontWeight: 700 }}>
+                      {total} {total === 1 ? 'registro' : 'registros'}
+                    </span>
+                  </td>
+                  <td style={{ color: 'var(--gray-400)', fontSize: 12, fontWeight: 600 }}>
+                    Ver histórico →
                   </td>
                 </tr>
               )
             })}
           </tbody>
         </table>
-        <div className="table-footer">{pesagens.length} pesagem(ns) registrada(s)</div>
+        <div className="table-footer">
+          {resumoPorAnimal.length} animal(is) com pesagem · {pesagens.length} pesagem(ns) no total
+        </div>
       </div>
 
       <Modal
@@ -244,8 +262,10 @@ export default function Pesagens() {
         {erro && <div className="alert alert-error">{erro}</div>}
         {loteConfirm && (
           <div className="alert alert-warning" style={{ marginBottom: 16 }}>
-            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ flexShrink: 0 }}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
-            Isso vai registrar pesagem para <strong>todos os animais</strong> do lote <strong>{lotes.find(l => String(l.id) === loteForm.lote_id)?.nome}</strong> ({lotes.find(l => String(l.id) === loteForm.lote_id)?.total_animais} animais). Confirmar?
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ flexShrink: 0, marginTop: 2 }}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+            <span style={{ lineHeight: 1.5 }}>
+              Isso vai registrar pesagem para <strong>todos os animais</strong> do lote <strong>{lotes.find(l => String(l.id) === loteForm.lote_id)?.nome}</strong> ({lotes.find(l => String(l.id) === loteForm.lote_id)?.total_animais} animais). Confirmar?
+            </span>
           </div>
         )}
         <form id="form-pesagem-lote" onSubmit={handleLoteSubmit}>

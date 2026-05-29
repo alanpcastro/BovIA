@@ -2,10 +2,17 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 from .config import settings
-from .routes import auth, lotes, animais, pesagens, saude, reproducao, movimentacoes, dashboard, relatorios, custos_nutricionais, despesas_fixas, financeiro, backup, pastos
+from .rate_limit import limiter
+from .routes import auth, lotes, animais, pesagens, saude, reproducao, movimentacoes, dashboard, relatorios, custos_nutricionais, despesas_fixas, financeiro, backup, pastos, alertas
 
 app = FastAPI(title="BovIA API", version="1.0.0")
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
 
 UPLOADS_DIR = Path(__file__).resolve().parent.parent / "uploads"
 UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
@@ -33,6 +40,7 @@ app.include_router(custos_nutricionais.router, prefix="/custos-nutricionais", ta
 app.include_router(despesas_fixas.router, prefix="/despesas-fixas", tags=["despesas-fixas"])
 app.include_router(financeiro.router, prefix="/financeiro", tags=["financeiro"])
 app.include_router(backup.router, prefix="/backup", tags=["backup"])
+app.include_router(alertas.router, prefix="/alertas", tags=["alertas"])
 
 
 @app.get("/")

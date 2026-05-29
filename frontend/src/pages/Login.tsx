@@ -3,6 +3,7 @@ import farmBg from '../assets/farm_bg.png'
 import logo from '../assets/logo.png'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { apiErrorMessage } from '../utils/apiError'
 
 export default function Login() {
   const { login } = useAuth()
@@ -20,7 +21,7 @@ export default function Login() {
       await login(email, senha)
       navigate('/dashboard')
     } catch (err: any) {
-      setErro(err.response?.data?.detail || 'E-mail ou senha incorretos')
+      setErro(apiErrorMessage(err, 'E-mail ou senha incorretos'))
     } finally {
       setLoading(false)
     }

@@ -1,28 +1,31 @@
 from pydantic import BaseModel
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, date
 
 
 class LoteCreate(BaseModel):
     nome: str
-    area_hectares: Optional[float] = None
     descricao: Optional[str] = None
     rendimento_carcaca: Optional[float] = 52.0
+    data_entrada: Optional[date] = None
 
 
 class LoteUpdate(BaseModel):
     nome: Optional[str] = None
-    area_hectares: Optional[float] = None
     descricao: Optional[str] = None
     rendimento_carcaca: Optional[float] = None
+    data_entrada: Optional[date] = None
 
 
 class LoteOut(BaseModel):
     id: int
     nome: str
-    area_hectares: Optional[float]
     descricao: Optional[str]
     rendimento_carcaca: Optional[float]
+    data_entrada: Optional[date] = None
+    pasto_atual_id: Optional[int] = None
+    pasto_atual_nome: Optional[str] = None
+    data_entrada_pasto: Optional[date] = None
     created_at: datetime
     total_animais: Optional[int] = 0
 
