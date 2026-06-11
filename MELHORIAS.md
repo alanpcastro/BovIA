@@ -106,6 +106,7 @@ Cada um destes itens, se quebrado, destroi a confianca do cliente ou expoe dados
 Entregue:
 - 3.1 KPIs financeiros no Dashboard (lucro do mes, custo/@, rentabilidade) via `/financeiro/analise`
 - 3.2 Nova pagina `/graficos` com recharts: evolucao de peso, composicao de custos (pizza), receita vs custo, animais por lote
+  - **Expansao (01/06/2026):** evolucao de peso ganhou filtro "todo rebanho / por animal / por lote"; "receita vs custo" virou serie mensal (6 meses, 6 chamadas paralelas a `/financeiro/analise`); card "animais por lote" trocado por "GMD medio por lote" (barras horizontais ordenadas, calculado no frontend a partir das pesagens com GMD)
 - 3.3 Wizard de onboarding no Dashboard quando `total_animais === 0`
 - 3.4 Fluxo integrado em Animais.tsx: secoes opcionais de compra e vacinacao no modal de cadastro
 - 3.5 Confirmacao em dois passos nos modais de operacao por lote (Pesagens, Saude, Reproducao, Movimentacoes)
@@ -297,3 +298,168 @@ Bloco "Extra" das imagens — o que diferencia a BovIA.
 - Analise do pior lote (ranking por eficiencia invertida)
 - Sugestao automatica de venda (quando lote atinge meta ou preco de mercado favoravel)
 - Pode ser feito em `routes/inteligencia.py` com calculos determinicos; IA generativa opcional
+
+---
+
+## BLOCO 8 — DIFERENCIACAO COMPETITIVA (benchmark Rural Data, 03/06/2026)
+
+Analise do concorrente direto **ruraldatabr.com** (produto "Seu Nettao"). Identificamos que o diferencial deles **nao** e o modulo zootecnico (o BovIA ja tem mais coisa: GMD com fallback, reproducao com criacao automatica de bezerro, simulador, GMD por lote, UA/ha por pasto, PWA offline-first). O gap esta em **interface conversacional + multi-fazenda + comercializacao**.
+
+Plano abaixo em ordem de impacto vs custo.
+
+### 8.1 Bot de WhatsApp com IA ("Seu Bovinho"?) — PRIORIDADE MAXIMA
+**Objetivo:** produtor manda audio/texto/foto pelo WhatsApp ("gastei 2500 com racao hoje", "comprei 12 bois por 31200") e o sistema:
+1. Transcreve audio (Whisper ou Anthropic Voice).
+2. Classifica intencao (despesa, receita, pesagem, venda, compra de animal, vacinacao, parto) com LLM.
+3. Extrai campos (valor, categoria, qtd cabecas, brinco) com prompt estruturado / function calling.
+4. Cria o registro no BovIA do usuario correto.
+5. Responde confirmando, com botoes inline para corrigir/desfazer.
+
+**Arquitetura sugerida:**
+- Numero WhatsApp Business via API Cloud (Meta) ou provider intermediario (Twilio, Zenvia, WATI)
+- Webhook `POST /webhooks/whatsapp` no FastAPI valida assinatura, enfileira mensagem
+- Worker assincrono (RQ ou apscheduler) consome a fila: transcreve -> classifica -> persiste -> responde
+- Tabela `whatsapp_links` que liga `phone_e164` -> `user_id` (login inicial por codigo OTP enviado no Whats)
+- Tabela `mensagens_recebidas` para auditoria e debug
+- Provider LLM: Claude Sonnet 4.6 (tem function calling, ja sabemos usar, custo OK para volume baixo)
+
+**Trabalho estimado:** 2-4 semanas focadas. Sub-itens:
+1. Cadastro de numero + onboarding (OTP por WhatsApp)
+2. Webhook + fila + transcricao
+3. Prompt de classificacao + function calling para criar registros
+4. UI de auditoria no BovIA mostrando ultimas mensagens recebidas e o que virou
+5. Botoes inline de confirmacao/correcao
+
+**Custo operacional:** WhatsApp Business API cobra por sessao iniciada pelo negocio (~R$0,03-0,10 cada). Sessoes iniciadas pelo cliente sao gratis nas primeiras 24h. Mais o custo de tokens LLM (~R$0,01-0,05 por mensagem com Claude Haiku, R$0,10-0,30 com Sonnet).
+
+### 8.2 Multi-fazenda na mesma conta
+Hoje `User.fazenda_nome` e uma string e cada `user_id` filtra direto nas queries. Para multi-fazenda:
+- Nova tabela `fazendas (id, user_id, nome, criada_em)` com a fazenda atual virando linha
+- Migration que cria 1 fazenda por usuario existente e adiciona `fazenda_id` em **todas** as tabelas tenant-aware (Animal, Lote, Pasto, Pesagem, Saude, Reproducao, Movimentacao, CustoNutricional, DespesaFixa)
+- Refactor de todos os filtros: `user_id == X` -> `fazenda_id in (fazendas_do_usuario)`. Auditar como foi feito em 0.1
+- Header com seletor de fazenda + indicador no canto
+- Cobranca extra por fazenda adicional (igual modelo do Rural Data, R$40/mes/fazenda)
+
+**Estimativa:** 1 semana. Maior risco e migrations + refatoracao dos endpoints.
+
+### 8.3 Multi-usuario por fazenda
+Casado com 8.2: tabela `fazenda_usuarios (fazenda_id, user_id, role)` com roles `dono`, `editor`, `leitor`. Convite por email. Permite "marido cuida do operacional, esposa do financeiro".
+- Sobrepoe-se ao item 6.3 do plano original (que estava marcado como pos-MVP)
+- Trabalho: 3-5 dias depois do 8.2
+
+### 8.4 Relatorios em linguagem natural por IA
+Endpoint `GET /relatorios/insight?periodo=mes` que:
+1. Coleta dados do periodo (custos, receitas, GMD, mortalidade, vendas)
+2. Monta prompt para LLM ("aqui sao os dados da fazenda X no mes Y, gere um paragrafo de insight executivo")
+3. Devolve 1-3 paragrafos em portugues claro: "Sua margem caiu 12% em maio comparado a abril, principalmente porque o custo de racao subiu 23%. O GMD medio do lote Bezerros2026 esta abaixo da meta (1.1 vs 1.5 kg/dia)"
+
+**Estimativa:** 2-3 dias. Pode reusar a mesma chave de LLM do 8.1.
+
+### 8.5 Lembretes/notificacoes pelo WhatsApp
+Quando 8.1 estiver pronto, expandir para mensagens **iniciadas pelo bot**:
+- Vacina vence em 3 dias
+- Parto esperado essa semana
+- Pasto X em superlotacao
+- Mensalidade vence amanha
+
+Requer template aprovado pela Meta (sessoes iniciadas pelo negocio precisam de template). Trabalho: 2-4 dias depois do 8.1.
+
+### 8.6 Site institucional + planos pagos
+Pos-tecnico — depende de decidir comercializar:
+- Landing page de vendas (separada do app, talvez em `/` enquanto o app fica em `/app/*`)
+- Integracao Stripe ou Mercado Pago para assinatura
+- Planos mensal/anual + cobranca por fazenda adicional
+- Pagina de status, politica de privacidade, termos
+- Hospedagem em Render/Fly.io com dominio proprio
+
+**Status atual:** Pendente. Ordem de execucao recomendada: 8.1 → 8.4 → 8.2 → 8.3 → 8.5 → 8.6.
+
+---
+
+## BLOCO 9 — FUNCIONALIDADES PARA PEQUENO E MEDIO PRODUTOR (03/06/2026)
+
+Levantamento de funcionalidades que atendem o publico-alvo do BovIA: pequeno e medio produtor brasileiro, tipicamente pecuaria extensiva (pasto + sal), alguns com suplementacao no periodo seco.
+
+Diferente do BLOCO 8 (que veio de benchmark com concorrente), este bloco vem da analise do que o publico realmente precisa no dia-a-dia. Ordem abaixo e por impacto/esforco.
+
+### 9.1 Painel de Cotacoes de Mercado no Dashboard ⭐ — PRIORIDADE
+**Por que:** Produtor olha preco da arroba **toda manha** antes de qualquer decisao. E a primeira coisa que ele quer ver ao abrir o app. Rural Data nem tem isso na home — seria diferencial direto.
+
+**O que mostrar (6 indicadores):**
+- Boi gordo @ (CEPEA) — referencia de venda
+- Bezerro @ (CEPEA) — compra/reposicao
+- Vaca @ (CEPEA) — descarte/recria
+- Milho saca 60kg (CEPEA) — influencia decisao de suplementar
+- Soja saca 60kg (CEPEA) — idem
+- Dolar (API Banco Central) — correlacionado com preco do boi (exportacao)
+
+**Arquitetura:**
+- Tabela `cotacoes (id, indicador, valor, variacao_pct_7d, variacao_pct_30d, data, fonte, atualizado_em)`
+- Job em background (apscheduler) roda 1x/dia as 18h (CEPEA publica ~17h):
+  - Scrape de paginas publicas da CEPEA (`cepea.esalq.usp.br/br/indicador/...`)
+  - Chamada na API olinda.bcb.gov.br para dolar
+- Endpoint `GET /mercado/cotacoes` devolve snapshot atual + variacoes
+- Componente "Painel de Mercado" no topo do Dashboard, 6 cards com valor + variacao colorida
+
+**Risco:** scraping da CEPEA quebra se eles mudarem HTML. Tratamento:
+- Log + mostra "atualizado ha X dias" quando falha
+- Alerta por email/sentry se falhar 2 dias seguidos
+
+**Estimativa:** 1 dia (~4h backend + 2h frontend)
+
+### 9.2 Calendario Sanitario Obrigatorio por UF
+**Por que:** Aftosa (maio e novembro), brucelose (fêmeas 3-8 meses), tuberculose, raiva em algumas regioes — campanhas **obrigatorias** que variam por estado. Hoje a Agenda do BovIA so mostra vacinas que o usuario cadastrou; perde quem esquece. Pequeno produtor e exatamente quem mais esquece e leva multa da defesa agropecuaria.
+
+**O que fazer:**
+- Tabela `calendario_sanitario_oficial (id, uf, vacina, mes_inicio, mes_fim, publico_alvo, observacoes)` populada via seed com dados de cada estado (Adagri/IDA/IAGRO/IDARON dependendo da UF)
+- Campo `uf` adicionado em `User` ou em uma nova tabela `Fazenda` (se 8.2 ja tiver sido feito)
+- Endpoint `GET /alertas` ja existente passa a incluir alertas sanitarios obrigatorios com 30 dias de antecedencia
+- Botao "Marcar como feita" gera registro em `Saude` automaticamente
+- Relatorio anual de cumprimento (PDF) para apresentar a defesa agropecuaria se necessario
+
+**Estimativa:** 2-3 dias (mais o levantamento dos calendarios por estado — pode comecar com SP, MG, GO, MT que cobrem 70% do rebanho nacional)
+
+### 9.3 Previsao do Tempo por Regiao
+**Por que:** Pasto depende 100% de chuva. Produtor decide rotacao de pasto, suplementacao, e ate hora de embarcar gado olhando previsao. Open-Meteo e INMET tem API gratuita publica.
+
+**O que fazer:**
+- Campo `latitude/longitude` na Fazenda (ou User enquanto 8.2 nao acontece) — pode ser preenchido por endereco via geocoding gratuito
+- Chamada a `api.open-meteo.com/v1/forecast` com cache de 6h
+- Card no Dashboard: previsao 7 dias + acumulado de chuva da semana
+- Bonus: alerta no Agenda quando previsao indicar seca prolongada (>15 dias sem chuva)
+
+**Estimativa:** 2-3h. API e simples, sem auth.
+
+### 9.4 Exportador de LCDPR (Livro Caixa Digital Produtor Rural)
+**Por que:** Obrigatorio para IRPF desde 2019 para quem fatura acima do limite (em 2026 ~R$ 5mi/ano, mas praticamente todo medio produtor faz). Gerar o arquivo TXT no formato exato da Receita Federal **economiza ao produtor R$ 500-2000/ano de contador**. E o gancho comercial mais forte de plataformas como Aegro.
+
+**O que fazer:**
+- Estudar o leiaute oficial do LCDPR (Receita publica especificacao em PDF)
+- Endpoint `GET /relatorios/lcdpr?ano=2026` gera o arquivo TXT
+- Mapear cada Movimentacao + Saude + DespesaFixa para o tipo de lancamento correto (4 tipos no leiaute)
+- Frontend: botao "Baixar LCDPR" em Relatorios, com selecao de ano-base
+- Pode ser cobrado a parte ou estar nos planos pagos como diferencial
+
+**Estimativa:** 4-5 dias (o leiaute e complexo, precisa atencao a detalhes fiscais)
+
+### 9.5 Calculadora de Venda Rapida
+**Por que:** Pequeno produtor faz essa conta no papel toda semana — "se eu vender esse lote hoje a R$ XXX a arroba, quanto eu recebo liquido?". Ja temos a base no Simulador, falta um modo rapido em cada lote.
+
+**O que fazer:**
+- Em cada card de Lote (em `/lotes`), adicionar botao "Simular venda"
+- Modal com 3 campos: peso medio/cabeca, preco da arroba, frete estimado
+- Mostra: arrobas totais, valor bruto, frete, imposto (Funrural 1.5% sobre venda), liquido por cabeca, liquido total
+- Reusa logica do Simulador.tsx (`rendimento_carcaca`, mortalidade, etc.)
+
+**Estimativa:** 1 dia (~6h)
+
+### 9.6 Itens NAO incluidos (justificativa)
+
+Avaliei e deixei de fora intencionalmente:
+
+- **GTA digital (Guia de Transito Animal)** — varia muito por estado, baixo retorno, burocratico
+- **Emissao de NFe** — pequeno produtor geralmente vende informal pra frigorifico/atravessador, complicaria o app
+- **Open banking** — pequeno produtor e avesso a conectar conta bancaria
+- **Comparacao/benchmark com outras fazendas** — interessante mas requer base de dados grande e tratamento LGPD
+
+**Ordem de execucao recomendada:** 9.1 → 9.3 → 9.5 → 9.2 → 9.4 (cotacoes primeiro por impacto visual; LCDPR por ultimo por ser o mais trabalhoso e fiscal).

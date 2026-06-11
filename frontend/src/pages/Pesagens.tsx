@@ -28,6 +28,7 @@ export default function Pesagens() {
   const [showLoteModal, setShowLoteModal] = useState(false)
   const [loteForm, setLoteForm] = useState({ lote_id: '', data: todayLocal(), peso_medio_kg: '', observacoes: '' })
   const [loteConfirm, setLoteConfirm] = useState(false)
+  const [selectedAnimalIds, setSelectedAnimalIds] = useState<Set<number>>(new Set())
 
   useEffect(() => {
     api.get('/animais', { params: { status: 'ativo', page_size: 200 } }).then(r => {
@@ -100,6 +101,41 @@ export default function Pesagens() {
 
   const animaisMap = Object.fromEntries(animais.map(a => [a.id, a]))
 
+  function toggleSelectAnimal(animalId: number) {
+    setSelectedAnimalIds(prev => {
+      const next = new Set(prev)
+      if (next.has(animalId)) next.delete(animalId); else next.add(animalId)
+      return next
+    })
+  }
+  function toggleAllVisible() {
+    const visibleIds = resumoPorAnimal.map(r => r.latest.animal_id)
+    const allSelected = visibleIds.length > 0 && visibleIds.every(id => selectedAnimalIds.has(id))
+    setSelectedAnimalIds(prev => {
+      const next = new Set(prev)
+      if (allSelected) visibleIds.forEach(id => next.delete(id))
+      else visibleIds.forEach(id => next.add(id))
+      return next
+    })
+  }
+  function clearSelection() { setSelectedAnimalIds(new Set()) }
+  async function bulkDeletePesagens() {
+    const animal_ids = Array.from(selectedAnimalIds)
+    if (animal_ids.length === 0) return
+    if (!confirm(`Excluir TODAS as pesagens de ${animal_ids.length} animal(is)?`)) return
+    setSaving(true)
+    try {
+      const r = await api.post('/pesagens/bulk-delete-by-animal', { animal_ids })
+      success(`${r.data.afetados} pesagem(ns) excluída(s)`)
+      clearSelection()
+      load()
+    } catch (err: any) {
+      toastError(apiErrorMessage(err, 'Erro ao excluir em massa'))
+    } finally {
+      setSaving(false)
+    }
+  }
+
   // Agrupa pesagens por animal: pega a mais recente + total de pesagens
   // (Pesagens vêm ordenadas DESC pela API, entao a primeira de cada animal e a mais recente)
   const resumoPorAnimal = useMemo(() => {
@@ -135,6 +171,25 @@ export default function Pesagens() {
         </div>
       </div>
 
+      {selectedAnimalIds.size > 0 && (
+        <div
+          style={{
+            display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
+            padding: '12px 16px', marginBottom: 16, borderRadius: 'var(--radius)',
+            background: 'var(--green-50)', border: '1px solid var(--green-100)',
+          }}
+        >
+          <span style={{ fontWeight: 700, color: 'var(--green-800)' }}>
+            {selectedAnimalIds.size} animal(is) selecionado(s)
+          </span>
+          <button className="btn btn-ghost btn-sm" onClick={clearSelection}>Limpar</button>
+          <div style={{ flex: 1 }} />
+          <button className="btn btn-danger btn-sm" onClick={bulkDeletePesagens} disabled={saving}>
+            Excluir todas as pesagens
+          </button>
+        </div>
+      )}
+
       {/* Filtro */}
       <div className="filters-bar">
         <label className="filter-label">Filtrar por animal:</label>
@@ -148,6 +203,13 @@ export default function Pesagens() {
         <table className="data-table data-table-big">
           <thead>
             <tr>
+              <th style={{ width: 36 }}>
+                <input
+                  type="checkbox"
+                  checked={resumoPorAnimal.length > 0 && resumoPorAnimal.every(r => selectedAnimalIds.has(r.latest.animal_id))}
+                  onChange={toggleAllVisible}
+                />
+              </th>
               <th>Animal</th>
               <th>Última Pesagem</th>
               <th>Peso Atual</th>
@@ -158,18 +220,29 @@ export default function Pesagens() {
           </thead>
           <tbody>
             {resumoPorAnimal.length === 0 && (
-              <tr><td colSpan={6} className="table-empty">Nenhuma pesagem registrada</td></tr>
+              <tr><td colSpan={7} className="table-empty">Nenhuma pesagem registrada</td></tr>
             )}
             {resumoPorAnimal.map(({ latest: p, total }) => {
               const animal = animaisMap[p.animal_id]
               const gmdPositivo = p.gmd != null && p.gmd > 0
               const gmdNegativo = p.gmd != null && p.gmd < 0
+              const isSelected = selectedAnimalIds.has(p.animal_id)
               return (
                 <tr
                   key={p.animal_id}
-                  onClick={() => navigate(`/animais/${p.animal_id}`)}
-                  style={{ cursor: 'pointer' }}
+                  onClick={(e) => {
+                    if ((e.target as HTMLElement).tagName === 'INPUT') return
+                    navigate(`/animais/${p.animal_id}`)
+                  }}
+                  style={{ cursor: 'pointer', background: isSelected ? 'var(--green-50)' : undefined }}
                 >
+                  <td onClick={e => e.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => toggleSelectAnimal(p.animal_id)}
+                    />
+                  </td>
                   <td style={{ fontWeight: 600 }}>
                     #{animal?.brinco || p.animal_id}
                     {animal?.nome && <span style={{ color: 'var(--gray-400)', fontWeight: 400 }}> — {animal.nome}</span>}

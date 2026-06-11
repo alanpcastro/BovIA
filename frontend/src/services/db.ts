@@ -8,6 +8,7 @@ export interface LocalLote {
   nome: string
   descricao?: string
   rendimento_carcaca?: number
+  ua_ha?: number | null
   created_at?: string
   total_animais?: number
 }

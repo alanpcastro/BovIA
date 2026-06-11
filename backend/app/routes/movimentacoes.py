@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
+from pydantic import BaseModel
 from ..database import get_db
 from ..models.movimentacao import Movimentacao
 from ..models.animal import Animal
@@ -9,6 +10,15 @@ from ..auth import get_current_user
 from ..models.user import User
 
 router = APIRouter()
+
+
+class BulkDeleteIn(BaseModel):
+    ids: List[int]
+
+
+class BulkResult(BaseModel):
+    total: int
+    afetados: int
 
 
 @router.get("", response_model=List[MovimentacaoOut])
@@ -39,9 +49,36 @@ def criar_movimentacao(data: MovimentacaoCreate, db: Session = Depends(get_db), 
     return mov
 
 
+@router.post("/bulk-delete", response_model=BulkResult)
+def bulk_delete_movimentacoes(
+    data: BulkDeleteIn,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if not data.ids:
+        raise HTTPException(status_code=400, detail="Nenhuma movimentação selecionada")
+    movs = db.query(Movimentacao).filter(
+        Movimentacao.id.in_(data.ids),
+        Movimentacao.user_id == current_user.id,
+    ).all()
+    for m in movs:
+        db.delete(m)
+    db.commit()
+    return BulkResult(total=len(data.ids), afetados=len(movs))
+
+
 @router.get("/{mov_id}", response_model=MovimentacaoOut)
 def get_movimentacao(mov_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     mov = db.query(Movimentacao).filter(Movimentacao.id == mov_id, Movimentacao.user_id == current_user.id).first()
     if not mov:
         raise HTTPException(status_code=404, detail="Movimentação não encontrada")
     return mov
+
+
+@router.delete("/{mov_id}", status_code=204)
+def deletar_movimentacao(mov_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    mov = db.query(Movimentacao).filter(Movimentacao.id == mov_id, Movimentacao.user_id == current_user.id).first()
+    if not mov:
+        raise HTTPException(status_code=404, detail="Movimentação não encontrada")
+    db.delete(mov)
+    db.commit()

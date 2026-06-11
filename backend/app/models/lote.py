@@ -13,6 +13,7 @@ class Lote(Base):
     nome = Column(String, nullable=False)
     descricao = Column(String, nullable=True)
     rendimento_carcaca = Column(Float, nullable=True, default=52.0)
+    ua_ha = Column(Float, nullable=True)  # consumo previsto de UA/ha pelo lote
     data_entrada = Column(Date, nullable=True)  # quando o lote foi formado/iniciou o ciclo
     data_entrada_pasto = Column(Date, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

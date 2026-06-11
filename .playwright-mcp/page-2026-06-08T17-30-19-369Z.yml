@@ -1,0 +1,451 @@
+- generic [ref=e5]:
+  - banner [ref=e6]:
+    - navigation [ref=e7]:
+      - link "Rural Data Logo" [ref=e9] [cursor=pointer]:
+        - /url: https://ruraldatabr.com/
+        - img "Rural Data Logo" [ref=e10]
+      - generic [ref=e11]:
+        - link "Início" [ref=e12] [cursor=pointer]:
+          - /url: "#"
+          - generic [ref=e13]: Início
+        - link "Funcionalidades" [ref=e14] [cursor=pointer]:
+          - /url: "#funcionalidades"
+          - generic [ref=e15]: Funcionalidades
+        - link "Relatórios" [ref=e16] [cursor=pointer]:
+          - /url: "#relatorios"
+          - generic [ref=e17]: Relatórios
+        - link "Preço" [ref=e18] [cursor=pointer]:
+          - /url: "#preco"
+          - generic [ref=e19]: Preço
+        - link "Informativos" [ref=e20] [cursor=pointer]:
+          - /url: https://ruraldatabr.com/informativos
+          - generic [ref=e21]: Informativos
+      - link "Entrar" [ref=e23] [cursor=pointer]:
+        - /url: https://ruraldatabr.com/login
+  - generic [ref=e28]:
+    - generic [ref=e29]:
+      - generic [ref=e30]:
+        - img "Rural Data Logo" [ref=e31]
+        - generic [ref=e34]: IA para fazendas
+      - generic [ref=e35]:
+        - heading "Nunca foi tão fácil fazer gestão da sua fazenda" [level=1] [ref=e36]:
+          - text: Nunca foi tão fácil fazer
+          - text: gestão da sua fazenda
+        - paragraph [ref=e37]: Acompanhe seu custo de produção e seu resultado financeiro lançando seus gastos pelo whatsapp com o Seu Nettão, a IA da Rural Data.
+      - link "Contratar o Nettão" [ref=e38] [cursor=pointer]:
+        - /url: https://wa.me/5562992377256
+        - img [ref=e39]
+        - generic [ref=e41]: Contratar o Nettão
+    - generic [ref=e44]:
+      - generic [ref=e45]:
+        - img "Seu Nettão" [ref=e46]
+        - generic [ref=e47]:
+          - heading "Seu Nettão" [level=3] [ref=e48]
+          - generic [ref=e51]: Online
+        - button [ref=e52]:
+          - img [ref=e53]
+      - generic [ref=e59]:
+        - generic [ref=e61]: Cliente
+        - generic [ref=e62]:
+          - paragraph [ref=e63]: Olá Nettão acabei de comprar 12 cabeças de gado para engorda no valor de 31200.
+          - generic [ref=e64]: 10:15
+  - generic [ref=e70]:
+    - generic [ref=e72]:
+      - generic [ref=e73]:
+        - img "Paulo Henrique" [ref=e75]
+        - heading "Paulo Henrique" [level=3] [ref=e77]
+      - paragraph [ref=e78]: O Seu Nettão agilizou muito meu tempo. Ficou muito fácil, é só entrar no WhatsApp, mandar um áudio e pronto. Não preciso mais sentar na frente de um computador pra fazer cada lançamento. Até meu pai testou, gostou e hoje está usando. Foi uma virada de chave.
+    - generic [ref=e80]:
+      - generic [ref=e81]:
+        - img "Guilherme Franco Alves" [ref=e83]
+        - heading "Guilherme Franco Alves" [level=3] [ref=e85]
+      - paragraph [ref=e86]: Já possuía planilhas de gastos, mas sem controle detalhado. Com o acompanhamento da Rural Data, consegui organizar todos os lançamentos passados, o que trouxe clareza ao fluxo de caixa e uma visão mais ampla sobre a atividade, permitindo tomar melhores decisões financeiras e zootécnicas.
+    - generic [ref=e88]:
+      - generic [ref=e89]:
+        - img "Lucas Silva" [ref=e91]
+        - heading "Lucas Silva" [level=3] [ref=e93]
+      - paragraph [ref=e94]: Nossa fazenda gira 200 bois no ano. No começo achei que minha operação não pagava o investimento, mas os relatórios me fizeram enxergar problemas que antes eu não tinha visto. Em pouco tempo já pagou o investimento.
+    - generic [ref=e96]:
+      - generic [ref=e97]:
+        - img "Rita de Cássia" [ref=e99]
+        - heading "Rita de Cássia" [level=3] [ref=e101]
+      - paragraph [ref=e102]: Meu marido cuida do dia a dia e eu cuido do financeiro na fazenda. Facilitou demais a minha vida por não ter que lançar pelo computador. No WhatsApp fica tudo mais fácil.
+    - generic [ref=e104]:
+      - generic [ref=e105]:
+        - img "Paulo Henrique" [ref=e107]
+        - heading "Paulo Henrique" [level=3] [ref=e109]
+      - paragraph [ref=e110]: O Seu Nettão agilizou muito meu tempo. Ficou muito fácil, é só entrar no WhatsApp, mandar um áudio e pronto. Não preciso mais sentar na frente de um computador pra fazer cada lançamento. Até meu pai testou, gostou e hoje está usando. Foi uma virada de chave.
+    - generic [ref=e112]:
+      - generic [ref=e113]:
+        - img "Guilherme Franco Alves" [ref=e115]
+        - heading "Guilherme Franco Alves" [level=3] [ref=e117]
+      - paragraph [ref=e118]: Já possuía planilhas de gastos, mas sem controle detalhado. Com o acompanhamento da Rural Data, consegui organizar todos os lançamentos passados, o que trouxe clareza ao fluxo de caixa e uma visão mais ampla sobre a atividade, permitindo tomar melhores decisões financeiras e zootécnicas.
+    - generic [ref=e120]:
+      - generic [ref=e121]:
+        - img "Lucas Silva" [ref=e123]
+        - heading "Lucas Silva" [level=3] [ref=e125]
+      - paragraph [ref=e126]: Nossa fazenda gira 200 bois no ano. No começo achei que minha operação não pagava o investimento, mas os relatórios me fizeram enxergar problemas que antes eu não tinha visto. Em pouco tempo já pagou o investimento.
+    - generic [ref=e128]:
+      - generic [ref=e129]:
+        - img "Rita de Cássia" [ref=e131]
+        - heading "Rita de Cássia" [level=3] [ref=e133]
+      - paragraph [ref=e134]: Meu marido cuida do dia a dia e eu cuido do financeiro na fazenda. Facilitou demais a minha vida por não ter que lançar pelo computador. No WhatsApp fica tudo mais fácil.
+    - generic [ref=e136]:
+      - generic [ref=e137]:
+        - img "Paulo Henrique" [ref=e139]
+        - heading "Paulo Henrique" [level=3] [ref=e141]
+      - paragraph [ref=e142]: O Seu Nettão agilizou muito meu tempo. Ficou muito fácil, é só entrar no WhatsApp, mandar um áudio e pronto. Não preciso mais sentar na frente de um computador pra fazer cada lançamento. Até meu pai testou, gostou e hoje está usando. Foi uma virada de chave.
+    - generic [ref=e144]:
+      - generic [ref=e145]:
+        - img "Guilherme Franco Alves" [ref=e147]
+        - heading "Guilherme Franco Alves" [level=3] [ref=e149]
+      - paragraph [ref=e150]: Já possuía planilhas de gastos, mas sem controle detalhado. Com o acompanhamento da Rural Data, consegui organizar todos os lançamentos passados, o que trouxe clareza ao fluxo de caixa e uma visão mais ampla sobre a atividade, permitindo tomar melhores decisões financeiras e zootécnicas.
+    - generic [ref=e152]:
+      - generic [ref=e153]:
+        - img "Lucas Silva" [ref=e155]
+        - heading "Lucas Silva" [level=3] [ref=e157]
+      - paragraph [ref=e158]: Nossa fazenda gira 200 bois no ano. No começo achei que minha operação não pagava o investimento, mas os relatórios me fizeram enxergar problemas que antes eu não tinha visto. Em pouco tempo já pagou o investimento.
+    - generic [ref=e160]:
+      - generic [ref=e161]:
+        - img "Rita de Cássia" [ref=e163]
+        - heading "Rita de Cássia" [level=3] [ref=e165]
+      - paragraph [ref=e166]: Meu marido cuida do dia a dia e eu cuido do financeiro na fazenda. Facilitou demais a minha vida por não ter que lançar pelo computador. No WhatsApp fica tudo mais fácil.
+  - generic [ref=e168]:
+    - generic [ref=e169]:
+      - generic [ref=e170]:
+        - img [ref=e171]
+        - text: FUNCIONALIDADES
+      - heading "Ganhe 70% do tempo na gestão" [level=2] [ref=e173]
+      - paragraph [ref=e174]: O WhatsApp você já sabe usar!
+    - paragraph [ref=e176]: Ferramenta criada por produtores e pensada na rotina do campo
+    - generic [ref=e177]:
+      - generic [ref=e178]:
+        - generic [ref=e179] [cursor=pointer]:
+          - generic [ref=e180]:
+            - generic [ref=e181]:
+              - img [ref=e182]
+              - img [ref=e185]
+            - heading "Envie áudios com suas movimentações financeiras" [level=3] [ref=e187]
+          - paragraph [ref=e188]: Registre suas despesas e receitas enviando mensagens de áudio. O Nettão entende e classifica tudo automaticamente.
+          - generic [ref=e190]:
+            - text: Ver no celular
+            - img [ref=e191]
+        - generic [ref=e193] [cursor=pointer]:
+          - generic [ref=e194]:
+            - generic [ref=e195]:
+              - img [ref=e196]
+              - img [ref=e199]
+            - heading "Lembretes Inteligentes" [level=3] [ref=e202]
+          - paragraph [ref=e203]: Receba notificações automáticas sobre pagamentos e compromissos financeiros. Nunca mais pague juros!
+          - generic [ref=e205]:
+            - text: Ver no celular
+            - img [ref=e206]
+        - generic [ref=e208] [cursor=pointer]:
+          - generic [ref=e209]:
+            - generic [ref=e210]:
+              - img [ref=e211]
+              - img [ref=e213]
+            - heading "Análises com IA" [level=3] [ref=e215]
+          - paragraph [ref=e216]: Obtenha análises inteligentes sobre sua fazenda com relatórios em texto gerados por inteligência artificial.
+          - generic [ref=e218]:
+            - text: Ver no celular
+            - img [ref=e219]
+      - generic [ref=e226]:
+        - generic [ref=e227]:
+          - img "Seu Nettão" [ref=e228]
+          - generic [ref=e229]:
+            - heading "Seu Nettão" [level=3] [ref=e230]
+            - paragraph [ref=e231]: online
+        - generic [ref=e232]:
+          - generic [ref=e234]:
+            - paragraph [ref=e235]: Gastei R$ 2.500 com ração hoje
+            - generic [ref=e237]: 14:32
+          - generic [ref=e239]:
+            - paragraph [ref=e240]: ✅ Registrado! DESPESA de R$ 2.500,00 com Ração 🌾
+            - generic [ref=e242]:
+              - generic [ref=e243]: "Categoria:"
+              - generic [ref=e244]: Alimentação
+            - generic [ref=e245]: 14:33
+        - generic [ref=e246]:
+          - generic [ref=e248]: Mensagem
+          - button [ref=e249]:
+            - img [ref=e250]
+      - generic [ref=e253]:
+        - generic [ref=e254] [cursor=pointer]:
+          - generic [ref=e256]:
+            - generic [ref=e257]:
+              - img [ref=e258]
+              - img [ref=e260]
+            - heading "Acompanhe a evolução do seu rebanho" [level=3] [ref=e262]
+          - paragraph [ref=e263]: Realize pesagens pelo sistema, com confiabilidade de dados para garantir o lucro da sua operação.
+          - generic [ref=e265]:
+            - text: Visualizando
+            - img [ref=e266]
+        - generic [ref=e268] [cursor=pointer]:
+          - generic [ref=e269]:
+            - generic [ref=e270]:
+              - img [ref=e271]
+              - img [ref=e274]
+            - heading "Economize 70% do tempo" [level=3] [ref=e277]
+          - paragraph [ref=e278]: Pare de perder tempo com planilhas complicadas. Registre suas movimentações em segundos com mensagens de voz.
+          - generic [ref=e280]:
+            - text: Ver no celular
+            - img [ref=e281]
+        - generic [ref=e283] [cursor=pointer]:
+          - generic [ref=e284]:
+            - generic [ref=e285]:
+              - img [ref=e286]
+              - img [ref=e289]
+            - heading "Controle Total" [level=3] [ref=e291]
+          - paragraph [ref=e292]: Acompanhe custos, receitas e lucros em tempo real. Saiba exatamente para onde vai cada centavo.
+          - generic [ref=e294]:
+            - text: Ver no celular
+            - img [ref=e295]
+  - generic [ref=e300]:
+    - generic [ref=e301]:
+      - generic [ref=e302]:
+        - img [ref=e303]
+        - generic [ref=e305]: PARCERIA
+        - img [ref=e306]
+      - heading "Startup parceira do Conecta Campo" [level=2] [ref=e308]
+    - generic [ref=e309]:
+      - generic:
+        - generic:
+          - img "Conecta Campo"
+      - generic [ref=e312]:
+        - paragraph [ref=e313]: Somos parceiros do Campo Lab, o maior hub de inovação do Centro-Oeste. Participamos do Conecta Campo, onde diversos produtores acompanhados pelo Senar testam e aprovam o nosso sistema.
+        - generic [ref=e314]:
+          - generic [ref=e315]:
+            - img [ref=e317]
+            - generic [ref=e320]: Testado
+          - generic [ref=e321]:
+            - img [ref=e323]
+            - generic [ref=e325]: Inovação
+          - generic [ref=e326]:
+            - img [ref=e328]
+            - generic [ref=e330]: Aprovado
+  - generic [ref=e335]:
+    - generic [ref=e336]:
+      - generic [ref=e337]:
+        - img [ref=e338]
+        - text: ANÁLISES INTELIGENTES
+      - heading "Todos os seus dados organizados" [level=2] [ref=e340]
+      - paragraph [ref=e341]: Reduzida o risco de prejuízo com tomada de decisões acertivas
+    - generic [ref=e343]:
+      - tablist [ref=e345]:
+        - tab "Financeiro" [selected] [ref=e346] [cursor=pointer]:
+          - img [ref=e347]
+          - generic [ref=e349]: Financeiro
+        - tab "Fluxo de caixa" [ref=e350] [cursor=pointer]:
+          - img [ref=e351]
+          - generic [ref=e354]: Fluxo de caixa
+        - tab "Mapa do dinheiro" [ref=e355] [cursor=pointer]:
+          - img [ref=e356]
+          - generic [ref=e358]: Mapa do dinheiro
+        - tab "Pastos" [ref=e359] [cursor=pointer]:
+          - img [ref=e360]
+          - generic [ref=e362]: Pastos
+        - tab "Animais" [ref=e363] [cursor=pointer]:
+          - img [ref=e364]
+          - generic [ref=e368]: Animais
+        - tab "Manejo" [ref=e369] [cursor=pointer]:
+          - img [ref=e370]
+          - generic [ref=e373]: Manejo
+        - tab "Vínculo financeiro" [ref=e374] [cursor=pointer]:
+          - img [ref=e375]
+          - generic [ref=e378]: Vínculo financeiro
+      - tabpanel "Financeiro" [ref=e381]:
+        - img "Financeiro" [ref=e388]
+  - generic [ref=e393]:
+    - generic [ref=e394]:
+      - generic [ref=e395]:
+        - img [ref=e396]
+        - generic [ref=e398]: TRANSFORMAÇÃO REAL
+        - img [ref=e399]
+      - heading "Veja a Transformação" [level=2] [ref=e401]
+    - generic [ref=e402]:
+      - generic [ref=e404]:
+        - generic [ref=e405]:
+          - generic [ref=e406]:
+            - img [ref=e408]
+            - generic [ref=e411]: Sem Nettão
+          - paragraph [ref=e412]: Você gastava muito tempo lançando em planilhas
+        - img [ref=e417]
+        - generic [ref=e420]:
+          - generic [ref=e421]:
+            - img [ref=e423]
+            - generic [ref=e425]: Com Nettão
+          - paragraph [ref=e426]: Você economiza 70% do seu tempo com lançamento no whatsapp
+          - img [ref=e429]
+      - generic [ref=e432]:
+        - generic [ref=e433]:
+          - generic [ref=e434]:
+            - img [ref=e436]
+            - generic [ref=e439]: Sem Nettão
+          - paragraph [ref=e440]: Você não sabia quanto gastava por mês na fazenda
+        - img [ref=e445]
+        - generic [ref=e448]:
+          - generic [ref=e449]:
+            - img [ref=e451]
+            - generic [ref=e453]: Com Nettão
+          - paragraph [ref=e454]: Você sabe para onde vai cada centavo do seu dinheiro
+          - img [ref=e457]
+      - generic [ref=e460]:
+        - generic [ref=e461]:
+          - generic [ref=e462]:
+            - img [ref=e464]
+            - generic [ref=e467]: Sem Nettão
+          - paragraph [ref=e468]: Você não sabia quanto custava o seu produto
+        - img [ref=e473]
+        - generic [ref=e476]:
+          - generic [ref=e477]:
+            - img [ref=e479]
+            - generic [ref=e481]: Com Nettão
+          - paragraph [ref=e482]: Agora você sabe quanto tem de lucro em qualquer período
+          - img [ref=e485]
+      - generic [ref=e488]:
+        - generic [ref=e489]:
+          - generic [ref=e490]:
+            - img [ref=e492]
+            - generic [ref=e495]: Sem Nettão
+          - paragraph [ref=e496]: Você não tinha relatórios sobre sua fazenda
+        - img [ref=e501]
+        - generic [ref=e504]:
+          - generic [ref=e505]:
+            - img [ref=e507]
+            - generic [ref=e509]: Com Nettão
+          - paragraph [ref=e510]: Agora você toma decisões com base em dados reais
+          - img [ref=e513]
+  - generic [ref=e520]:
+    - generic [ref=e521]:
+      - generic [ref=e522]:
+        - img [ref=e523]
+        - generic [ref=e525]: PLANOS
+        - img [ref=e526]
+      - heading "Escolha o melhor plano para você" [level=2] [ref=e528]
+    - generic [ref=e529]:
+      - generic [ref=e530]:
+        - heading "Plano mensal" [level=3] [ref=e532]
+        - generic [ref=e533]:
+          - generic [ref=e534]:
+            - generic [ref=e535]: R$ 189
+            - generic [ref=e536]: /mês
+          - paragraph [ref=e537]: Cobrado mensalmente no cartão de crédito
+        - list [ref=e538]:
+          - listitem [ref=e539]:
+            - img [ref=e540]
+            - generic [ref=e543]: Lançamentos pelo whatsapp
+          - listitem [ref=e544]:
+            - img [ref=e545]
+            - generic [ref=e548]: Sistema completo de gestão
+          - listitem [ref=e549]:
+            - img [ref=e550]
+            - generic [ref=e553]: Análises em texto por Inteligência Artificial
+          - listitem [ref=e554]:
+            - img [ref=e555]
+            - generic [ref=e558]: Usuários ilimitados por assinatura
+          - listitem [ref=e559]:
+            - img [ref=e560]
+            - generic [ref=e563]: Suporte via whatsapp
+        - generic [ref=e564]:
+          - generic [ref=e565]: + R$40/mês a mais para cada fazenda adicional
+          - link "Começar agora" [ref=e566] [cursor=pointer]:
+            - /url: https://wa.me/5562992377256
+      - generic [ref=e567]:
+        - generic [ref=e568]: POPULAR
+        - heading "Plano anual" [level=3] [ref=e570]
+        - generic [ref=e571]:
+          - generic [ref=e572]:
+            - generic [ref=e573]: R$ 170
+            - generic [ref=e574]: /mês
+          - paragraph [ref=e575]: Cobrado anualmente em 1x de R$ 2.040,00
+        - list [ref=e576]:
+          - listitem [ref=e577]:
+            - img [ref=e578]
+            - generic [ref=e581]: Lançamentos pelo whatsapp
+          - listitem [ref=e582]:
+            - img [ref=e583]
+            - generic [ref=e586]: Sistema completo de gestão
+          - listitem [ref=e587]:
+            - img [ref=e588]
+            - generic [ref=e591]: Análises em texto por Inteligência Artificial
+          - listitem [ref=e592]:
+            - img [ref=e593]
+            - generic [ref=e596]: Usuários ilimitados por assinatura
+          - listitem [ref=e597]:
+            - img [ref=e598]
+            - generic [ref=e601]: Suporte via whatsapp
+          - listitem [ref=e602]:
+            - img [ref=e603]
+            - generic [ref=e606]: + Suporte prioritário
+          - listitem [ref=e607]:
+            - img [ref=e608]
+            - generic [ref=e611]: 10% de economia
+        - generic [ref=e612]:
+          - generic [ref=e613]: + R$40/mês a mais para cada fazenda adicional
+          - link "Começar agora" [ref=e614] [cursor=pointer]:
+            - /url: https://wa.me/5562992377256
+      - generic [ref=e615]:
+        - heading "Plano personalizado" [level=3] [ref=e617]
+        - generic [ref=e618]:
+          - generic [ref=e620]: Custom
+          - paragraph [ref=e621]: Valores personalizados para sua necessidade
+        - list [ref=e622]:
+          - listitem [ref=e623]:
+            - img [ref=e624]
+            - generic [ref=e626]: Adaptamos e personalizamos essa e outras tecnologias para a realidade da sua fazenda
+          - listitem [ref=e627]:
+            - img [ref=e628]
+            - generic [ref=e630]: Desenvolvimentos exclusivos para atender suas necessidades específicas
+        - generic [ref=e631]:
+          - generic [ref=e632]: Valores e condições personalizadas
+          - link "Falar com especialista" [ref=e633] [cursor=pointer]:
+            - /url: https://wa.me/5562992377256
+  - contentinfo [ref=e634]:
+    - generic [ref=e635]:
+      - generic [ref=e636]:
+        - generic [ref=e637]: Fale com a Rural Data
+        - heading "Tenha o Seu Nettão funcionando na sua fazenda" [level=2] [ref=e638]
+        - paragraph [ref=e639]: Preencha o formulário e nossa equipe entrará em contato para te ajudar a começar do jeito mais simples possível.
+      - generic [ref=e640]:
+        - generic [ref=e641]:
+          - generic [ref=e642]:
+            - textbox "Nome" [ref=e643]:
+              - /placeholder: Seu nome
+            - textbox "WhatsApp" [ref=e644]:
+              - /placeholder: WhatsApp (11) 99999-9999
+          - combobox "Eu sou" [ref=e645]:
+            - option "Eu sou..." [selected]
+            - option "Pecuarista"
+            - option "Profissional do Agro"
+            - option "Outro"
+          - button "Ver Rural Data em ação" [ref=e646]
+          - paragraph [ref=e647]: Responderemos em até 1 dia útil
+        - generic [ref=e648]:
+          - generic [ref=e649]: Por que falar com a gente?
+          - list [ref=e651]:
+            - listitem [ref=e652]:
+              - img [ref=e653]
+              - text: Implementação guiada do Seu Nettão no WhatsApp
+            - listitem [ref=e655]:
+              - img [ref=e656]
+              - text: "Sem burocracia: comece registrando suas movimentações em minutos"
+            - listitem [ref=e658]:
+              - img [ref=e659]
+              - text: Relatórios e análises que mostram onde está o lucro
+          - link "Conheça a Rural Data" [ref=e661] [cursor=pointer]:
+            - /url: https://ruraldatabr.com/RuralData
+            - generic [ref=e662]: Conheça a Rural Data
+            - img [ref=e663]
+      - generic [ref=e666]:
+        - img "Seu Nettão Logo"
+        - generic [ref=e667]:
+          - generic [ref=e668]:
+            - img [ref=e669]
+            - generic [ref=e672]: Edifício QS Tower Office - R. 72, 223 - Jardim Goiás, Goiânia - GO, 74805-480, Salas 2001 e 2002
+          - generic [ref=e673]: •
+          - generic [ref=e674] [cursor=pointer]: Política de Privacidade
+          - generic [ref=e675]: •
+          - generic [ref=e676] [cursor=pointer]: Termos de Uso
+          - generic [ref=e677]: •
+          - generic [ref=e678]: © 2025 Rural Data. Todos os direitos reservados.

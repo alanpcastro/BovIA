@@ -36,6 +36,7 @@ export default function Movimentacoes() {
   const emptyLoteForm = { lote_id: '', tipo: 'compra', data: todayLocal(), valor_total: '', peso_medio_kg: '', origem: '', destino: '', observacoes: '' }
   const [loteForm, setLoteForm] = useState(emptyLoteForm)
   const [loteConfirm, setLoteConfirm] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
 
   useEffect(() => {
     api.get('/animais', { params: { page_size: 200 } }).then(r => setAnimais(r.data.items))
@@ -104,6 +105,41 @@ export default function Movimentacoes() {
 
   const animaisMap = Object.fromEntries(animais.map(a => [a.id, a]))
 
+  function toggleSelect(id: number) {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id); else next.add(id)
+      return next
+    })
+  }
+  function toggleAllVisible() {
+    const visibleIds = movs.map(m => m.id)
+    const allSelected = visibleIds.length > 0 && visibleIds.every(id => selectedIds.has(id))
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (allSelected) visibleIds.forEach(id => next.delete(id))
+      else visibleIds.forEach(id => next.add(id))
+      return next
+    })
+  }
+  function clearSelection() { setSelectedIds(new Set()) }
+  async function bulkDelete() {
+    const ids = Array.from(selectedIds)
+    if (ids.length === 0) return
+    if (!confirm(`Excluir ${ids.length} movimentação(ões)?`)) return
+    setSaving(true)
+    try {
+      const r = await api.post('/movimentacoes/bulk-delete', { ids })
+      success(`${r.data.afetados} movimentação(ões) excluída(s)`)
+      clearSelection()
+      load()
+    } catch (err: any) {
+      toastError(apiErrorMessage(err, 'Erro ao excluir em massa'))
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const totalVendas = movs.filter(m => m.tipo === 'venda').reduce((acc, m) => acc + (m.valor || 0), 0)
   const totalCompras = movs.filter(m => m.tipo === 'compra').reduce((acc, m) => acc + (m.valor || 0), 0)
   const saldo = totalVendas - totalCompras
@@ -146,6 +182,23 @@ export default function Movimentacoes() {
         ))}
       </div>
 
+      {selectedIds.size > 0 && (
+        <div
+          style={{
+            display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
+            padding: '12px 16px', marginBottom: 16, borderRadius: 'var(--radius)',
+            background: 'var(--green-50)', border: '1px solid var(--green-100)',
+          }}
+        >
+          <span style={{ fontWeight: 700, color: 'var(--green-800)' }}>
+            {selectedIds.size} selecionada(s)
+          </span>
+          <button className="btn btn-ghost btn-sm" onClick={clearSelection}>Limpar</button>
+          <div style={{ flex: 1 }} />
+          <button className="btn btn-danger btn-sm" onClick={bulkDelete} disabled={saving}>Excluir selecionadas</button>
+        </div>
+      )}
+
       {/* Filtro por tipo */}
       <div className="filters-bar">
         <label className="filter-label">Filtrar por tipo:</label>
@@ -159,6 +212,13 @@ export default function Movimentacoes() {
         <table className="data-table">
           <thead>
             <tr>
+              <th style={{ width: 36 }}>
+                <input
+                  type="checkbox"
+                  checked={movs.length > 0 && movs.every(m => selectedIds.has(m.id))}
+                  onChange={toggleAllVisible}
+                />
+              </th>
               <th>Animal</th>
               <th>Data</th>
               <th>Tipo</th>
@@ -173,12 +233,19 @@ export default function Movimentacoes() {
           </thead>
           <tbody>
             {movs.length === 0 && (
-              <tr><td colSpan={10} className="table-empty">Nenhuma movimentação registrada</td></tr>
+              <tr><td colSpan={11} className="table-empty">Nenhuma movimentação registrada</td></tr>
             )}
             {movs.map(m => {
               const a = animaisMap[m.animal_id]
               return (
-                <tr key={m.id}>
+                <tr key={m.id} style={{ background: selectedIds.has(m.id) ? 'var(--green-50)' : undefined }}>
+                  <td>
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(m.id)}
+                      onChange={() => toggleSelect(m.id)}
+                    />
+                  </td>
                   <td style={{ fontWeight: 600 }}>#{a ? a.brinco : m.animal_id}</td>
                   <td>{new Date(m.data + 'T00:00').toLocaleDateString('pt-BR')}</td>
                   <td><span className={`badge ${tipoBadge[m.tipo] || 'badge-gray'}`}>{tipoLabel[m.tipo] || m.tipo}</span></td>

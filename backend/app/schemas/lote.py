@@ -7,6 +7,7 @@ class LoteCreate(BaseModel):
     nome: str
     descricao: Optional[str] = None
     rendimento_carcaca: Optional[float] = 52.0
+    ua_ha: Optional[float] = None
     data_entrada: Optional[date] = None
 
 
@@ -14,6 +15,7 @@ class LoteUpdate(BaseModel):
     nome: Optional[str] = None
     descricao: Optional[str] = None
     rendimento_carcaca: Optional[float] = None
+    ua_ha: Optional[float] = None
     data_entrada: Optional[date] = None
 
 
@@ -22,6 +24,7 @@ class LoteOut(BaseModel):
     nome: str
     descricao: Optional[str]
     rendimento_carcaca: Optional[float]
+    ua_ha: Optional[float] = None
     data_entrada: Optional[date] = None
     pasto_atual_id: Optional[int] = None
     pasto_atual_nome: Optional[str] = None

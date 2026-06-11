@@ -5,7 +5,7 @@ import { useToast } from '../components/Toast'
 import { todayLocal } from '../utils/date'
 import { apiErrorMessage } from '../utils/apiError'
 
-const emptyForm = { nome: '', descricao: '', rendimento_carcaca: '52', data_entrada: todayLocal() }
+const emptyForm = { nome: '', descricao: '', ua_ha: '1.0', data_entrada: todayLocal() }
 
 export default function Lotes() {
   const { success, error: toastError } = useToast()
@@ -26,7 +26,7 @@ export default function Lotes() {
     setForm({
       nome: l.nome,
       descricao: l.descricao || '',
-      rendimento_carcaca: l.rendimento_carcaca?.toString() || '52',
+      ua_ha: l.ua_ha != null ? l.ua_ha.toString() : '',
       data_entrada: l.data_entrada || '',
     })
     setErro('')
@@ -40,7 +40,7 @@ export default function Lotes() {
     const payload = {
       nome: form.nome,
       descricao: form.descricao || undefined,
-      rendimento_carcaca: form.rendimento_carcaca ? parseFloat(form.rendimento_carcaca) : 52.0,
+      ua_ha: form.ua_ha ? parseFloat(form.ua_ha) : null,
       data_entrada: form.data_entrada || undefined,
     }
     try {
@@ -205,8 +205,8 @@ export default function Lotes() {
           </div>
           <div className="grid-2" style={{ marginBottom: 0 }}>
             <div className="form-group">
-              <label className="form-label">Rendimento Carcaça (%)</label>
-              <input className="form-input" type="number" step="0.1" value={form.rendimento_carcaca} onChange={e => setForm(p => ({ ...p, rendimento_carcaca: e.target.value }))} placeholder="Ex: 52" />
+              <label className="form-label">UA/ha consumido</label>
+              <input className="form-input" type="number" step="0.1" value={form.ua_ha} onChange={e => setForm(p => ({ ...p, ua_ha: e.target.value }))} placeholder="Ex: 1.5" />
             </div>
             <div className="form-group">
               <label className="form-label">Data de Formação</label>

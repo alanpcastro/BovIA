@@ -40,6 +40,7 @@ export interface Lote {
   nome: string
   descricao?: string
   rendimento_carcaca?: number
+  ua_ha?: number | null
   data_entrada?: string | null
   pasto_atual_id?: number | null
   pasto_atual_nome?: string | null

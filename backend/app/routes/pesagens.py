@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
+from pydantic import BaseModel
 from ..database import get_db
 from ..models.pesagem import Pesagem
 from ..models.animal import Animal
@@ -9,6 +10,15 @@ from ..auth import get_current_user
 from ..models.user import User
 
 router = APIRouter()
+
+
+class BulkDeleteByAnimalIn(BaseModel):
+    animal_ids: List[int]
+
+
+class BulkResult(BaseModel):
+    total: int
+    afetados: int
 
 
 def _calcular_gmd(db: Session, animal_id: int, nova_pesagem: Pesagem, user_id: int) -> Optional[float]:
@@ -80,6 +90,25 @@ def criar_pesagem(data: PesagemCreate, db: Session = Depends(get_db), current_us
     out = PesagemOut.model_validate(pesagem)
     out.gmd = _calcular_gmd(db, pesagem.animal_id, pesagem, current_user.id)
     return out
+
+
+@router.post("/bulk-delete-by-animal", response_model=BulkResult)
+def bulk_delete_pesagens_por_animal(
+    data: BulkDeleteByAnimalIn,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Apaga TODAS as pesagens dos animais selecionados (usado na tela agrupada)."""
+    if not data.animal_ids:
+        raise HTTPException(status_code=400, detail="Nenhum animal selecionado")
+    pesagens = db.query(Pesagem).join(Animal).filter(
+        Pesagem.animal_id.in_(data.animal_ids),
+        Animal.user_id == current_user.id,
+    ).all()
+    for p in pesagens:
+        db.delete(p)
+    db.commit()
+    return BulkResult(total=len(data.animal_ids), afetados=len(pesagens))
 
 
 @router.delete("/{pesagem_id}", status_code=204)
