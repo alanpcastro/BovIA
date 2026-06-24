@@ -16,7 +16,7 @@ app.add_middleware(SlowAPIMiddleware)
 
 UPLOADS_DIR = Path(__file__).resolve().parent.parent / "uploads"
 UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
+# app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")  # REMOVIDO PARA SEGURANÇA (0.4)
 
 app.add_middleware(
     CORSMiddleware,

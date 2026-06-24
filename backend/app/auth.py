@@ -45,3 +45,21 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     if user is None:
         raise credentials_exception
     return user
+
+
+def check_assinatura_ativa(current_user: User = Depends(get_current_user)) -> User:
+    from .models.user import AssinaturaStatusEnum
+    
+    if current_user.assinatura_status != AssinaturaStatusEnum.ativo:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Sua assinatura não está ativa. Regularize seu pagamento para realizar alterações."
+        )
+    
+    if current_user.assinatura_expira_em and current_user.assinatura_expira_em < datetime.utcnow():
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Sua assinatura expirou. Renove para continuar utilizando todos os recursos."
+        )
+        
+    return current_user

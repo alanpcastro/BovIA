@@ -44,7 +44,7 @@ export default function Animais() {
   const pageSize = 50
   const [lotes, setLotes] = useState<Lote[]>([])
   const [showModal, setShowModal] = useState(false)
-  const [filtros, setFiltros] = useState({ status: '', sexo: '', categoria: '', lote_id: '', busca: '' })
+  const [filtros, setFiltros] = useState({ status: 'ativo', sexo: '', categoria: '', lote_id: '', busca: '' })
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
   const [erro, setErro] = useState('')

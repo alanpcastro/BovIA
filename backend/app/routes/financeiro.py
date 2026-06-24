@@ -93,8 +93,12 @@ def analise_financeira(
         dias_periodo = 1
 
     # ── Animais ──────────────────────────────────────────────────────────────
+    # Considera só animais ATIVOS no plantel atual. Vendidos/mortos saíram do rebanho
+    # e não devem entrar no cálculo de desempenho zootécnico do periodo.
     q_animais = db.query(Animal).filter(
-        Animal.user_id == uid, Animal.deletado_em == None
+        Animal.user_id == uid,
+        Animal.deletado_em == None,
+        Animal.status == "ativo",
     )
     if lote_id:
         q_animais = q_animais.filter(Animal.lote_id == lote_id)
@@ -132,8 +136,34 @@ def analise_financeira(
             .first()
         )
 
-        pi = primeira.peso_kg if primeira else (animal.peso_entrada if animal.peso_entrada else None)
-        pf = ultima.peso_kg if ultima else None
+        # Define pi/pf e suas datas
+        # Caso 1: 2+ pesagens no período (primeira != ultima) — usa as pesagens como pontas
+        # Caso 2: 1 pesagem no período — usa peso_entrada como inicial (referência do cadastro)
+        # Caso 3: 0 pesagens — fallback pra peso_entrada como inicial, sem final
+        pi = None
+        pf = None
+        data_pi = None
+        data_pf = None
+
+        if primeira and ultima and primeira.id != ultima.id:
+            pi = primeira.peso_kg
+            data_pi = primeira.data
+            pf = ultima.peso_kg
+            data_pf = ultima.data
+        elif primeira and animal.peso_entrada is not None:
+            # Só 1 pesagem no período: usa peso_entrada como inicial
+            pi = animal.peso_entrada
+            data_pi = animal.data_nascimento or (animal.created_at.date() if animal.created_at else None)
+            pf = primeira.peso_kg
+            data_pf = primeira.data
+        elif primeira:
+            # Só 1 pesagem e sem peso_entrada: nao da pra comparar
+            pi = primeira.peso_kg
+            pf = primeira.peso_kg
+            data_pi = data_pf = primeira.data
+        elif animal.peso_entrada is not None:
+            # Sem pesagem no período: só temos o peso de cadastro
+            pi = animal.peso_entrada
 
         if pi is not None:
             pesos_iniciais.append(pi)
@@ -142,8 +172,8 @@ def analise_financeira(
             pesos_finais.append(pf)
             arrobas_saida += (pf * rend_frac) / 15.0
 
-        if pi is not None and pf is not None and primeira and ultima:
-            dias_animal = (ultima.data - primeira.data).days
+        if pi is not None and pf is not None and data_pi is not None and data_pf is not None:
+            dias_animal = (data_pf - data_pi).days
             if dias_animal > 0:
                 gpds.append((pf - pi) / dias_animal)
                 carcaca_ini = pi * rend_frac
@@ -158,7 +188,8 @@ def analise_financeira(
 
     ganho_periodo_arroba = None
     if peso_medio_inicial is not None and peso_medio_final is not None:
-        ganho_periodo_arroba = round((peso_medio_final - peso_medio_inicial) / 30.0, 2)
+        # ganho em arrobas de carcaca: peso ganho em vivo * rendimento / 15kg por @
+        ganho_periodo_arroba = round((peso_medio_final - peso_medio_inicial) * rend_frac / 15.0, 2)
 
     peso_carcaca_medio_final = round(peso_medio_final * rend_frac, 1) if peso_medio_final else None
 

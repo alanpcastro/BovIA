@@ -125,7 +125,7 @@ export default function Pesagens() {
     if (!confirm(`Excluir TODAS as pesagens de ${animal_ids.length} animal(is)?`)) return
     setSaving(true)
     try {
-      const r = await api.post('/pesagens/bulk-delete-by-animal', { animal_ids })
+      const r = await api.post('/pesagens/bulk-delete', { animal_ids })
       success(`${r.data.afetados} pesagem(ns) excluída(s)`)
       clearSelection()
       load()

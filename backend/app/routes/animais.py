@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
+from fastapi.responses import FileResponse
 from pathlib import Path
 import uuid
 from sqlalchemy.orm import Session
@@ -15,7 +16,7 @@ from .pesagens import _calcular_gmd
 from ..schemas.saude import SaudeOut
 from ..schemas.reproducao import ReproducaoOut
 from ..schemas.movimentacao import MovimentacaoCreate, MovimentacaoOut
-from ..auth import get_current_user
+from ..auth import get_current_user, check_assinatura_ativa
 from ..models.user import User
 from datetime import date, datetime, timezone
 from pydantic import BaseModel
@@ -65,8 +66,13 @@ def listar_animais(
     q = db.query(Animal).filter(Animal.user_id == current_user.id, Animal.deletado_em == None)
     if lote_id is not None:
         q = q.filter(Animal.lote_id == lote_id)
+    
+    # Se o usuário não filtrou por status, mostramos apenas os ativos por padrão
     if status:
         q = q.filter(Animal.status == status)
+    else:
+        q = q.filter(Animal.status == "ativo")
+
     if sexo:
         q = q.filter(Animal.sexo == sexo)
     if categoria:
@@ -83,7 +89,7 @@ def listar_animais(
 
 
 @router.post("", response_model=AnimalOut, status_code=201)
-def criar_animal(data: AnimalCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def criar_animal(data: AnimalCreate, db: Session = Depends(get_db), current_user: User = Depends(check_assinatura_ativa)):
     if data.brinco:
         existe = db.query(Animal).filter(Animal.user_id == current_user.id, Animal.brinco == data.brinco).first()
         if existe:
@@ -127,7 +133,7 @@ def get_animal(animal_id: int, db: Session = Depends(get_db), current_user: User
 
 
 @router.put("/{animal_id}", response_model=AnimalOut)
-def atualizar_animal(animal_id: int, data: AnimalUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def atualizar_animal(animal_id: int, data: AnimalUpdate, db: Session = Depends(get_db), current_user: User = Depends(check_assinatura_ativa)):
     animal = db.query(Animal).filter(Animal.id == animal_id, Animal.user_id == current_user.id, Animal.deletado_em == None).first()
     if not animal:
         raise HTTPException(status_code=404, detail="Animal não encontrado")
@@ -178,7 +184,7 @@ def atualizar_animal(animal_id: int, data: AnimalUpdate, db: Session = Depends(g
 def bulk_update(
     data: BulkUpdateIn,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(check_assinatura_ativa),
 ):
     if not data.ids:
         raise HTTPException(status_code=400, detail="Nenhum animal selecionado")
@@ -221,7 +227,7 @@ def bulk_update(
 def bulk_delete(
     data: BulkDeleteIn,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(check_assinatura_ativa),
 ):
     if not data.ids:
         raise HTTPException(status_code=400, detail="Nenhum animal selecionado")
@@ -251,7 +257,7 @@ async def upload_foto(
     animal_id: int,
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(check_assinatura_ativa),
 ):
     animal = db.query(Animal).filter(Animal.id == animal_id, Animal.user_id == current_user.id, Animal.deletado_em == None).first()
     if not animal:
@@ -275,8 +281,28 @@ async def upload_foto(
     return animal
 
 
+@router.get("/foto/{filename}")
+def servir_foto(
+    filename: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Serve a foto do animal de forma segura, verificando se pertence ao usuario."""
+    # O filename no banco é salvo como "/uploads/animais/user_id_animal_id_hash.ext"
+    # Mas aqui recebemos apenas o filename final.
+    # Para garantir seguranca, o filename deve começar com o ID do usuario logado.
+    if not filename.startswith(f"{current_user.id}_"):
+        raise HTTPException(status_code=403, detail="Acesso negado a esta foto")
+
+    file_path = UPLOAD_DIR / filename
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="Foto não encontrada")
+
+    return FileResponse(file_path)
+
+
 @router.delete("/{animal_id}/foto", response_model=AnimalOut)
-def deletar_foto(animal_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def deletar_foto(animal_id: int, db: Session = Depends(get_db), current_user: User = Depends(check_assinatura_ativa)):
     animal = db.query(Animal).filter(Animal.id == animal_id, Animal.user_id == current_user.id, Animal.deletado_em == None).first()
     if not animal:
         raise HTTPException(status_code=404, detail="Animal não encontrado")
@@ -292,7 +318,7 @@ def deletar_foto(animal_id: int, db: Session = Depends(get_db), current_user: Us
 
 
 @router.delete("/{animal_id}", status_code=204)
-def deletar_animal(animal_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def deletar_animal(animal_id: int, db: Session = Depends(get_db), current_user: User = Depends(check_assinatura_ativa)):
     animal = db.query(Animal).filter(Animal.id == animal_id, Animal.user_id == current_user.id, Animal.deletado_em == None).first()
     if not animal:
         raise HTTPException(status_code=404, detail="Animal não encontrado")

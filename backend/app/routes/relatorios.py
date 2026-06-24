@@ -21,7 +21,7 @@ from ..models.pesagem import Pesagem
 from ..models.saude import Saude
 from ..models.movimentacao import Movimentacao
 from ..models.despesa_fixa import DespesaFixa
-from ..auth import get_current_user
+from ..auth import get_current_user, check_assinatura_ativa
 from ..models.user import User
 
 router = APIRouter()
@@ -550,7 +550,7 @@ def resumo_contador_pdf(
 async def importar_animais(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(check_assinatura_ativa),
 ):
     if not file.filename or not file.filename.endswith(".csv"):
         raise HTTPException(status_code=400, detail="Envie um arquivo .csv")

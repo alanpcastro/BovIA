@@ -46,6 +46,21 @@ Cada um destes itens, se quebrado, destroi a confianca do cliente ou expoe dados
 - Documentar procedimento de restore em `RESTORE.md`
 - **Testar o restore pelo menos uma vez** — backup que nunca foi restaurado nao e backup
 
+### 0.4 Protecao de arquivos estaticos (Fotos) (SEGURANCA)
+**Por que**: Atualmente as fotos em `/uploads` sao publicas. Se a URL vazar, qualquer um ve o animal do cliente.
+**O que fazer**:
+- Remover `app.mount("/uploads", ...)` do `main.py`
+- Criar endpoint `GET /animais/{id}/foto` que verifica se `current_user.id == animal.user_id`
+- Retornar o arquivo usando `FileResponse` do FastAPI
+- No frontend, atualizar tags `<img>` para apontar para o novo endpoint com header Authorization
+
+### 0.5 Infraestrutura de Assinatura (COMERCIAL)
+**Por que**: Necessario para cobrar mensalidade e controlar acesso.
+**O que fazer**:
+- **Model User**: adicionar `plano` (enum), `assinatura_status` (ativo, inadimplente, cancelado), `assinatura_expira_em` (datetime), `stripe_customer_id` (string)
+- **Middleware/Dependency**: criar `check_assinatura_ativa` que bloqueia endpoints de escrita (`POST/PUT/DELETE`) se o status nao for `ativo` ou se a data expirou (modo "apenas leitura")
+- **Webhooks**: endpoint para receber confirmacao de pagamento do Stripe/Mercado Pago e atualizar o status no banco
+
 ---
 
 ## BLOCO 1 — CRITICO: Mobile e Responsividade ✅ (concluido 13/04/2026)
@@ -463,3 +478,10 @@ Avaliei e deixei de fora intencionalmente:
 - **Comparacao/benchmark com outras fazendas** — interessante mas requer base de dados grande e tratamento LGPD
 
 **Ordem de execucao recomendada:** 9.1 → 9.3 → 9.5 → 9.2 → 9.4 (cotacoes primeiro por impacto visual; LCDPR por ultimo por ser o mais trabalhoso e fiscal).
+
+### 9.7 Modo Demo / Dados de Exemplo ✅ (concluido 10/06/2026)
+**Resultado**: Endpoints `/dashboard/demo` e `/dashboard/limpar-demo` funcionais.
+**O que foi feito**:
+- Logica para gerar 2 pastos, 2 lotes, 15 animais com historico de pesagens e movimentacoes
+- Protegido por assinatura ativa
+- Facilita onboarding de novos usuarios

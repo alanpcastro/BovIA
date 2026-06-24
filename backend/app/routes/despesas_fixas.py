@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from ..database import get_db
 from ..models.despesa_fixa import DespesaFixa
 from ..schemas.despesa_fixa import DespesaFixaCreate, DespesaFixaUpdate, DespesaFixaOut
-from ..auth import get_current_user
+from ..auth import get_current_user, check_assinatura_ativa
 from ..models.user import User
 
 router = APIRouter()
@@ -36,7 +36,7 @@ def listar(
 def criar(
     data: DespesaFixaCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(check_assinatura_ativa),
 ):
     desp = DespesaFixa(**data.model_dump(), user_id=current_user.id)
     db.add(desp)
@@ -50,7 +50,7 @@ def atualizar(
     desp_id: int,
     data: DespesaFixaUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(check_assinatura_ativa),
 ):
     desp = db.query(DespesaFixa).filter(
         DespesaFixa.id == desp_id, DespesaFixa.user_id == current_user.id
@@ -68,7 +68,7 @@ def atualizar(
 def bulk_delete_despesas(
     data: BulkDeleteIn,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(check_assinatura_ativa),
 ):
     if not data.ids:
         raise HTTPException(status_code=400, detail="Nenhuma despesa selecionada")
@@ -86,7 +86,7 @@ def bulk_delete_despesas(
 def deletar(
     desp_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(check_assinatura_ativa),
 ):
     desp = db.query(DespesaFixa).filter(
         DespesaFixa.id == desp_id, DespesaFixa.user_id == current_user.id

@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from ..database import get_db
 from ..models.custo_nutricional import CustoNutricional
 from ..schemas.custo_nutricional import CustoNutricionalCreate, CustoNutricionalUpdate, CustoNutricionalOut
-from ..auth import get_current_user
+from ..auth import get_current_user, check_assinatura_ativa
 from ..models.user import User
 
 router = APIRouter()
@@ -42,7 +42,7 @@ def listar(
 def criar(
     data: CustoNutricionalCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(check_assinatura_ativa),
 ):
     custo = CustoNutricional(**data.model_dump(), user_id=current_user.id)
     db.add(custo)
@@ -56,7 +56,7 @@ def atualizar(
     custo_id: int,
     data: CustoNutricionalUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(check_assinatura_ativa),
 ):
     custo = db.query(CustoNutricional).filter(
         CustoNutricional.id == custo_id, CustoNutricional.user_id == current_user.id
@@ -74,7 +74,7 @@ def atualizar(
 def bulk_delete_custos(
     data: BulkDeleteIn,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(check_assinatura_ativa),
 ):
     if not data.ids:
         raise HTTPException(status_code=400, detail="Nenhum custo selecionado")
@@ -92,7 +92,7 @@ def bulk_delete_custos(
 def deletar(
     custo_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(check_assinatura_ativa),
 ):
     custo = db.query(CustoNutricional).filter(
         CustoNutricional.id == custo_id, CustoNutricional.user_id == current_user.id

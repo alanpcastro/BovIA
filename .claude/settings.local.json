@@ -3,7 +3,8 @@
     "allow": [
       "Bash(xargs -I{} find {} -type f)",
       "Bash(claude config:*)",
-      "Read(//Users/alan_castro/.claude/**)"
+      "Read(//Users/alan_castro/.claude/**)",
+      "mcp__playwright__browser_fill_form"
     ]
   }
 }

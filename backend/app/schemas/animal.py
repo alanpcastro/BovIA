@@ -1,4 +1,4 @@
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, field_serializer
 from typing import Optional
 from datetime import date, datetime
 from enum import Enum
@@ -115,6 +115,12 @@ class AnimalOut(BaseModel):
     observacoes: Optional[str]
     foto_url: Optional[str] = None
     created_at: datetime
+
+    @field_serializer('foto_url')
+    def transform_foto_url(self, v: Optional[str]) -> Optional[str]:
+        if v and v.startswith("/uploads/animais/"):
+            return v.replace("/uploads/animais/", "/animais/foto/")
+        return v
 
     class Config:
         from_attributes = True

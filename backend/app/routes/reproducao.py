@@ -7,7 +7,7 @@ from ..database import get_db
 from ..models.reproducao import Reproducao
 from ..models.animal import Animal, CategoriaAnimalEnum
 from ..schemas.reproducao import ReproducaoCreate, ReproducaoUpdate, ReproducaoOut, TipoReproducaoEnum
-from ..auth import get_current_user
+from ..auth import get_current_user, check_assinatura_ativa
 from ..models.user import User
 
 router = APIRouter()
@@ -30,7 +30,10 @@ def listar_reproducao(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    q = db.query(Reproducao).join(Animal).filter(Animal.user_id == current_user.id)
+    q = db.query(Reproducao).join(Animal).filter(
+        Animal.user_id == current_user.id,
+        Animal.deletado_em.is_(None),
+    )
     if animal_id:
         q = q.filter(Reproducao.animal_id == animal_id)
     if tipo:
@@ -41,7 +44,7 @@ def listar_reproducao(
 
 
 @router.post("", response_model=ReproducaoOut, status_code=201)
-def criar_reproducao(data: ReproducaoCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def criar_reproducao(data: ReproducaoCreate, db: Session = Depends(get_db), current_user: User = Depends(check_assinatura_ativa)):
     animal = db.query(Animal).filter(Animal.id == data.animal_id, Animal.user_id == current_user.id).first()
     if not animal:
         raise HTTPException(status_code=404, detail="Animal não encontrado")
@@ -97,7 +100,7 @@ def get_reproducao(repro_id: int, db: Session = Depends(get_db), current_user: U
 
 
 @router.put("/{repro_id}", response_model=ReproducaoOut)
-def atualizar_reproducao(repro_id: int, data: ReproducaoUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def atualizar_reproducao(repro_id: int, data: ReproducaoUpdate, db: Session = Depends(get_db), current_user: User = Depends(check_assinatura_ativa)):
     repro = db.query(Reproducao).join(Animal).filter(Reproducao.id == repro_id, Animal.user_id == current_user.id).first()
     if not repro:
         raise HTTPException(status_code=404, detail="Registro não encontrado")
@@ -112,7 +115,7 @@ def atualizar_reproducao(repro_id: int, data: ReproducaoUpdate, db: Session = De
 def bulk_delete_reproducao(
     data: BulkDeleteIn,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(check_assinatura_ativa),
 ):
     if not data.ids:
         raise HTTPException(status_code=400, detail="Nenhum registro selecionado")
@@ -127,7 +130,7 @@ def bulk_delete_reproducao(
 
 
 @router.delete("/{repro_id}", status_code=204)
-def deletar_reproducao(repro_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def deletar_reproducao(repro_id: int, db: Session = Depends(get_db), current_user: User = Depends(check_assinatura_ativa)):
     repro = db.query(Reproducao).join(Animal).filter(Reproducao.id == repro_id, Animal.user_id == current_user.id).first()
     if not repro:
         raise HTTPException(status_code=404, detail="Registro não encontrado")

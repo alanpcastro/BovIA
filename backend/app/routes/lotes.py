@@ -11,7 +11,7 @@ from ..models.saude import Saude
 from ..models.movimentacao import Movimentacao
 from ..models.custo_nutricional import CustoNutricional
 from ..schemas.lote import LoteCreate, LoteUpdate, LoteOut
-from ..auth import get_current_user
+from ..auth import get_current_user, check_assinatura_ativa
 from ..models.user import User
 
 router = APIRouter()
@@ -95,7 +95,7 @@ def listar_lotes(db: Session = Depends(get_db), current_user: User = Depends(get
 
 
 @router.post("", response_model=LoteOut, status_code=201)
-def criar_lote(data: LoteCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def criar_lote(data: LoteCreate, db: Session = Depends(get_db), current_user: User = Depends(check_assinatura_ativa)):
     lote = Lote(**data.model_dump(), user_id=current_user.id)
     db.add(lote)
     db.commit()
@@ -110,7 +110,7 @@ def get_lote(lote_id: int, db: Session = Depends(get_db), current_user: User = D
 
 
 @router.put("/{lote_id}", response_model=LoteOut)
-def atualizar_lote(lote_id: int, data: LoteUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def atualizar_lote(lote_id: int, data: LoteUpdate, db: Session = Depends(get_db), current_user: User = Depends(check_assinatura_ativa)):
     lote = _get_lote_or_404(lote_id, db, current_user)
     for field, value in data.model_dump(exclude_unset=True).items():
         setattr(lote, field, value)
@@ -120,7 +120,7 @@ def atualizar_lote(lote_id: int, data: LoteUpdate, db: Session = Depends(get_db)
 
 
 @router.delete("/{lote_id}", status_code=204)
-def deletar_lote(lote_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def deletar_lote(lote_id: int, db: Session = Depends(get_db), current_user: User = Depends(check_assinatura_ativa)):
     lote = _get_lote_or_404(lote_id, db, current_user)
     # Desvincular animais (eles ficam sem lote, mas continuam cadastrados)
     db.query(Animal).filter(Animal.lote_id == lote.id).update({Animal.lote_id: None})
@@ -140,7 +140,7 @@ def criar_animais_em_lote(
     lote_id: int,
     data: LoteAnimaisCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(check_assinatura_ativa),
 ):
     """Cria N animais de uma vez dentro de um lote."""
     lote = _get_lote_or_404(lote_id, db, current_user)
@@ -170,7 +170,7 @@ def pesagem_em_lote(
     lote_id: int,
     data: LotePesagemCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(check_assinatura_ativa),
 ):
     """Registra pesagem (peso médio) para todos os animais ativos do lote."""
     _get_lote_or_404(lote_id, db, current_user)
@@ -195,7 +195,7 @@ def saude_em_lote(
     lote_id: int,
     data: LoteSaudeCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(check_assinatura_ativa),
 ):
     """Registra evento de saúde para todos os animais ativos do lote."""
     _get_lote_or_404(lote_id, db, current_user)
@@ -226,7 +226,7 @@ def movimentacao_em_lote(
     lote_id: int,
     data: LoteMovimentacaoCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(check_assinatura_ativa),
 ):
     """Registra movimentação para todos os animais ativos do lote."""
     _get_lote_or_404(lote_id, db, current_user)
@@ -247,6 +247,14 @@ def movimentacao_em_lote(
             observacoes=data.observacoes,
         )
         db.add(m)
+
+        # Sincronizar status do animal com a movimentação em lote
+        if data.tipo == "venda":
+            animal.status = "vendido"
+            animal.lote_id = None
+        elif data.tipo == "morte":
+            animal.status = "morto"
+            animal.lote_id = None
 
     db.commit()
     return {"registrados": len(animais)}

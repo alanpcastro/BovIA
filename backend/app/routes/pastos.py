@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 from typing import List
@@ -13,7 +13,7 @@ from ..schemas.pasto import (
     PastoCreate, PastoUpdate, PastoOut, LoteNoPasto,
     OcuparPastoIn, DesocuparPastoIn, HistoricoOcupacaoOut, AlertaPasto,
 )
-from ..auth import get_current_user
+from ..auth import get_current_user, check_assinatura_ativa
 from ..models.user import User
 
 router = APIRouter()
@@ -125,7 +125,7 @@ def listar_pastos(db: Session = Depends(get_db), current_user: User = Depends(ge
 
 
 @router.post("", response_model=PastoOut, status_code=201)
-def criar_pasto(data: PastoCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def criar_pasto(data: PastoCreate, db: Session = Depends(get_db), current_user: User = Depends(check_assinatura_ativa)):
     pasto = Pasto(**data.model_dump(), user_id=current_user.id)
     db.add(pasto)
     db.commit()
@@ -168,7 +168,7 @@ def get_pasto(pasto_id: int, db: Session = Depends(get_db), current_user: User =
 
 
 @router.put("/{pasto_id}", response_model=PastoOut)
-def atualizar_pasto(pasto_id: int, data: PastoUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def atualizar_pasto(pasto_id: int, data: PastoUpdate, db: Session = Depends(get_db), current_user: User = Depends(check_assinatura_ativa)):
     p = _get_pasto_or_404(pasto_id, db, current_user)
     payload = data.model_dump(exclude_unset=True)
     if "status" in payload and payload["status"] is not None:
@@ -184,7 +184,7 @@ def atualizar_pasto(pasto_id: int, data: PastoUpdate, db: Session = Depends(get_
 
 
 @router.delete("/{pasto_id}", status_code=204)
-def deletar_pasto(pasto_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def deletar_pasto(pasto_id: int, db: Session = Depends(get_db), current_user: User = Depends(check_assinatura_ativa)):
     p = _get_pasto_or_404(pasto_id, db, current_user)
     ocupado = db.query(Lote).filter(Lote.pasto_atual_id == p.id).first()
     if ocupado:
@@ -200,7 +200,7 @@ def ocupar_pasto(
     pasto_id: int,
     data: OcuparPastoIn,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(check_assinatura_ativa),
 ):
     """Coloca um lote no pasto."""
     pasto = _get_pasto_or_404(pasto_id, db, current_user)
@@ -238,7 +238,7 @@ def desocupar_pasto(
     pasto_id: int,
     data: DesocuparPastoIn,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(check_assinatura_ativa),
 ):
     pasto = _get_pasto_or_404(pasto_id, db, current_user)
     lote = db.query(Lote).filter(

@@ -5,7 +5,7 @@ from datetime import date, datetime
 from decimal import Decimal
 import json
 from ..database import get_db
-from ..auth import get_current_user
+from ..auth import get_current_user, check_assinatura_ativa
 from ..models.user import User
 from ..models.lote import Lote
 from ..models.animal import Animal
