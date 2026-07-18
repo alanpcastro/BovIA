@@ -47,7 +47,7 @@ export default function Saude() {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
 
   useEffect(() => {
-    api.get('/animais', { params: { page_size: 200 } }).then(r => setAnimais(r.data.items))
+    api.get('/animais', { params: { status: 'ativo', page_size: 200 } }).then(r => setAnimais(r.data.items))
     api.get('/lotes').then(r => setLotes(r.data))
   }, [])
   function load() {

@@ -69,6 +69,7 @@ class OcuparPastoIn(BaseModel):
     lote_id: int
     data_entrada: date
     observacoes: Optional[str] = None
+    forcar: bool = False  # ignora bloqueio de descanso minimo
 
 
 class DesocuparPastoIn(BaseModel):

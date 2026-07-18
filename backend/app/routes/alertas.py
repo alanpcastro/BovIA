@@ -1,7 +1,7 @@
 """Rota unificada de alertas: agrega vacinas, pastos, abate e partos numa lista cronologica."""
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
-from sqlalchemy import desc, func
+from sqlalchemy.orm import Session, aliased
+from sqlalchemy import desc, func, and_, or_, exists
 from typing import List, Optional, Literal
 from datetime import date, timedelta
 from pydantic import BaseModel
@@ -11,7 +11,7 @@ from ..auth import get_current_user
 from ..models.user import User
 from ..models.animal import Animal, StatusEnum, SexoEnum, CategoriaAnimalEnum
 from ..models.saude import Saude
-from ..models.reproducao import Reproducao
+from ..models.reproducao import Reproducao, TipoReproducaoEnum
 from ..models.pesagem import Pesagem
 from ..models.pasto import Pasto
 from ..routes.pastos import _build_pasto_out, LIMITE_DIAS_OCUPACAO, LIMITE_DIAS_DESCANSO
@@ -164,6 +164,20 @@ def listar_alertas(
         ))
 
     # 4. Partos previstos (proximos 30 dias)
+    # Filtra: cobertura nao resolvida (sem resultado terminal) E sem registro de parto subsequente
+    RES_TERMINAIS = ("nasceu bezerro", "aborto", "vazia")
+    Repro2 = aliased(Reproducao)
+    ja_pariu = exists().where(
+        and_(
+            Repro2.animal_id == Reproducao.animal_id,
+            Repro2.id != Reproducao.id,
+            Repro2.data >= Reproducao.data,
+            or_(
+                Repro2.tipo == TipoReproducaoEnum.parto,
+                Repro2.resultado.in_(RES_TERMINAIS),
+            ),
+        )
+    )
     partos = (
         db.query(Reproducao).join(Animal)
         .filter(
@@ -173,6 +187,11 @@ def listar_alertas(
             Reproducao.data_prevista_parto.isnot(None),
             Reproducao.data_prevista_parto >= hoje - timedelta(days=7),
             Reproducao.data_prevista_parto <= horizonte,
+            or_(
+                Reproducao.resultado.is_(None),
+                Reproducao.resultado.notin_(RES_TERMINAIS),
+            ),
+            ~ja_pariu,
         )
         .order_by(Reproducao.data_prevista_parto)
         .all()

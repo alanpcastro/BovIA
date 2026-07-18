@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import api, { Dashboard as DashboardData, AnaliseFinanceira, Alerta } from '../services/api'
 import { useToast } from '../components/Toast'
 import { formatBRL, formatNumber } from '../utils/format'
+import { toLocalDate } from '../utils/date'
 
 const fmt = (v: number | undefined | null) => v != null ? formatBRL(v) : '—'
 
@@ -67,7 +68,7 @@ export default function Dashboard() {
     const hoje = new Date()
     const mesAtras = new Date(hoje); mesAtras.setMonth(mesAtras.getMonth() - 1)
     api.get('/financeiro/analise', {
-      params: { data_inicio: mesAtras.toISOString().split('T')[0], data_fim: hoje.toISOString().split('T')[0] }
+      params: { data_inicio: toLocalDate(mesAtras), data_fim: toLocalDate(hoje) }
     }).then(r => setFin(r.data)).catch(() => {})
     api.get('/alertas').then(r => setAlertas(r.data)).catch(() => {})
   }, [])

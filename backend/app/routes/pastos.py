@@ -7,7 +7,7 @@ from datetime import date
 from ..database import get_db
 from ..models.pasto import Pasto, HistoricoOcupacao, StatusPastoEnum
 from ..models.lote import Lote
-from ..models.animal import Animal, StatusEnum
+from ..models.animal import Animal, StatusEnum, CategoriaAnimalEnum
 from ..models.pesagem import Pesagem
 from ..schemas.pasto import (
     PastoCreate, PastoUpdate, PastoOut, LoteNoPasto,
@@ -20,7 +20,20 @@ router = APIRouter()
 
 UA_KG = 450.0  # 1 UA = 450 kg de peso vivo
 LIMITE_DIAS_OCUPACAO = 45  # alerta de rotacao
-LIMITE_DIAS_DESCANSO = 90  # descanso excessivo
+LIMITE_DIAS_DESCANSO = 90  # descanso excessivo (alerta)
+DESCANSO_MINIMO = 30  # dias minimos para permitir nova ocupacao sem forcar
+
+# Peso estimado por categoria (kg) — usado como fallback quando animal nao tem pesagem nem peso_entrada.
+# Evita subestimar taxa de lotacao (bug: 0kg fantasma). Valores baseados nas faixas descritas no model.
+PESO_PADRAO_POR_CATEGORIA = {
+    CategoriaAnimalEnum.bezerro: 200.0,
+    CategoriaAnimalEnum.garrote: 280.0,
+    CategoriaAnimalEnum.novilha: 320.0,
+    CategoriaAnimalEnum.vaca: 450.0,
+    CategoriaAnimalEnum.boi_magro: 350.0,
+    CategoriaAnimalEnum.boi_gordo: 500.0,
+}
+PESO_PADRAO_FALLBACK = 400.0  # sem categoria: media geral aproximada
 
 
 def _get_pasto_or_404(pasto_id: int, db: Session, user: User) -> Pasto:
@@ -49,7 +62,11 @@ def _peso_total_lote(lote_id: int, db: Session, user_id: int) -> tuple[int, floa
     ).all()
     total = 0.0
     for a in animais:
-        peso = _ultima_pesagem_animal(a.id, db, user_id) or a.peso_entrada or 0
+        # Ordem: ultima pesagem -> peso_entrada -> peso padrao por categoria -> fallback geral.
+        # NUNCA cair pra 0 (subestima UA e mascara superlotacao).
+        peso = _ultima_pesagem_animal(a.id, db, user_id) or a.peso_entrada
+        if not peso:
+            peso = PESO_PADRAO_POR_CATEGORIA.get(a.categoria, PESO_PADRAO_FALLBACK)
         total += peso
     return len(animais), total
 
@@ -186,9 +203,21 @@ def atualizar_pasto(pasto_id: int, data: PastoUpdate, db: Session = Depends(get_
 @router.delete("/{pasto_id}", status_code=204)
 def deletar_pasto(pasto_id: int, db: Session = Depends(get_db), current_user: User = Depends(check_assinatura_ativa)):
     p = _get_pasto_or_404(pasto_id, db, current_user)
-    ocupado = db.query(Lote).filter(Lote.pasto_atual_id == p.id).first()
+    # Bloqueia se algum lote (do proprio usuario) aponta pra este pasto...
+    ocupado = db.query(Lote).filter(
+        Lote.pasto_atual_id == p.id,
+        Lote.user_id == current_user.id,
+    ).first()
     if ocupado:
         raise HTTPException(400, "Pasto está ocupado por lotes. Desocupe antes de excluir.")
+    # ... OU se existe historico aberto (ocupacao em andamento sem data_saida),
+    # cobre inconsistencia: lote desvinculado mas historico nao foi fechado
+    historico_aberto = db.query(HistoricoOcupacao).filter(
+        HistoricoOcupacao.pasto_id == p.id,
+        HistoricoOcupacao.data_saida.is_(None),
+    ).first()
+    if historico_aberto:
+        raise HTTPException(400, "Pasto tem ocupação em andamento sem data de saída. Feche o histórico antes.")
     db.delete(p)
     db.commit()
 
@@ -209,6 +238,23 @@ def ocupar_pasto(
         raise HTTPException(404, "Lote não encontrado")
     if data.data_entrada > date.today():
         raise HTTPException(400, "Data de entrada não pode ser futura")
+
+    # Bloqueia ocupacao prematura em pasto ainda em descanso, salvo se o produtor forcar
+    if pasto.status == StatusPastoEnum.descanso and not data.forcar:
+        ultimo = (
+            db.query(HistoricoOcupacao)
+            .filter(HistoricoOcupacao.pasto_id == pasto.id, HistoricoOcupacao.data_saida.isnot(None))
+            .order_by(desc(HistoricoOcupacao.data_saida))
+            .first()
+        )
+        if ultimo and ultimo.data_saida:
+            dias = (date.today() - ultimo.data_saida).days
+            if dias < DESCANSO_MINIMO:
+                raise HTTPException(
+                    400,
+                    f"Pasto em descanso há apenas {dias} dias (mínimo recomendado: {DESCANSO_MINIMO}). "
+                    f"Marque a opção 'Forçar ocupação' se quiser prosseguir mesmo assim."
+                )
 
     # Fecha histórico anterior desse lote, se estava em outro pasto
     anterior = (

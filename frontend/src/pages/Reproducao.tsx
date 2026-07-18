@@ -44,7 +44,7 @@ export default function Reproducao() {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
 
   useEffect(() => {
-    api.get('/animais', { params: { sexo: 'femea', page_size: 200 } }).then(r => setAnimais(r.data.items))
+    api.get('/animais', { params: { status: 'ativo', sexo: 'femea', page_size: 200 } }).then(r => setAnimais(r.data.items))
   }, [])
   function load() {
     const p: any = {}
@@ -84,7 +84,7 @@ export default function Reproducao() {
       setShowModal(false)
       setForm(emptyForm)
       // Recarrega lista de animais para refletir brinco atualizado
-      const r = await api.get('/animais', { params: { sexo: 'femea', page_size: 200 } })
+      const r = await api.get('/animais', { params: { status: 'ativo', sexo: 'femea', page_size: 200 } })
       setAnimais(r.data.items)
       load()
       success('Registro reprodutivo salvo!')

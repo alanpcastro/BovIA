@@ -136,6 +136,15 @@ export interface Animal {
   created_at: string
 }
 
+export interface ImpactoDelete {
+  pesagens: number
+  saudes: number
+  reproducoes: number
+  movimentacoes: number
+  receita_perdida: number
+  custo_perdido: number
+}
+
 export interface Pesagem {
   id: number
   animal_id: number
@@ -229,11 +238,11 @@ export interface AnaliseFinanceira {
   arrobas_saida_total?: number
   arrobas_produzidas_total?: number
   custo_nutricional_total: number
-  custo_nutricional_por_cabeca: number
+  custo_nutricional_por_cabeca?: number
   custo_operacional_total: number
-  custo_operacional_por_cabeca: number
+  custo_operacional_por_cabeca?: number
   custo_saude_total: number
-  custo_total_por_cabeca: number
+  custo_total_por_cabeca?: number
   custo_por_arroba_produzida?: number
   preco_arroba_compra_medio?: number
   preco_arroba_venda_medio?: number

@@ -23,6 +23,7 @@ from ..models.movimentacao import Movimentacao
 from ..models.despesa_fixa import DespesaFixa
 from ..auth import get_current_user, check_assinatura_ativa
 from ..models.user import User
+from .pesagens import _calcular_gmd
 
 router = APIRouter()
 
@@ -129,9 +130,10 @@ def exportar_pesagens(
     writer = csv.writer(output)
     writer.writerow(["Brinco Animal", "Data", "Peso (kg)", "GMD", "Observações"])
     for p in pesagens:
+        gmd = _calcular_gmd(db, p.animal_id, p, current_user.id)
         writer.writerow([
             p.animal.brinco if p.animal else p.animal_id,
-            p.data, p.peso_kg, "", p.observacoes or "",
+            p.data, p.peso_kg, gmd if gmd is not None else "", p.observacoes or "",
         ])
 
     output.seek(0)
@@ -240,12 +242,13 @@ def exportar_pesagens_xlsx(
     wb = Workbook()
     ws = wb.active
     ws.title = "Pesagens"
-    ws.append(["Brinco", "Data", "Peso (kg)", "Observações"])
+    ws.append(["Brinco", "Data", "Peso (kg)", "GMD (kg/dia)", "Observações"])
     for p in pesagens:
+        gmd = _calcular_gmd(db, p.animal_id, p, current_user.id)
         ws.append([
             p.animal.brinco if p.animal else str(p.animal_id),
             p.data.isoformat() if p.data else "",
-            p.peso_kg, p.observacoes or "",
+            p.peso_kg, gmd if gmd is not None else "", p.observacoes or "",
         ])
     _format_header(ws)
     _autosize(ws)
@@ -341,7 +344,11 @@ def exportar_animais_pdf(
 ):
     animais = (
         db.query(Animal)
-        .filter(Animal.user_id == current_user.id, Animal.deletado_em == None)
+        .filter(
+            Animal.user_id == current_user.id,
+            Animal.deletado_em == None,  # noqa: E711
+            Animal.status == StatusEnum.ativo,
+        )
         .order_by(Animal.brinco)
         .all()
     )
@@ -564,11 +571,16 @@ async def importar_animais(
     reader = csv.DictReader(io.StringIO(text))
     criados = 0
     erros: list[str] = []
+    brincos_no_csv: set[str] = set()  # detecta duplicatas dentro do proprio arquivo
 
     for i, row in enumerate(reader, start=2):
         brinco = (row.get("Brinco") or row.get("brinco") or "").strip()
         if not brinco:
             erros.append(f"Linha {i}: brinco ausente")
+            continue
+
+        if brinco in brincos_no_csv:
+            erros.append(f"Linha {i}: brinco '{brinco}' duplicado no arquivo")
             continue
 
         existe = db.query(Animal).filter(
@@ -577,6 +589,8 @@ async def importar_animais(
         if existe:
             erros.append(f"Linha {i}: brinco '{brinco}' já existe")
             continue
+
+        brincos_no_csv.add(brinco)
 
         sexo_raw = (row.get("Sexo") or row.get("sexo") or "macho").strip().lower()
         sexo = SexoEnum.femea if sexo_raw in ("femea", "fêmea", "f") else SexoEnum.macho

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, Date, ForeignKey, DateTime, Enum
+from sqlalchemy import Column, Integer, String, Float, Date, ForeignKey, DateTime, Enum, Index, text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import enum
@@ -28,6 +28,16 @@ class CategoriaAnimalEnum(str, enum.Enum):
 
 class Animal(Base):
     __tablename__ = "animais"
+    __table_args__ = (
+        # Brinco unico por usuario, apenas entre animais nao-deletados.
+        # Migration: alembic/versions/a8d3e7b2c4f1_brinco_unique.py
+        Index(
+            "ix_animais_user_brinco_ativo_unique",
+            "user_id", "brinco",
+            unique=True,
+            postgresql_where=text("deletado_em IS NULL AND brinco IS NOT NULL"),
+        ),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)

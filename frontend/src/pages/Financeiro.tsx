@@ -4,6 +4,7 @@ import api, { AnaliseFinanceira, Lote } from '../services/api'
 import { useToast } from '../components/Toast'
 import { useEffect } from 'react'
 import { formatBRL, formatNumber } from '../utils/format'
+import { toLocalDate } from '../utils/date'
 
 function KPI({ label, value, sub, color }: { label: string; value: string; sub?: string; color: string }) {
   return (
@@ -42,8 +43,8 @@ export default function Financeiro() {
   tresMesesAtras.setMonth(tresMesesAtras.getMonth() - 3)
 
   const [filtro, setFiltro] = useState({
-    data_inicio: tresMesesAtras.toISOString().split('T')[0],
-    data_fim: hoje.toISOString().split('T')[0],
+    data_inicio: toLocalDate(tresMesesAtras),
+    data_fim: toLocalDate(hoje),
     lote_id: ''
   })
 

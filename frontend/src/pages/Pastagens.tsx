@@ -20,7 +20,8 @@ export default function Pastagens() {
   const [saving, setSaving] = useState(false)
 
   const [ocupandoPasto, setOcupandoPasto] = useState<Pasto | null>(null)
-  const [ocupForm, setOcupForm] = useState({ lote_id: '', data_entrada: hoje(), observacoes: '' })
+  const [ocupForm, setOcupForm] = useState({ lote_id: '', data_entrada: hoje(), observacoes: '', forcar: false })
+  const [avisoDescanso, setAvisoDescanso] = useState<string | null>(null)
 
   const [historicoPasto, setHistoricoPasto] = useState<Pasto | null>(null)
   const [historicos, setHistoricos] = useState<HistoricoOcupacao[]>([])
@@ -93,7 +94,8 @@ export default function Pastagens() {
 
   function abrirOcupar(p: Pasto) {
     setOcupandoPasto(p)
-    setOcupForm({ lote_id: '', data_entrada: hoje(), observacoes: '' })
+    setOcupForm({ lote_id: '', data_entrada: hoje(), observacoes: '', forcar: false })
+    setAvisoDescanso(null)
   }
 
   async function handleOcupar(e: FormEvent) {
@@ -104,12 +106,19 @@ export default function Pastagens() {
         lote_id: parseInt(ocupForm.lote_id),
         data_entrada: ocupForm.data_entrada,
         observacoes: ocupForm.observacoes || undefined,
+        forcar: ocupForm.forcar,
       })
       success('Lote colocado no pasto')
       setOcupandoPasto(null)
       load()
     } catch (err: any) {
-      toastError(apiErrorMessage(err, 'Erro ao ocupar pasto'))
+      const msg = apiErrorMessage(err, 'Erro ao ocupar pasto')
+      // Backend responde 400 com mensagem sobre descanso mínimo — oferece opção de forçar
+      if (err?.response?.status === 400 && /descanso/i.test(msg)) {
+        setAvisoDescanso(msg)
+      } else {
+        toastError(msg)
+      }
     }
   }
 
@@ -394,6 +403,21 @@ export default function Pastagens() {
             <input className="form-input" value={ocupForm.observacoes}
               onChange={e => setOcupForm(p => ({ ...p, observacoes: e.target.value }))} />
           </div>
+          {avisoDescanso && (
+            <div style={{ padding: 12, background: 'var(--amber-100)', borderRadius: 6, marginTop: 8 }}>
+              <div style={{ fontSize: 13, color: 'var(--amber-800)', marginBottom: 8 }}>
+                ⚠️ {avisoDescanso}
+              </div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={ocupForm.forcar}
+                  onChange={e => setOcupForm(p => ({ ...p, forcar: e.target.checked }))}
+                />
+                Forçar ocupação mesmo assim
+              </label>
+            </div>
+          )}
         </form>
       </Modal>
 

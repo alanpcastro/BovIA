@@ -7,6 +7,7 @@ import json
 from ..database import get_db
 from ..auth import get_current_user, check_assinatura_ativa
 from ..models.user import User
+from ..models.pasto import Pasto, HistoricoOcupacao
 from ..models.lote import Lote
 from ..models.animal import Animal
 from ..models.pesagem import Pesagem
@@ -18,7 +19,9 @@ from ..models.despesa_fixa import DespesaFixa
 
 router = APIRouter()
 
+# Ordem importa: pais antes de filhos (FKs apontam pra cima)
 EXPORT_MODELS = [
+    ("pastos", Pasto),
     ("lotes", Lote),
     ("animais", Animal),
     ("pesagens", Pesagem),
@@ -27,6 +30,7 @@ EXPORT_MODELS = [
     ("movimentacoes", Movimentacao),
     ("custos_nutricionais", CustoNutricional),
     ("despesas_fixas", DespesaFixa),
+    ("historico_ocupacao", HistoricoOcupacao),
 ]
 
 
@@ -76,11 +80,14 @@ async def import_backup(
     id_maps: dict[str, dict[int, int]] = {name: {} for name, _ in EXPORT_MODELS}
 
     fk_map = {
+        "lotes": [("pasto_atual_id", "pastos")],
         "animais": [("lote_id", "lotes")],
         "pesagens": [("animal_id", "animais")],
         "saude": [("animal_id", "animais")],
         "reproducao": [("animal_id", "animais")],
         "movimentacoes": [("animal_id", "animais")],
+        "custos_nutricionais": [("lote_id", "lotes")],
+        "historico_ocupacao": [("pasto_id", "pastos"), ("lote_id", "lotes")],
     }
 
     for name, Model in EXPORT_MODELS:
@@ -93,15 +100,17 @@ async def import_backup(
                 if data.get(fk) is not None:
                     data[fk] = id_maps[target].get(data[fk], data[fk])
             data["user_id"] = current_user.id
+            sp = db.begin_nested()
             try:
                 obj = Model(**data)
                 db.add(obj)
                 db.flush()
                 if old_id is not None:
                     id_maps[name][old_id] = obj.id
+                sp.commit()
                 created += 1
             except Exception:
-                db.rollback()
+                sp.rollback()
                 continue
         counts[name] = created
     db.commit()

@@ -1,6 +1,6 @@
 import { useEffect, useState, FormEvent, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import api, { Animal, Pesagem, Saude, Reproducao, Movimentacao, Lote } from '../services/api'
+import api, { Animal, Pesagem, Saude, Reproducao, Movimentacao, Lote, ImpactoDelete } from '../services/api'
 import Modal from '../components/Modal'
 import { useToast } from '../components/Toast'
 import { formatKg, formatBRL } from '../utils/format'
@@ -134,10 +134,29 @@ export default function AnimalDetalhe() {
     }
   }
 
-  async function deletar() {
-    if (!confirm('Excluir este animal permanentemente? Esta ação não pode ser desfeita.')) return
-    await api.delete(`/animais/${id}`)
-    navigate('/animais')
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [impacto, setImpacto] = useState<ImpactoDelete | null>(null)
+  const [deletando, setDeletando] = useState(false)
+
+  async function abrirModalExclusao() {
+    try {
+      const r = await api.get(`/animais/${id}/impacto-delete`)
+      setImpacto(r.data)
+      setShowDeleteModal(true)
+    } catch (err: any) {
+      toastError(apiErrorMessage(err, 'Erro ao carregar impacto'))
+    }
+  }
+
+  async function confirmarExclusao() {
+    setDeletando(true)
+    try {
+      await api.delete(`/animais/${id}`)
+      navigate('/animais')
+    } catch (err: any) {
+      toastError(apiErrorMessage(err, 'Erro ao excluir animal'))
+      setDeletando(false)
+    }
   }
 
   async function deletarPesagem(pesagemId: number) {
@@ -285,7 +304,7 @@ export default function AnimalDetalhe() {
                 </span>
                 <button className="btn btn-ghost btn-sm" onClick={() => setEditStatus(true)}>Mudar status</button>
                 <button className="btn btn-primary btn-sm" onClick={openEdit}>Editar</button>
-                <button className="btn btn-danger btn-sm" onClick={deletar}>Excluir</button>
+                <button className="btn btn-danger btn-sm" onClick={abrirModalExclusao}>Excluir</button>
               </>
             )}
           </div>
@@ -579,6 +598,52 @@ export default function AnimalDetalhe() {
             <input className="form-input" value={editForm.observacoes} onChange={e => setEditForm(p => ({ ...p, observacoes: e.target.value }))} placeholder="Opcional..." />
           </div>
         </form>
+      </Modal>
+
+      {/* Modal de exclusao com resumo do impacto */}
+      <Modal
+        open={showDeleteModal}
+        onClose={() => !deletando && setShowDeleteModal(false)}
+        title="Excluir animal permanentemente"
+        size="sm"
+        footer={
+          <>
+            <button className="btn btn-ghost" onClick={() => setShowDeleteModal(false)} disabled={deletando}>Cancelar</button>
+            <button className="btn btn-danger" onClick={confirmarExclusao} disabled={deletando}>
+              {deletando ? <><span className="spinner" /> Excluindo...</> : 'Excluir tudo'}
+            </button>
+          </>
+        }
+      >
+        {impacto && (
+          <div>
+            <p style={{ marginBottom: 12 }}>
+              Isso vai apagar <strong>#{animal.brinco || animal.id}</strong> e todos os dados vinculados:
+            </p>
+            <ul style={{ marginBottom: 16, paddingLeft: 20, lineHeight: 1.9 }}>
+              <li>{impacto.pesagens} pesagem(ns)</li>
+              <li>{impacto.saudes} evento(s) de saúde</li>
+              <li>{impacto.reproducoes} registro(s) reprodutivo(s)</li>
+              <li>{impacto.movimentacoes} movimentação(ões)</li>
+            </ul>
+            {(impacto.receita_perdida > 0 || impacto.custo_perdido > 0) && (
+              <div style={{ padding: 12, background: 'var(--amber-100)', borderRadius: 6, marginBottom: 12 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--amber-800)', marginBottom: 4 }}>
+                  ⚠️ Impacto financeiro histórico
+                </div>
+                {impacto.receita_perdida > 0 && (
+                  <div style={{ fontSize: 13 }}>Receita que sai dos relatórios: <strong>{formatBRL(impacto.receita_perdida)}</strong></div>
+                )}
+                {impacto.custo_perdido > 0 && (
+                  <div style={{ fontSize: 13 }}>Custo que sai dos relatórios: <strong>{formatBRL(impacto.custo_perdido)}</strong></div>
+                )}
+              </div>
+            )}
+            <div style={{ fontSize: 12, color: 'var(--gray-600)' }}>
+              Se o animal foi vendido ou morreu, use <strong>Mudar status</strong> em vez de excluir — preserva o histórico financeiro.
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   )

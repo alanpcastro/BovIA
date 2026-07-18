@@ -5,6 +5,7 @@ import {
 } from 'recharts'
 import api, { AnaliseFinanceira, Pesagem, Lote, Animal } from '../services/api'
 import { formatBRL, formatKg, formatPct, formatNumber } from '../utils/format'
+import { toLocalDate } from '../utils/date'
 
 const COLORS = ['#2d6a4f', '#d97706', '#db2777', '#2563eb', '#0d9488', '#6b7280']
 
@@ -26,9 +27,7 @@ function ultimoDiaMes(d: Date): Date {
   return new Date(d.getFullYear(), d.getMonth() + 1, 0)
 }
 
-function toISO(d: Date): string {
-  return d.toISOString().split('T')[0]
-}
+const toISO = toLocalDate
 
 export default function Graficos() {
   const [pesagens, setPesagens] = useState<Pesagem[]>([])
@@ -62,7 +61,7 @@ export default function Graficos() {
     Promise.all([
       api.get('/pesagens'),
       api.get('/lotes'),
-      api.get('/animais', { params: { page_size: 200 } }),
+      api.get('/animais', { params: { status: 'ativo', page_size: 200 } }),
       api.get('/financeiro/analise', {
         params: { data_inicio: toISO(seisAtras), data_fim: toISO(hoje) }
       }).catch(() => ({ data: null })),

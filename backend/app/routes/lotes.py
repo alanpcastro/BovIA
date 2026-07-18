@@ -8,7 +8,7 @@ from ..models.lote import Lote
 from ..models.animal import Animal
 from ..models.pesagem import Pesagem
 from ..models.saude import Saude
-from ..models.movimentacao import Movimentacao
+from ..models.movimentacao import Movimentacao, TipoMovEnum
 from ..models.custo_nutricional import CustoNutricional
 from ..schemas.lote import LoteCreate, LoteUpdate, LoteOut
 from ..auth import get_current_user, check_assinatura_ativa
@@ -56,6 +56,9 @@ class LoteAnimaisCreate(BaseModel):
     peso_medio: Optional[float] = None
     origem: Optional[str] = None
     observacoes: Optional[str] = None
+    # Numeracao automatica de brincos (opcional): se preenchido, gera prefixo+numero sequencial
+    brinco_prefixo: Optional[str] = None  # ex: "L1-" gera "L1-001", "L1-002" ...
+    brinco_inicio: int = 1  # numero inicial da sequencia
 
 
 class LotePesagemCreate(BaseModel):
@@ -77,7 +80,7 @@ class LoteSaudeCreate(BaseModel):
 
 
 class LoteMovimentacaoCreate(BaseModel):
-    tipo: str
+    tipo: TipoMovEnum
     data: date
     valor_total: Optional[float] = None
     peso_medio_kg: Optional[float] = None
@@ -122,14 +125,30 @@ def atualizar_lote(lote_id: int, data: LoteUpdate, db: Session = Depends(get_db)
 @router.delete("/{lote_id}", status_code=204)
 def deletar_lote(lote_id: int, db: Session = Depends(get_db), current_user: User = Depends(check_assinatura_ativa)):
     lote = _get_lote_or_404(lote_id, db, current_user)
+    pasto_id_atual = lote.pasto_atual_id
+
     # Desvincular animais (eles ficam sem lote, mas continuam cadastrados)
     db.query(Animal).filter(Animal.lote_id == lote.id).update({Animal.lote_id: None})
-    # Desvincular custos nutricionais (FK nullable, preserva o historico)
-    db.query(CustoNutricional).filter(CustoNutricional.lote_id == lote.id).update({CustoNutricional.lote_id: None})
+    # Deletar custos nutricionais vinculados: se desvincularmos (lote_id=NULL),
+    # passam a ser interpretados como "rebanho inteiro" e inflam analises retroativas
+    db.query(CustoNutricional).filter(CustoNutricional.lote_id == lote.id).delete()
     # Remover historico_ocupacao (lote_id e NOT NULL na tabela, nao da pra preservar)
-    from ..models.pasto import HistoricoOcupacao
+    from ..models.pasto import HistoricoOcupacao, Pasto, StatusPastoEnum
     db.query(HistoricoOcupacao).filter(HistoricoOcupacao.lote_id == lote.id).delete()
     db.delete(lote)
+    db.flush()
+
+    # Se o lote estava ocupando um pasto e nao sobrou nenhum outro lote nele,
+    # marca o pasto como em descanso (evita pasto "ocupado" sem ocupantes)
+    if pasto_id_atual is not None:
+        ainda_ocupado = db.query(Lote).filter(Lote.pasto_atual_id == pasto_id_atual).first()
+        if not ainda_ocupado:
+            pasto = db.query(Pasto).filter(
+                Pasto.id == pasto_id_atual, Pasto.user_id == current_user.id
+            ).first()
+            if pasto and pasto.status == StatusPastoEnum.ocupado:
+                pasto.status = StatusPastoEnum.descanso
+
     db.commit()
 
 
@@ -146,12 +165,36 @@ def criar_animais_em_lote(
     lote = _get_lote_or_404(lote_id, db, current_user)
     if data.quantidade < 1 or data.quantidade > 5000:
         raise HTTPException(status_code=400, detail="Quantidade deve ser entre 1 e 5000")
+    if data.brinco_inicio < 1:
+        raise HTTPException(status_code=400, detail="Numero inicial do brinco deve ser >= 1")
+
+    # Gera brincos se prefixo foi informado (padding dinamico: minimo 3 digitos)
+    brincos = []
+    prefixo = (data.brinco_prefixo or "").strip()
+    if prefixo:
+        ultimo_num = data.brinco_inicio + data.quantidade - 1
+        padding = max(3, len(str(ultimo_num)))
+        brincos = [f"{prefixo}{str(data.brinco_inicio + i).zfill(padding)}" for i in range(data.quantidade)]
+
+        # Valida duplicidade antes de comecar a inserir
+        ja_existentes = db.query(Animal.brinco).filter(
+            Animal.user_id == current_user.id,
+            Animal.brinco.in_(brincos),
+        ).all()
+        if ja_existentes:
+            conflitos = ", ".join(b[0] for b in ja_existentes[:5])
+            extra = f" (+{len(ja_existentes) - 5} outros)" if len(ja_existentes) > 5 else ""
+            raise HTTPException(
+                status_code=400,
+                detail=f"Brincos ja cadastrados: {conflitos}{extra}. Ajuste prefixo ou numero inicial.",
+            )
 
     criados = []
-    for _ in range(data.quantidade):
+    for i in range(data.quantidade):
         animal = Animal(
             user_id=current_user.id,
             lote_id=lote.id,
+            brinco=brincos[i] if brincos else None,
             sexo=data.sexo,
             raca=data.raca,
             peso_entrada=data.peso_medio,
@@ -249,10 +292,10 @@ def movimentacao_em_lote(
         db.add(m)
 
         # Sincronizar status do animal com a movimentação em lote
-        if data.tipo == "venda":
+        if data.tipo == TipoMovEnum.venda:
             animal.status = "vendido"
             animal.lote_id = None
-        elif data.tipo == "morte":
+        elif data.tipo == TipoMovEnum.morte:
             animal.status = "morto"
             animal.lote_id = None
 

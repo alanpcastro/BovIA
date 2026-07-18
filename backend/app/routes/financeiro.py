@@ -43,11 +43,11 @@ class AnaliseFinanceira(BaseModel):
 
     # Custos
     custo_nutricional_total: float = 0
-    custo_nutricional_por_cabeca: float = 0
+    custo_nutricional_por_cabeca: Optional[float] = None
     custo_operacional_total: float = 0
-    custo_operacional_por_cabeca: float = 0
+    custo_operacional_por_cabeca: Optional[float] = None
     custo_saude_total: float = 0
-    custo_total_por_cabeca: float = 0
+    custo_total_por_cabeca: Optional[float] = None
     custo_por_arroba_produzida: Optional[float] = None
 
     # Preços arroba
@@ -103,7 +103,7 @@ def analise_financeira(
     if lote_id:
         q_animais = q_animais.filter(Animal.lote_id == lote_id)
     animais = q_animais.all()
-    qtd_cabecas = len(animais) or 1  # evitar divisão por zero
+    qtd_cabecas = len(animais)
     animal_ids = [a.id for a in animais]
 
     # ── Rendimento de carcaça ────────────────────────────────────────────────
@@ -119,6 +119,7 @@ def analise_financeira(
     pesos_finais = []
     gpds = []
     gmcs = []
+    ganhos_arroba_por_animal = []  # so para animais com pi E pf no mesmo periodo
     arrobas_entrada = 0.0
     arrobas_saida = 0.0
 
@@ -172,6 +173,10 @@ def analise_financeira(
             pesos_finais.append(pf)
             arrobas_saida += (pf * rend_frac) / 15.0
 
+        # Ganho em @ por animal: requer pi E pf no periodo (independente das datas)
+        if pi is not None and pf is not None:
+            ganhos_arroba_por_animal.append((pf - pi) * rend_frac / 15.0)
+
         if pi is not None and pf is not None and data_pi is not None and data_pf is not None:
             dias_animal = (data_pf - data_pi).days
             if dias_animal > 0:
@@ -186,10 +191,11 @@ def analise_financeira(
     gmc_medio = round(sum(gmcs) / len(gmcs), 3) if gmcs else None
     arrobas_produzidas = round(arrobas_saida - arrobas_entrada, 2) if pesos_iniciais and pesos_finais else None
 
-    ganho_periodo_arroba = None
-    if peso_medio_inicial is not None and peso_medio_final is not None:
-        # ganho em arrobas de carcaca: peso ganho em vivo * rendimento / 15kg por @
-        ganho_periodo_arroba = round((peso_medio_final - peso_medio_inicial) * rend_frac / 15.0, 2)
+    # Ganho em @ medio por animal (so considera animais com pi E pf no periodo)
+    ganho_periodo_arroba = (
+        round(sum(ganhos_arroba_por_animal) / len(ganhos_arroba_por_animal), 2)
+        if ganhos_arroba_por_animal else None
+    )
 
     peso_carcaca_medio_final = round(peso_medio_final * rend_frac, 1) if peso_medio_final else None
 
@@ -209,13 +215,13 @@ def analise_financeira(
             if c.lote_id:
                 n = db.query(sqlfunc.count(Animal.id)).filter(
                     Animal.lote_id == c.lote_id, Animal.user_id == uid, Animal.deletado_em == None
-                ).scalar() or 1
+                ).scalar() or 0
             else:
                 n = qtd_cabecas
             custo_nutri_total += c.preco_kg * c.consumo_kg_dia * dias * n
 
     custo_nutri_total = round(custo_nutri_total, 2)
-    custo_nutri_por_cab = round(custo_nutri_total / qtd_cabecas, 2)
+    custo_nutri_por_cab = round(custo_nutri_total / qtd_cabecas, 2) if qtd_cabecas > 0 else None
 
     # ── Custo Operacional (despesas fixas exceto impostos) ────────────────────
     despesas = db.query(DespesaFixa).filter(DespesaFixa.user_id == uid).all()
@@ -233,7 +239,7 @@ def analise_financeira(
 
     custo_oper_total = round(custo_oper_total, 2)
     impostos_total = round(impostos_total, 2)
-    custo_oper_por_cab = round(custo_oper_total / qtd_cabecas, 2)
+    custo_oper_por_cab = round(custo_oper_total / qtd_cabecas, 2) if qtd_cabecas > 0 else None
 
     # ── Custo Saúde ──────────────────────────────────────────────────────────
     q_saude = db.query(sqlfunc.coalesce(sqlfunc.sum(Saude.custo), 0)).join(Animal).filter(
@@ -247,7 +253,7 @@ def analise_financeira(
 
     # ── Custos totais ────────────────────────────────────────────────────────
     custo_total = custo_nutri_total + custo_oper_total + custo_saude
-    custo_total_por_cab = round(custo_total / qtd_cabecas, 2)
+    custo_total_por_cab = round(custo_total / qtd_cabecas, 2) if qtd_cabecas > 0 else None
 
     custo_por_arroba = None
     if arrobas_produzidas and arrobas_produzidas > 0:
@@ -306,7 +312,7 @@ def analise_financeira(
     # = valor_venda - (valor_compra - agio) - custo_operacional
     custo_compras_sem_agil = custo_compras - total_agio
     lucro_liq_sem_agil = round(receita_vendas - custo_compras_sem_agil - custo_oper_total, 2)
-    lucro_liq_sem_agil_por_cab = round(lucro_liq_sem_agil / qtd_cabecas, 2)
+    lucro_liq_sem_agil_por_cab = round(lucro_liq_sem_agil / qtd_cabecas, 2) if qtd_cabecas > 0 else None
 
     rentabilidade = None
     investimento = custo_compras + custo_total
@@ -317,7 +323,7 @@ def analise_financeira(
         periodo_inicio=data_inicio,
         periodo_fim=data_fim,
         lote_id=lote_id,
-        qtd_cabecas=len(animais),
+        qtd_cabecas=qtd_cabecas,
         dias_periodo=dias_periodo,
         peso_medio_inicial=peso_medio_inicial,
         peso_medio_final=peso_medio_final,

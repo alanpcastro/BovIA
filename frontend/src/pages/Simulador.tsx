@@ -13,6 +13,7 @@ interface SimulacaoInput {
   frete_compra: number
   frete_venda: number
   mortalidade_pct: number
+  imposto_pct: number  // Funrural etc — % sobre receita bruta
 }
 
 interface SimulacaoResult {
@@ -29,6 +30,7 @@ interface SimulacaoResult {
   custo_por_arroba_produzida: number
   custo_por_cab: number
   receita_venda_total: number
+  impostos_valor: number
   lucro_bruto: number
   lucro_liquido: number
   lucro_por_cab: number
@@ -42,7 +44,7 @@ function calcular(input: SimulacaoInput): SimulacaoResult | null {
   const {
     qtd_animais, peso_compra_kg, preco_arroba_compra, peso_venda_kg,
     preco_arroba_venda, gmd_esperado, rendimento_carcaca, custo_diario_cab,
-    frete_compra, frete_venda, mortalidade_pct
+    frete_compra, frete_venda, mortalidade_pct, imposto_pct
   } = input
 
   if (qtd_animais <= 0 || peso_compra_kg <= 0 || peso_venda_kg <= peso_compra_kg || gmd_esperado <= 0) return null
@@ -68,15 +70,19 @@ function calcular(input: SimulacaoInput): SimulacaoResult | null {
 
   const receita_venda_total = cab_efetivas * arrobas_saida_cab * preco_arroba_venda
   const lucro_bruto = receita_venda_total - custo_total
-  const lucro_liquido = lucro_bruto
+  const impostos_valor = receita_venda_total * (imposto_pct / 100)
+  const lucro_liquido = lucro_bruto - impostos_valor
   const lucro_por_cab = cab_efetivas > 0 ? lucro_liquido / cab_efetivas : 0
   const margem_pct = receita_venda_total > 0 ? (lucro_liquido / receita_venda_total) * 100 : 0
 
-  const custo_sem_compra = custo_operacional_total + custo_frete_total + custo_compra_total
+  // Break-even = ponto onde lucro liquido = 0. Considera custo total (inclui compra) e impostos.
+  // receita_necessaria = custo_total / (1 - imposto_pct/100)
+  const fator_imposto = 1 - imposto_pct / 100
+  const receita_break_even = fator_imposto > 0 ? custo_total / fator_imposto : custo_total
   const arrobas_saida_total = cab_efetivas * arrobas_saida_cab
-  const break_even_arroba_venda = arrobas_saida_total > 0 ? custo_sem_compra / arrobas_saida_total : 0
-  const break_even_peso_venda = arrobas_produzidas_total > 0
-    ? peso_compra_kg + ((custo_operacional_total + custo_frete_total) / (cab_efetivas * rc / 15 * preco_arroba_venda))
+  const break_even_arroba_venda = arrobas_saida_total > 0 ? receita_break_even / arrobas_saida_total : 0
+  const break_even_peso_venda = (cab_efetivas > 0 && rc > 0 && preco_arroba_venda > 0)
+    ? receita_break_even / (cab_efetivas * rc / 15 * preco_arroba_venda)
     : 0
 
   return {
@@ -85,7 +91,7 @@ function calcular(input: SimulacaoInput): SimulacaoResult | null {
     arrobas_produzidas_total,
     custo_compra_total, custo_operacional_total, custo_frete_total, custo_total,
     custo_por_arroba_produzida, custo_por_cab: custo_total / qtd_animais,
-    receita_venda_total,
+    receita_venda_total, impostos_valor,
     lucro_bruto, lucro_liquido, lucro_por_cab, margem_pct,
     break_even_arroba_venda, break_even_peso_venda,
     cab_efetivas,
@@ -166,6 +172,7 @@ export default function Simulador() {
     frete_compra: 3000,
     frete_venda: 3000,
     mortalidade_pct: 1,
+    imposto_pct: 1.5,  // Funrural padrao
   })
 
   const [result, setResult] = useState<SimulacaoResult | null>(null)
@@ -254,6 +261,7 @@ export default function Simulador() {
               <InputField label="Preco/@ venda" value={input.preco_arroba_venda} onChange={v => update('preco_arroba_venda', v)} suffix="R$/@" />
               <InputField label="Frete venda" value={input.frete_venda} onChange={v => update('frete_venda', v)} suffix="R$" />
               <InputField label="Mortalidade" value={input.mortalidade_pct} onChange={v => update('mortalidade_pct', v)} suffix="%" />
+              <InputField label="Imposto (Funrural)" value={input.imposto_pct} onChange={v => update('imposto_pct', v)} suffix="%" step={0.1} />
             </div>
           </div>
 
@@ -353,6 +361,8 @@ export default function Simulador() {
                 <MetricRow label="Receita de venda" value={fmtBRL(result.receita_venda_total)} color="var(--success)" />
                 <MetricRow label="Custo total" value={fmtBRL(result.custo_total)} color="var(--danger)" />
                 <MetricRow label="Lucro bruto" value={fmtBRL(result.lucro_bruto)} color={result.lucro_bruto >= 0 ? 'var(--success)' : 'var(--danger)'} />
+                <MetricRow label={`Impostos (${input.imposto_pct}%)`} value={fmtBRL(result.impostos_valor)} color="var(--danger)" />
+                <MetricRow label="Lucro líquido" value={fmtBRL(result.lucro_liquido)} color={result.lucro_liquido >= 0 ? 'var(--success)' : 'var(--danger)'} />
                 <div style={{ borderTop: '2px solid var(--gray-200)', marginTop: 8, paddingTop: 8 }}>
                   <MetricRow label="Break-even @/venda" value={`${fmtBRL(result.break_even_arroba_venda)}/@`} color="var(--warning)" />
                   <MetricRow label="Peso minimo venda" value={`${fmtNum(result.break_even_peso_venda, 0)} kg`} color="var(--warning)" />

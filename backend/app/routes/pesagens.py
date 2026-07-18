@@ -13,7 +13,7 @@ router = APIRouter()
 
 
 class BulkDeleteIn(BaseModel):
-    animal_ids: List[int]
+    pesagem_ids: List[int]
 
 
 class BulkResult(BaseModel):
@@ -36,11 +36,13 @@ def _calcular_gmd(db: Session, animal_id: int, pesagem_atual: Pesagem, user_id: 
     )
 
     if not anterior:
-        # Se nao tem pesagem anterior, tenta usar o peso_entrada do animal
+        # Sem pesagem anterior: usar peso_entrada e a data do cadastro (created_at).
+        # NAO usar data_nascimento — peso_entrada e o peso quando o animal foi cadastrado,
+        # nao o peso ao nascer (animal pode ter sido comprado adulto ou cadastrado tardiamente).
         animal = db.query(Animal).filter(Animal.id == animal_id).first()
-        if animal and animal.peso_entrada and animal.data_nascimento:
+        if animal and animal.peso_entrada and animal.created_at:
             peso_ant = animal.peso_entrada
-            data_ant = animal.data_nascimento
+            data_ant = animal.created_at.date()
         else:
             return None
     else:
@@ -101,12 +103,12 @@ def bulk_delete_pesagens(
     db: Session = Depends(get_db),
     current_user: User = Depends(check_assinatura_ativa),
 ):
-    if not data.animal_ids:
-        raise HTTPException(status_code=400, detail="Nenhum animal selecionado")
+    if not data.pesagem_ids:
+        raise HTTPException(status_code=400, detail="Nenhuma pesagem selecionada")
 
-    # Deleta as ultimas pesagens dos animais selecionados
+    # Deleta apenas as pesagens explicitamente selecionadas (validando ownership via animal)
     pesagens = db.query(Pesagem).join(Animal).filter(
-        Animal.id.in_(data.animal_ids),
+        Pesagem.id.in_(data.pesagem_ids),
         Animal.user_id == current_user.id,
     ).all()
 
@@ -114,7 +116,7 @@ def bulk_delete_pesagens(
         db.delete(p)
 
     db.commit()
-    return BulkResult(total=len(data.animal_ids), afetados=len(pesagens))
+    return BulkResult(total=len(data.pesagem_ids), afetados=len(pesagens))
 
 
 @router.delete("/{pesagem_id}", status_code=204)

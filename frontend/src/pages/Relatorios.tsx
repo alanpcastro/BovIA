@@ -1,6 +1,6 @@
 import { useState, useRef, ReactNode } from 'react'
 import { useToast } from '../components/Toast'
-import { todayLocal } from '../utils/date'
+import { todayLocal, toLocalDate } from '../utils/date'
 
 const BASE_URL = '/api'
 
@@ -96,8 +96,8 @@ export default function Relatorios() {
   // Resumo contabil
   const hoje = new Date()
   const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1)
-  const [contadorInicio, setContadorInicio] = useState(inicioMes.toISOString().split('T')[0])
-  const [contadorFim, setContadorFim] = useState(hoje.toISOString().split('T')[0])
+  const [contadorInicio, setContadorInicio] = useState(toLocalDate(inicioMes))
+  const [contadorFim, setContadorFim] = useState(toLocalDate(hoje))
 
   async function importarCSV(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]

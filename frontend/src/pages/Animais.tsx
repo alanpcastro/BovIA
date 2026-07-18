@@ -49,7 +49,7 @@ export default function Animais() {
   const [saving, setSaving] = useState(false)
   const [erro, setErro] = useState('')
   const [showLoteModal, setShowLoteModal] = useState(false)
-  const [loteForm, setLoteForm] = useState({ lote_id: '', quantidade: '', raca: '', sexo: 'femea', peso_medio: '', origem: 'nascido', observacoes: '' })
+  const [loteForm, setLoteForm] = useState({ lote_id: '', quantidade: '', raca: '', sexo: 'femea', peso_medio: '', origem: 'nascido', observacoes: '', brinco_prefixo: '', brinco_inicio: '1' })
 
   // Bulk selection
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
@@ -147,29 +147,43 @@ export default function Animais() {
       const res = await api.post('/animais', payload)
       const animalId = res.data.id
       const hoje = todayLocal()
+      const falhasExtras: string[] = []
       // Register purchase if checked
       if (form.registrar_compra && form.compra_valor) {
-        await api.post('/movimentacoes', {
-          animal_id: animalId, tipo: 'compra', data: hoje,
-          valor: parseFloat(form.compra_valor),
-          peso_kg: form.peso_entrada ? parseFloat(form.peso_entrada) : undefined,
-          preco_arroba: form.compra_preco_arroba ? parseFloat(form.compra_preco_arroba) : undefined,
-          origem: form.compra_origem || undefined,
-        }).catch(() => {})
+        try {
+          await api.post('/movimentacoes', {
+            animal_id: animalId, tipo: 'compra', data: hoje,
+            valor: parseFloat(form.compra_valor),
+            peso_kg: form.peso_entrada ? parseFloat(form.peso_entrada) : undefined,
+            preco_arroba: form.compra_preco_arroba ? parseFloat(form.compra_preco_arroba) : undefined,
+            origem: form.compra_origem || undefined,
+          })
+        } catch (err: any) {
+          falhasExtras.push(`Compra: ${apiErrorMessage(err, 'falha ao registrar')}`)
+        }
       }
       // Register vaccination if checked
       if (form.registrar_vacina && form.vacina_descricao) {
-        await api.post('/saude', {
-          animal_id: animalId, tipo: 'vacinacao', data: hoje,
-          descricao: form.vacina_descricao,
-          medicamento: form.vacina_medicamento || undefined,
-          proxima_data: form.vacina_proxima_data || undefined,
-        }).catch(() => {})
+        try {
+          await api.post('/saude', {
+            animal_id: animalId, tipo: 'vacinacao', data: hoje,
+            descricao: form.vacina_descricao,
+            medicamento: form.vacina_medicamento || undefined,
+            proxima_data: form.vacina_proxima_data || undefined,
+          })
+        } catch (err: any) {
+          falhasExtras.push(`Vacinação: ${apiErrorMessage(err, 'falha ao registrar')}`)
+        }
       }
       setShowModal(false)
       setForm(emptyForm)
       load()
-      success('Animal cadastrado com sucesso!')
+      if (falhasExtras.length > 0) {
+        success('Animal cadastrado, mas com pendências')
+        falhasExtras.forEach(msg => toastError(msg))
+      } else {
+        success('Animal cadastrado com sucesso!')
+      }
     } catch (err: any) {
       setErro(apiErrorMessage(err, 'Erro ao cadastrar animal'))
       toastError('Erro ao cadastrar animal')
@@ -190,6 +204,8 @@ export default function Animais() {
         peso_medio: loteForm.peso_medio ? parseFloat(loteForm.peso_medio) : undefined,
         origem: loteForm.origem || undefined,
         observacoes: loteForm.observacoes || undefined,
+        brinco_prefixo: loteForm.brinco_prefixo.trim() || undefined,
+        brinco_inicio: parseInt(loteForm.brinco_inicio) || 1,
       })
       setShowLoteModal(false)
       load()
@@ -212,7 +228,7 @@ export default function Animais() {
           <div className="page-subtitle">{total} animal(is) no rebanho</div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn btn-ghost btn-xl" onClick={() => { setLoteForm({ lote_id: '', quantidade: '', raca: '', sexo: 'macho', peso_medio: '', origem: 'nascido', observacoes: '' }); setErro(''); setShowLoteModal(true) }}>
+          <button className="btn btn-ghost btn-xl" onClick={() => { setLoteForm({ lote_id: '', quantidade: '', raca: '', sexo: 'macho', peso_medio: '', origem: 'nascido', observacoes: '', brinco_prefixo: '', brinco_inicio: '1' }); setErro(''); setShowLoteModal(true) }}>
             Criar em Lote
           </button>
           <button className="btn btn-primary btn-xl" onClick={() => { setForm(emptyForm); setErro(''); setShowModal(true) }}>
@@ -537,6 +553,52 @@ export default function Animais() {
               <input className="form-input" value={loteForm.observacoes} onChange={e => setLoteForm(p => ({ ...p, observacoes: e.target.value }))} placeholder="Opcional..." />
             </div>
           </div>
+
+          {/* Numeracao automatica de brincos */}
+          <div style={{ borderTop: '1px solid var(--gray-200)', marginTop: 12, paddingTop: 12 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--gray-700)', marginBottom: 8 }}>
+              Numeração automática de brincos (opcional)
+            </div>
+            <div className="grid-2" style={{ marginBottom: 0 }}>
+              <div className="form-group">
+                <label className="form-label">Prefixo do brinco</label>
+                <input
+                  className="form-input"
+                  value={loteForm.brinco_prefixo}
+                  onChange={e => setLoteForm(p => ({ ...p, brinco_prefixo: e.target.value }))}
+                  placeholder="Ex: L1-"
+                  maxLength={20}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Número inicial</label>
+                <input
+                  className="form-input"
+                  type="number"
+                  min={1}
+                  value={loteForm.brinco_inicio}
+                  onChange={e => setLoteForm(p => ({ ...p, brinco_inicio: e.target.value }))}
+                />
+              </div>
+            </div>
+            {loteForm.brinco_prefixo.trim() && loteForm.quantidade && parseInt(loteForm.quantidade) > 0 && (() => {
+              const inicio = parseInt(loteForm.brinco_inicio) || 1
+              const qtd = parseInt(loteForm.quantidade)
+              const ultimo = inicio + qtd - 1
+              const padding = Math.max(3, String(ultimo).length)
+              const pad = (n: number) => String(n).padStart(padding, '0')
+              const primeiro = `${loteForm.brinco_prefixo.trim()}${pad(inicio)}`
+              const fim = `${loteForm.brinco_prefixo.trim()}${pad(ultimo)}`
+              return (
+                <div style={{ fontSize: 12, color: 'var(--gray-500)', marginTop: 4 }}>
+                  Serão gerados: <strong>{primeiro}</strong> até <strong>{fim}</strong>
+                </div>
+              )
+            })()}
+            <div style={{ fontSize: 12, color: 'var(--gray-400)', marginTop: 6 }}>
+              Deixe o prefixo em branco para criar animais sem brinco.
+            </div>
+          </div>
         </form>
       </Modal>
 
@@ -574,11 +636,14 @@ export default function Animais() {
         {bulkAction === 'delete' && (
           <div>
             <p style={{ marginBottom: 12 }}>
-              Você está prestes a excluir <strong>{selectedIds.size}</strong> animal(is).
+              Você está prestes a excluir <strong>{selectedIds.size}</strong> animal(is) <strong>permanentemente</strong>.
             </p>
-            <p style={{ fontSize: 13, color: 'var(--gray-600)' }}>
-              Os animais serão arquivados (soft-delete). Esta ação não removerá pesagens, vacinas ou movimentações já registradas.
+            <p style={{ fontSize: 13, color: 'var(--gray-700)', marginBottom: 12 }}>
+              Todas as pesagens, eventos de saúde, registros reprodutivos e movimentações desses animais serão apagados junto.
             </p>
+            <div style={{ padding: 10, background: 'var(--amber-100)', borderRadius: 6, fontSize: 12, color: 'var(--amber-800)' }}>
+              ⚠️ Se algum foi vendido/morreu, use <strong>Mudar status</strong> em vez de excluir — preserva histórico financeiro.
+            </div>
           </div>
         )}
         {bulkAction === 'lote' && (

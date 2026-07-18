@@ -140,18 +140,22 @@ def dashboard(db: Session = Depends(get_db), current_user: User = Depends(get_cu
     if ultimas:
         peso_medio = round(sum(p.peso_kg for p in ultimas) / len(ultimas), 1)
 
-    # Próximas vacinas (proxima_data nos próximos 30 dias)
+    # Próximas vacinas (proxima_data nos próximos 30 dias) — só animais ativos
     proximas_vacinas = db.query(Saude).join(Animal).filter(
         Animal.user_id == uid,
+        Animal.status == StatusEnum.ativo,
+        Animal.deletado_em == None,  # noqa: E711
         Saude.proxima_data != None,
         Saude.proxima_data >= hoje,
         Saude.proxima_data <= proximos_30,
     ).order_by(Saude.proxima_data).limit(10).all()
 
-    # Partos previstos nos próximos 60 dias
+    # Partos previstos nos próximos 60 dias — só fêmeas ativas
     proximos_60 = hoje + timedelta(days=60)
     partos_previstos = db.query(Reproducao).join(Animal).filter(
         Animal.user_id == uid,
+        Animal.status == StatusEnum.ativo,
+        Animal.deletado_em == None,  # noqa: E711
         Reproducao.data_prevista_parto != None,
         Reproducao.data_prevista_parto >= hoje,
         Reproducao.data_prevista_parto <= proximos_60,
@@ -200,6 +204,8 @@ async def enviar_alertas_email(
 
     vacinas = db.query(Saude).join(Animal).filter(
         Animal.user_id == uid,
+        Animal.status == StatusEnum.ativo,
+        Animal.deletado_em == None,  # noqa: E711
         Saude.proxima_data != None,
         Saude.proxima_data >= hoje,
         Saude.proxima_data <= proximos_7,

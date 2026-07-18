@@ -18,7 +18,7 @@ from ..schemas.reproducao import ReproducaoOut
 from ..schemas.movimentacao import MovimentacaoCreate, MovimentacaoOut
 from ..auth import get_current_user, check_assinatura_ativa
 from ..models.user import User
-from datetime import date, datetime, timezone
+from datetime import date
 from pydantic import BaseModel
 
 router = APIRouter()
@@ -67,11 +67,8 @@ def listar_animais(
     if lote_id is not None:
         q = q.filter(Animal.lote_id == lote_id)
     
-    # Se o usuário não filtrou por status, mostramos apenas os ativos por padrão
     if status:
         q = q.filter(Animal.status == status)
-    else:
-        q = q.filter(Animal.status == "ativo")
 
     if sexo:
         q = q.filter(Animal.sexo == sexo)
@@ -235,12 +232,16 @@ def bulk_delete(
     animais = db.query(Animal).filter(
         Animal.id.in_(data.ids),
         Animal.user_id == current_user.id,
-        Animal.deletado_em == None,
     ).all()
 
-    agora = datetime.now(timezone.utc)
-    for a in animais:
-        a.deletado_em = agora
+    animais_ids = [a.id for a in animais]
+    # Hard-delete cascade em massa
+    if animais_ids:
+        db.query(Pesagem).filter(Pesagem.animal_id.in_(animais_ids)).delete(synchronize_session=False)
+        db.query(Saude).filter(Saude.animal_id.in_(animais_ids)).delete(synchronize_session=False)
+        db.query(Reproducao).filter(Reproducao.animal_id.in_(animais_ids)).delete(synchronize_session=False)
+        db.query(Movimentacao).filter(Movimentacao.animal_id.in_(animais_ids)).delete(synchronize_session=False)
+        db.query(Animal).filter(Animal.id.in_(animais_ids)).delete(synchronize_session=False)
 
     db.commit()
     return BulkResult(total=len(data.ids), afetados=len(animais))
@@ -317,12 +318,51 @@ def deletar_foto(animal_id: int, db: Session = Depends(get_db), current_user: Us
     return animal
 
 
-@router.delete("/{animal_id}", status_code=204)
-def deletar_animal(animal_id: int, db: Session = Depends(get_db), current_user: User = Depends(check_assinatura_ativa)):
-    animal = db.query(Animal).filter(Animal.id == animal_id, Animal.user_id == current_user.id, Animal.deletado_em == None).first()
+class ImpactoDelete(BaseModel):
+    pesagens: int
+    saudes: int
+    reproducoes: int
+    movimentacoes: int
+    receita_perdida: float  # soma de vendas que serao apagadas
+    custo_perdido: float    # soma de compras + custos de saude que serao apagados
+
+
+@router.get("/{animal_id}/impacto-delete", response_model=ImpactoDelete)
+def impacto_delete(animal_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """Retorna o que sera apagado se o animal for excluido — para exibir no modal de confirmacao."""
+    animal = db.query(Animal).filter(Animal.id == animal_id, Animal.user_id == current_user.id).first()
     if not animal:
         raise HTTPException(status_code=404, detail="Animal não encontrado")
-    animal.deletado_em = datetime.now(timezone.utc)
+
+    n_pesagens = db.query(Pesagem).filter(Pesagem.animal_id == animal.id).count()
+    n_saudes = db.query(Saude).filter(Saude.animal_id == animal.id).count()
+    n_reproducoes = db.query(Reproducao).filter(Reproducao.animal_id == animal.id).count()
+    movs = db.query(Movimentacao).filter(Movimentacao.animal_id == animal.id).all()
+    receita = sum((m.valor or 0) - (m.desconto or 0) for m in movs if m.tipo == TipoMovEnum.venda)
+    custo_compras = sum((m.valor or 0) + (m.frete or 0) for m in movs if m.tipo == TipoMovEnum.compra)
+    custo_saude = sum(s.custo or 0 for s in db.query(Saude).filter(Saude.animal_id == animal.id).all())
+
+    return ImpactoDelete(
+        pesagens=n_pesagens,
+        saudes=n_saudes,
+        reproducoes=n_reproducoes,
+        movimentacoes=len(movs),
+        receita_perdida=round(receita, 2),
+        custo_perdido=round(custo_compras + custo_saude, 2),
+    )
+
+
+@router.delete("/{animal_id}", status_code=204)
+def deletar_animal(animal_id: int, db: Session = Depends(get_db), current_user: User = Depends(check_assinatura_ativa)):
+    animal = db.query(Animal).filter(Animal.id == animal_id, Animal.user_id == current_user.id).first()
+    if not animal:
+        raise HTTPException(status_code=404, detail="Animal não encontrado")
+    # Hard-delete cascade: apaga tudo relacionado ao animal
+    db.query(Pesagem).filter(Pesagem.animal_id == animal.id).delete()
+    db.query(Saude).filter(Saude.animal_id == animal.id).delete()
+    db.query(Reproducao).filter(Reproducao.animal_id == animal.id).delete()
+    db.query(Movimentacao).filter(Movimentacao.animal_id == animal.id).delete()
+    db.delete(animal)
     db.commit()
 
 

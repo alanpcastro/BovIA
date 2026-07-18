@@ -1,4 +1,4 @@
-import { useEffect, useState, FormEvent, useMemo } from 'react'
+import { useEffect, useState, FormEvent } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import api, { Pesagem, Animal } from '../services/api'
 import Modal from '../components/Modal'
@@ -28,7 +28,7 @@ export default function Pesagens() {
   const [showLoteModal, setShowLoteModal] = useState(false)
   const [loteForm, setLoteForm] = useState({ lote_id: '', data: todayLocal(), peso_medio_kg: '', observacoes: '' })
   const [loteConfirm, setLoteConfirm] = useState(false)
-  const [selectedAnimalIds, setSelectedAnimalIds] = useState<Set<number>>(new Set())
+  const [selectedPesagemIds, setSelectedPesagemIds] = useState<Set<number>>(new Set())
 
   useEffect(() => {
     api.get('/animais', { params: { status: 'ativo', page_size: 200 } }).then(r => {
@@ -101,31 +101,31 @@ export default function Pesagens() {
 
   const animaisMap = Object.fromEntries(animais.map(a => [a.id, a]))
 
-  function toggleSelectAnimal(animalId: number) {
-    setSelectedAnimalIds(prev => {
+  function toggleSelectPesagem(pesagemId: number) {
+    setSelectedPesagemIds(prev => {
       const next = new Set(prev)
-      if (next.has(animalId)) next.delete(animalId); else next.add(animalId)
+      if (next.has(pesagemId)) next.delete(pesagemId); else next.add(pesagemId)
       return next
     })
   }
   function toggleAllVisible() {
-    const visibleIds = resumoPorAnimal.map(r => r.latest.animal_id)
-    const allSelected = visibleIds.length > 0 && visibleIds.every(id => selectedAnimalIds.has(id))
-    setSelectedAnimalIds(prev => {
+    const visibleIds = pesagens.map(p => p.id)
+    const allSelected = visibleIds.length > 0 && visibleIds.every(id => selectedPesagemIds.has(id))
+    setSelectedPesagemIds(prev => {
       const next = new Set(prev)
       if (allSelected) visibleIds.forEach(id => next.delete(id))
       else visibleIds.forEach(id => next.add(id))
       return next
     })
   }
-  function clearSelection() { setSelectedAnimalIds(new Set()) }
+  function clearSelection() { setSelectedPesagemIds(new Set()) }
   async function bulkDeletePesagens() {
-    const animal_ids = Array.from(selectedAnimalIds)
-    if (animal_ids.length === 0) return
-    if (!confirm(`Excluir TODAS as pesagens de ${animal_ids.length} animal(is)?`)) return
+    const pesagem_ids = Array.from(selectedPesagemIds)
+    if (pesagem_ids.length === 0) return
+    if (!confirm(`Excluir ${pesagem_ids.length} pesagem(ns) selecionada(s)?`)) return
     setSaving(true)
     try {
-      const r = await api.post('/pesagens/bulk-delete', { animal_ids })
+      const r = await api.post('/pesagens/bulk-delete', { pesagem_ids })
       success(`${r.data.afetados} pesagem(ns) excluída(s)`)
       clearSelection()
       load()
@@ -136,20 +136,16 @@ export default function Pesagens() {
     }
   }
 
-  // Agrupa pesagens por animal: pega a mais recente + total de pesagens
-  // (Pesagens vêm ordenadas DESC pela API, entao a primeira de cada animal e a mais recente)
-  const resumoPorAnimal = useMemo(() => {
-    const map = new Map<number, { latest: Pesagem; total: number }>()
-    for (const p of pesagens) {
-      const existing = map.get(p.animal_id)
-      if (existing) {
-        existing.total += 1
-      } else {
-        map.set(p.animal_id, { latest: p, total: 1 })
-      }
+  async function deletarPesagem(pesagemId: number) {
+    if (!confirm('Excluir esta pesagem?')) return
+    try {
+      await api.delete(`/pesagens/${pesagemId}`)
+      success('Pesagem excluída')
+      load()
+    } catch (err: any) {
+      toastError(apiErrorMessage(err, 'Erro ao excluir pesagem'))
     }
-    return Array.from(map.values())
-  }, [pesagens])
+  }
 
   return (
     <div>
@@ -171,7 +167,7 @@ export default function Pesagens() {
         </div>
       </div>
 
-      {selectedAnimalIds.size > 0 && (
+      {selectedPesagemIds.size > 0 && (
         <div
           style={{
             display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
@@ -180,12 +176,12 @@ export default function Pesagens() {
           }}
         >
           <span style={{ fontWeight: 700, color: 'var(--green-800)' }}>
-            {selectedAnimalIds.size} animal(is) selecionado(s)
+            {selectedPesagemIds.size} pesagem(ns) selecionada(s)
           </span>
           <button className="btn btn-ghost btn-sm" onClick={clearSelection}>Limpar</button>
           <div style={{ flex: 1 }} />
           <button className="btn btn-danger btn-sm" onClick={bulkDeletePesagens} disabled={saving}>
-            Excluir todas as pesagens
+            Excluir selecionadas
           </button>
         </div>
       )}
@@ -206,44 +202,43 @@ export default function Pesagens() {
               <th style={{ width: 36 }}>
                 <input
                   type="checkbox"
-                  checked={resumoPorAnimal.length > 0 && resumoPorAnimal.every(r => selectedAnimalIds.has(r.latest.animal_id))}
+                  checked={pesagens.length > 0 && pesagens.every(p => selectedPesagemIds.has(p.id))}
                   onChange={toggleAllVisible}
                 />
               </th>
               <th>Animal</th>
-              <th>Última Pesagem</th>
-              <th>Peso Atual</th>
+              <th>Data</th>
+              <th>Peso (kg)</th>
               <th>GMD (kg/dia)</th>
-              <th>Pesagens</th>
+              <th>Observações</th>
               <th></th>
             </tr>
           </thead>
           <tbody>
-            {resumoPorAnimal.length === 0 && (
+            {pesagens.length === 0 && (
               <tr><td colSpan={7} className="table-empty">Nenhuma pesagem registrada</td></tr>
             )}
-            {resumoPorAnimal.map(({ latest: p, total }) => {
+            {pesagens.map(p => {
               const animal = animaisMap[p.animal_id]
               const gmdPositivo = p.gmd != null && p.gmd > 0
               const gmdNegativo = p.gmd != null && p.gmd < 0
-              const isSelected = selectedAnimalIds.has(p.animal_id)
+              const isSelected = selectedPesagemIds.has(p.id)
               return (
                 <tr
-                  key={p.animal_id}
-                  onClick={(e) => {
-                    if ((e.target as HTMLElement).tagName === 'INPUT') return
-                    navigate(`/animais/${p.animal_id}`)
-                  }}
-                  style={{ cursor: 'pointer', background: isSelected ? 'var(--green-50)' : undefined }}
+                  key={p.id}
+                  style={{ background: isSelected ? 'var(--green-50)' : undefined }}
                 >
-                  <td onClick={e => e.stopPropagation()}>
+                  <td>
                     <input
                       type="checkbox"
                       checked={isSelected}
-                      onChange={() => toggleSelectAnimal(p.animal_id)}
+                      onChange={() => toggleSelectPesagem(p.id)}
                     />
                   </td>
-                  <td style={{ fontWeight: 600 }}>
+                  <td
+                    style={{ fontWeight: 600, cursor: 'pointer' }}
+                    onClick={() => navigate(`/animais/${p.animal_id}`)}
+                  >
                     #{animal?.brinco || p.animal_id}
                     {animal?.nome && <span style={{ color: 'var(--gray-400)', fontWeight: 400 }}> — {animal.nome}</span>}
                   </td>
@@ -259,13 +254,19 @@ export default function Pesagens() {
                       </span>
                     ) : <span style={{ color: 'var(--gray-400)' }}>—</span>}
                   </td>
-                  <td>
-                    <span className="badge badge-gray" style={{ fontWeight: 700 }}>
-                      {total} {total === 1 ? 'registro' : 'registros'}
-                    </span>
+                  <td style={{ color: 'var(--gray-600)', fontSize: 13, maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {p.observacoes || '—'}
                   </td>
-                  <td style={{ color: 'var(--gray-400)', fontSize: 12, fontWeight: 600 }}>
-                    Ver histórico →
+                  <td>
+                    <button
+                      className="btn btn-ghost btn-sm btn-icon"
+                      onClick={() => deletarPesagem(p.id)}
+                      title="Excluir esta pesagem"
+                    >
+                      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="var(--red-600)" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                      </svg>
+                    </button>
                   </td>
                 </tr>
               )
@@ -273,7 +274,7 @@ export default function Pesagens() {
           </tbody>
         </table>
         <div className="table-footer">
-          {resumoPorAnimal.length} animal(is) com pesagem · {pesagens.length} pesagem(ns) no total
+          {pesagens.length} pesagem(ns) no total
         </div>
       </div>
 
