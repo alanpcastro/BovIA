@@ -1,7 +1,9 @@
 import axios from 'axios'
 
+// Em dev, usa '/api' (proxy do Vite -> localhost:8000).
+// Em producao, VITE_API_URL aponta pro backend hospedado (ex: https://bovia-api.onrender.com).
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: import.meta.env.VITE_API_URL || '/api',
 })
 
 api.interceptors.request.use((config) => {

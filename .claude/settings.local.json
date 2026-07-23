@@ -5,7 +5,9 @@
       "Bash(claude config:*)",
       "Read(//Users/alan_castro/.claude/**)",
       "mcp__playwright__browser_fill_form",
-      "Bash(rtk psql *)"
+      "Bash(rtk psql *)",
+      "Bash(grep -E \"\\\\.env$|\\\\.env\\\\.\")",
+      "Bash(rtk git *)"
     ]
   }
 }

@@ -2,7 +2,8 @@ import { useState, useRef, ReactNode } from 'react'
 import { useToast } from '../components/Toast'
 import { todayLocal, toLocalDate } from '../utils/date'
 
-const BASE_URL = '/api'
+// Mesmo esquema do api.ts: '/api' em dev, VITE_API_URL em producao
+const BASE_URL = import.meta.env.VITE_API_URL || '/api'
 
 type Formato = { ext: 'csv' | 'xlsx' | 'pdf'; label: string }
 

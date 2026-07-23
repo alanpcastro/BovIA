@@ -3,7 +3,16 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from .config import settings
 
-engine = create_engine(settings.DATABASE_URL)
+# Alguns provedores entregam a URL como "postgres://" (esquema antigo que o
+# SQLAlchemy 2.0 rejeita). Normaliza para "postgresql://".
+db_url = settings.DATABASE_URL
+if db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql://", 1)
+
+# pool_pre_ping: testa a conexao antes de usar (evita erro quando o Neon suspende
+# o banco apos inatividade e a conexao no pool fica morta).
+# pool_recycle: recicla conexoes com mais de 5 min, alinhado com o auto-suspend do Neon.
+engine = create_engine(db_url, pool_pre_ping=True, pool_recycle=300)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
