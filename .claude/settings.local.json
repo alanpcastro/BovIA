@@ -7,7 +7,9 @@
       "mcp__playwright__browser_fill_form",
       "Bash(rtk psql *)",
       "Bash(grep -E \"\\\\.env$|\\\\.env\\\\.\")",
-      "Bash(rtk git *)"
+      "Bash(rtk git *)",
+      "Bash(grep -E \"__pycache__|\\\\.pyc$\")",
+      "Bash(grep -cE \"__pycache__|\\\\.pyc$\")"
     ]
   }
 }
