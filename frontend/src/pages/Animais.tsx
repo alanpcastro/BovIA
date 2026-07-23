@@ -295,8 +295,22 @@ export default function Animais() {
         </select>
       </div>
 
+      {/* Estado vazio: conta nova (nenhum filtro alterado + zero total) */}
+      {total === 0 && filtros.status === 'ativo' && !filtros.sexo && !filtros.categoria && !filtros.lote_id && !filtros.busca && (
+        <div className="card card-padded" style={{ textAlign: 'center', padding: 48 }}>
+          <svg width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="var(--green-700)" strokeWidth={1.5} style={{ margin: '0 auto 12px', display: 'block' }}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/>
+          </svg>
+          <div style={{ fontWeight: 600, color: 'var(--gray-700)', marginBottom: 6 }}>Nenhum animal cadastrado</div>
+          <div style={{ fontSize: 13, color: 'var(--gray-500)', maxWidth: 380, margin: '0 auto 20px' }}>
+            Cadastre um por vez informando brinco, sexo, peso e categoria — ou use "Criar em Lote" pra gerar vários de uma vez com brincos sequenciais.
+          </div>
+          <button className="btn btn-primary" onClick={() => { setForm(emptyForm); setErro(''); setShowModal(true) }}>Cadastrar primeiro animal</button>
+        </div>
+      )}
+
       {/* Tabela */}
-      <div className="table-wrapper">
+      <div className="table-wrapper" style={total === 0 && filtros.status === 'ativo' && !filtros.sexo && !filtros.categoria && !filtros.lote_id && !filtros.busca ? { display: 'none' } : undefined}>
         <table className="data-table data-table-big">
           <thead>
             <tr>
@@ -330,7 +344,16 @@ export default function Animais() {
           </thead>
           <tbody>
             {animais.length === 0 && (
-              <tr><td colSpan={10} className="table-empty" style={{ fontSize: 16, padding: 56 }}>Nenhum animal encontrado</td></tr>
+              <tr><td colSpan={10} className="table-empty" style={{ fontSize: 15, padding: 40 }}>
+                Nenhum animal encontrado com esses filtros.{' '}
+                <button
+                  className="btn btn-ghost btn-sm"
+                  style={{ padding: '4px 8px' }}
+                  onClick={() => setFiltros({ status: '', sexo: '', categoria: '', lote_id: '', busca: '' })}
+                >
+                  Limpar filtros
+                </button>
+              </td></tr>
             )}
             {animais.map(a => (
               <tr key={a.id} className="clickable" onClick={() => navigate(`/animais/${a.id}`)} style={selectedIds.has(a.id) ? { background: 'var(--green-50)' } : undefined}>

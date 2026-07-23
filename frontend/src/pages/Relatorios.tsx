@@ -98,6 +98,7 @@ export default function Relatorios() {
   const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1)
   const [contadorInicio, setContadorInicio] = useState(toLocalDate(inicioMes))
   const [contadorFim, setContadorFim] = useState(toLocalDate(hoje))
+  const [anoLivroCaixa, setAnoLivroCaixa] = useState(hoje.getFullYear())
 
   async function importarCSV(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -159,6 +160,11 @@ export default function Relatorios() {
     }
     const url = `/relatorios/resumo-contador.pdf?data_inicio=${contadorInicio}&data_fim=${contadorFim}`
     await baixar(url, `resumo_contabil_${contadorInicio}_${contadorFim}.pdf`, 'contador', 'Resumo contábil')
+  }
+
+  async function baixarLivroCaixa() {
+    const url = `/relatorios/livro-caixa.xlsx?ano=${anoLivroCaixa}`
+    await baixar(url, `livro_caixa_${anoLivroCaixa}.xlsx`, 'livro-caixa', 'Livro Caixa')
   }
 
   return (
@@ -276,6 +282,50 @@ export default function Relatorios() {
             </div>
             <div style={{ fontSize: 12, color: 'var(--gray-500)' }}>
               Dica: para o relatório anual, selecione 1º de janeiro a 31 de dezembro.
+            </div>
+          </div>
+        </div>
+
+        {/* Livro Caixa — base para LCDPR / IRPF Rural */}
+        <div className="card card-padded" style={{ position: 'relative', overflow: 'hidden', marginTop: 16 }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: 'var(--green-800)' }} />
+          <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                width: 40, height: 40, borderRadius: 10, background: 'var(--green-100)', color: 'var(--green-800)',
+              }}>{IconReport}</span>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--gray-900)' }}>Livro Caixa (LCDPR / IRPF Rural)</div>
+                <div style={{ fontSize: 12, color: 'var(--gray-500)', marginTop: 2 }}>
+                  Todas as receitas e despesas do ano cronologicamente + resumo mensal e anual. Base para o LCDPR ou declaração de IRPF.
+                </div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+              <div style={{ flex: '0 0 140px' }}>
+                <label className="form-label">Ano-calendário</label>
+                <input
+                  className="form-input"
+                  type="number"
+                  min={2000}
+                  max={2100}
+                  value={anoLivroCaixa}
+                  onChange={e => setAnoLivroCaixa(parseInt(e.target.value) || hoje.getFullYear())}
+                />
+              </div>
+              <button
+                className="btn btn-primary"
+                onClick={baixarLivroCaixa}
+                disabled={baixando === 'livro-caixa'}
+              >
+                {baixando === 'livro-caixa'
+                  ? <><span className="spinner" /> Gerando...</>
+                  : <>{IconDownload} Gerar Excel</>}
+              </button>
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--gray-500)', padding: 10, background: 'var(--amber-100)', borderRadius: 6 }}>
+              ⚠️ O arquivo é um <strong>Livro Caixa gerencial</strong> para entregar ao contador — ele monta o LCDPR oficial (TXT) ou a declaração de IRPF Rural a partir dele. Custos nutricionais e despesas fixas aparecem rateados por dia.
             </div>
           </div>
         </div>

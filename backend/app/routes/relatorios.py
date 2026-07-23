@@ -3,6 +3,7 @@ import io
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
+from sqlalchemy import func as sqlfunc
 from typing import Optional
 from datetime import date
 
@@ -19,11 +20,14 @@ from ..database import get_db
 from ..models.animal import Animal, StatusEnum, SexoEnum
 from ..models.pesagem import Pesagem
 from ..models.saude import Saude
-from ..models.movimentacao import Movimentacao
+from ..models.movimentacao import Movimentacao, TipoMovEnum
 from ..models.despesa_fixa import DespesaFixa
+from ..models.custo_nutricional import CustoNutricional
+from ..models.lote import Lote
 from ..auth import get_current_user, check_assinatura_ativa
 from ..models.user import User
 from .pesagens import _calcular_gmd
+from calendar import monthrange
 
 router = APIRouter()
 
@@ -620,3 +624,233 @@ async def importar_animais(
 
     db.commit()
     return {"importados": criados, "erros": erros}
+
+
+# ── Livro Caixa (base para o LCDPR / IRPF Rural) ─────────────────────────────
+
+CATEGORIA_DESP_LABEL = {
+    "mao_de_obra": "Mão de obra",
+    "manutencao": "Manutenção",
+    "energia": "Energia elétrica",
+    "arrendamento": "Arrendamento",
+    "impostos": "Impostos",
+    "sal_mineral": "Sal mineral",
+    "suplemento": "Suplemento",
+    "vermifugo": "Vermífugo",
+    "combustivel": "Combustível",
+    "outros": "Outros",
+}
+
+
+def _overlap(rec_inicio: date, rec_fim: Optional[date], per_inicio: date, per_fim: date) -> tuple[date, date] | None:
+    """Retorna o intervalo (inicio, fim) de sobreposicao, ou None se nao houver."""
+    inicio = max(rec_inicio, per_inicio)
+    fim = min(rec_fim or per_fim, per_fim)
+    return (inicio, fim) if fim >= inicio else None
+
+
+@router.get("/livro-caixa.xlsx")
+def exportar_livro_caixa(
+    ano: int = Query(..., ge=2000, le=2100, description="Ano-calendário"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Livro Caixa do produtor rural para o ano-calendário informado.
+    Agrega movimentações financeiras (compras/vendas), despesas fixas rateadas,
+    custos de saúde e custos nutricionais rateados. Base para o LCDPR/IRPF Rural.
+    """
+    uid = current_user.id
+    per_inicio = date(ano, 1, 1)
+    per_fim = date(ano, 12, 31)
+
+    linhas: list[dict] = []  # cada linha: data, tipo, categoria, descricao, referencia, valor
+
+    # 1) Movimentacoes (compra = despesa, venda = receita)
+    movs = (
+        db.query(Movimentacao).join(Animal)
+        .filter(
+            Animal.user_id == uid,
+            Movimentacao.data >= per_inicio,
+            Movimentacao.data <= per_fim,
+        )
+        .order_by(Movimentacao.data)
+        .all()
+    )
+    for m in movs:
+        brinco = m.animal.brinco if m.animal else f"#{m.animal_id}"
+        if m.tipo == TipoMovEnum.venda:
+            valor = (m.valor or 0) - (m.desconto or 0)
+            if valor > 0:
+                linhas.append({
+                    "data": m.data, "tipo": "Receita", "categoria": "Venda de animal",
+                    "descricao": f"Venda — {m.destino or brinco}".strip(),
+                    "referencia": brinco, "valor": valor,
+                })
+        elif m.tipo == TipoMovEnum.compra:
+            valor_compra = (m.valor or 0) + (m.frete or 0)
+            if valor_compra > 0:
+                linhas.append({
+                    "data": m.data, "tipo": "Despesa", "categoria": "Compra de animal",
+                    "descricao": f"Compra — {m.origem or brinco}".strip(),
+                    "referencia": brinco, "valor": valor_compra,
+                })
+
+    # 2) Custos de saude (com valor)
+    saudes = (
+        db.query(Saude).join(Animal)
+        .filter(
+            Animal.user_id == uid,
+            Saude.custo != None,  # noqa: E711
+            Saude.custo > 0,
+            Saude.data >= per_inicio,
+            Saude.data <= per_fim,
+        )
+        .order_by(Saude.data)
+        .all()
+    )
+    for s in saudes:
+        brinco = s.animal.brinco if s.animal else f"#{s.animal_id}"
+        linhas.append({
+            "data": s.data, "tipo": "Despesa", "categoria": "Saúde/Sanidade",
+            "descricao": s.descricao or (s.tipo.value if hasattr(s.tipo, "value") else str(s.tipo)),
+            "referencia": brinco, "valor": s.custo,
+        })
+
+    # 3) Despesas fixas (rateio mensal por dias sobrepostos)
+    despesas = db.query(DespesaFixa).filter(DespesaFixa.user_id == uid).all()
+    for d in despesas:
+        ovl = _overlap(d.data_inicio, d.data_fim, per_inicio, per_fim)
+        if not ovl:
+            continue
+        ini, fim = ovl
+        # Gera 1 linha por mes de sobreposicao com o valor pro-rata do mes
+        cur = date(ini.year, ini.month, 1)
+        while cur <= fim:
+            ultimo_dia = monthrange(cur.year, cur.month)[1]
+            fim_mes = date(cur.year, cur.month, ultimo_dia)
+            mes_ini = max(cur, ini)
+            mes_fim = min(fim_mes, fim)
+            dias_no_mes = (mes_fim - mes_ini).days + 1
+            valor_mes = round((d.valor_mensal or 0) * dias_no_mes / ultimo_dia, 2)
+            if valor_mes > 0:
+                cat_label = CATEGORIA_DESP_LABEL.get(
+                    d.categoria.value if hasattr(d.categoria, "value") else str(d.categoria),
+                    "Outros",
+                )
+                linhas.append({
+                    "data": fim_mes if fim_mes <= per_fim else per_fim,
+                    "tipo": "Despesa", "categoria": cat_label,
+                    "descricao": d.descricao,
+                    "referencia": f"{mes_ini.strftime('%d/%m')} a {mes_fim.strftime('%d/%m')}",
+                    "valor": valor_mes,
+                })
+            # avanca pro proximo mes
+            if cur.month == 12:
+                cur = date(cur.year + 1, 1, 1)
+            else:
+                cur = date(cur.year, cur.month + 1, 1)
+
+    # 4) Custos nutricionais (rateio: preco_kg * consumo_kg_dia * dias * cabecas)
+    custos_nutri = db.query(CustoNutricional).filter(CustoNutricional.user_id == uid).all()
+    for c in custos_nutri:
+        ovl = _overlap(c.data_inicio, c.data_fim, per_inicio, per_fim)
+        if not ovl:
+            continue
+        ini, fim = ovl
+        # Numero de cabecas: do lote se especifico, senao rebanho ativo total
+        if c.lote_id:
+            n_cabecas = db.query(sqlfunc.count(Animal.id)).filter(
+                Animal.lote_id == c.lote_id,
+                Animal.user_id == uid,
+                Animal.deletado_em == None,  # noqa: E711
+            ).scalar() or 0
+            lote = db.query(Lote).filter(Lote.id == c.lote_id, Lote.user_id == uid).first()
+            ref = f"Lote {lote.nome}" if lote else "Lote"
+        else:
+            n_cabecas = db.query(sqlfunc.count(Animal.id)).filter(
+                Animal.user_id == uid,
+                Animal.deletado_em == None,  # noqa: E711
+                Animal.status == StatusEnum.ativo,
+            ).scalar() or 0
+            ref = "Rebanho"
+        dias = (fim - ini).days + 1
+        valor = round((c.preco_kg or 0) * (c.consumo_kg_dia or 0) * dias * n_cabecas, 2)
+        if valor > 0:
+            linhas.append({
+                "data": fim, "tipo": "Despesa", "categoria": "Nutrição",
+                "descricao": f"{c.produto} — {ini.strftime('%d/%m')} a {fim.strftime('%d/%m')}",
+                "referencia": ref, "valor": valor,
+            })
+
+    # Ordena cronologicamente
+    linhas.sort(key=lambda x: (x["data"], 0 if x["tipo"] == "Receita" else 1))
+
+    # Calcula saldo acumulado
+    saldo = 0.0
+    for l in linhas:
+        if l["tipo"] == "Receita":
+            saldo += l["valor"]
+        else:
+            saldo -= l["valor"]
+        l["saldo"] = round(saldo, 2)
+
+    # ── Monta o XLSX ─────────────────────────────────────────────────────────
+    wb = Workbook()
+
+    # Sheet 1: Livro Caixa cronologico
+    ws = wb.active
+    ws.title = "Livro Caixa"
+    ws.append(["Data", "Tipo", "Categoria", "Descrição", "Referência", "Valor (R$)", "Saldo (R$)"])
+    for l in linhas:
+        ws.append([
+            l["data"].isoformat(),
+            l["tipo"],
+            l["categoria"],
+            l["descricao"],
+            l["referencia"],
+            l["valor"],
+            l["saldo"],
+        ])
+    _format_header(ws)
+    _autosize(ws)
+
+    # Sheet 2: Resumo Mensal
+    ws2 = wb.create_sheet("Resumo Mensal")
+    ws2.append(["Mês", "Receitas (R$)", "Despesas (R$)", "Saldo do mês (R$)", "Saldo acumulado (R$)"])
+    meses_nomes = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
+    saldo_acum = 0.0
+    for mes in range(1, 13):
+        rec = sum(l["valor"] for l in linhas if l["data"].month == mes and l["tipo"] == "Receita")
+        desp = sum(l["valor"] for l in linhas if l["data"].month == mes and l["tipo"] == "Despesa")
+        saldo_mes = rec - desp
+        saldo_acum += saldo_mes
+        ws2.append([
+            f"{meses_nomes[mes - 1]}/{ano}",
+            round(rec, 2), round(desp, 2), round(saldo_mes, 2), round(saldo_acum, 2),
+        ])
+    _format_header(ws2)
+    _autosize(ws2)
+
+    # Sheet 3: Resumo Anual + aviso
+    ws3 = wb.create_sheet("Resumo Anual")
+    total_rec = sum(l["valor"] for l in linhas if l["tipo"] == "Receita")
+    total_desp = sum(l["valor"] for l in linhas if l["tipo"] == "Despesa")
+    resultado = total_rec - total_desp
+    ws3.append(["", ""])
+    ws3.append(["Ano-calendário", ano])
+    ws3.append(["Produtor", current_user.nome])
+    ws3.append(["Fazenda", current_user.fazenda_nome or ""])
+    ws3.append(["", ""])
+    ws3.append(["Receita bruta total", round(total_rec, 2)])
+    ws3.append(["Despesa total", round(total_desp, 2)])
+    ws3.append(["Resultado da atividade rural", round(resultado, 2)])
+    ws3.append(["", ""])
+    ws3.append(["Total de lançamentos", len(linhas)])
+    ws3.append(["", ""])
+    ws3.append(["AVISO", "Este arquivo é um Livro Caixa gerencial baseado nos dados registrados no BovIA."])
+    ws3.append(["", "Para gerar o LCDPR oficial (TXT layout 0002) ou entregar no IRPF Rural,"])
+    ws3.append(["", "revise com seu contador. Custos nutricionais são rateios estimados."])
+    _autosize(ws3)
+
+    return _xlsx_response(wb, f"livro_caixa_{ano}.xlsx")

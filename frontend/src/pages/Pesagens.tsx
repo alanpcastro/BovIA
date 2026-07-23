@@ -195,7 +195,36 @@ export default function Pesagens() {
         </select>
       </div>
 
-      <div className="table-wrapper">
+      {/* Estado vazio: primeira vez usando pesagens */}
+      {pesagens.length === 0 && !filtroAnimal && (
+        <div className="card card-padded" style={{ textAlign: 'center', padding: 48 }}>
+          <svg width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="var(--green-700)" strokeWidth={1.5} style={{ margin: '0 auto 12px', display: 'block' }}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 6l3 1m0 0l-3 9a5 5 0 006.9 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5 5 0 006.9 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V6"/>
+          </svg>
+          <div style={{ fontWeight: 600, color: 'var(--gray-700)', marginBottom: 6 }}>Nenhuma pesagem registrada</div>
+          <div style={{ fontSize: 13, color: 'var(--gray-500)', maxWidth: 380, margin: '0 auto 20px' }}>
+            {animais.length === 0
+              ? 'Antes de registrar uma pesagem, cadastre pelo menos um animal.'
+              : 'Registre o peso individual de um animal ou aplique um peso médio a todo um lote de uma vez.'}
+          </div>
+          {animais.length === 0 ? (
+            <button className="btn btn-primary" onClick={() => navigate('/animais')}>
+              Cadastrar animais primeiro
+            </button>
+          ) : (
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <button className="btn btn-primary" onClick={() => { setErro(''); setShowModal(true) }}>
+                Registrar primeira pesagem
+              </button>
+              <button className="btn btn-ghost" onClick={() => { setLoteForm({ lote_id: '', data: todayLocal(), peso_medio_kg: '', observacoes: '' }); setErro(''); setLoteConfirm(false); setShowLoteModal(true) }}>
+                Pesar Lote Inteiro
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="table-wrapper" style={pesagens.length === 0 && !filtroAnimal ? { display: 'none' } : undefined}>
         <table className="data-table data-table-big">
           <thead>
             <tr>
@@ -215,8 +244,13 @@ export default function Pesagens() {
             </tr>
           </thead>
           <tbody>
-            {pesagens.length === 0 && (
-              <tr><td colSpan={7} className="table-empty">Nenhuma pesagem registrada</td></tr>
+            {pesagens.length === 0 && filtroAnimal && (
+              <tr><td colSpan={7} className="table-empty">
+                Nenhuma pesagem para o animal selecionado.{' '}
+                <button className="btn btn-ghost btn-sm" style={{ padding: '4px 8px' }} onClick={() => setFiltroAnimal('')}>
+                  Ver todas
+                </button>
+              </td></tr>
             )}
             {pesagens.map(p => {
               const animal = animaisMap[p.animal_id]
