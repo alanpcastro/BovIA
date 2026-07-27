@@ -123,22 +123,30 @@ def analise_financeira(
     arrobas_entrada = 0.0
     arrobas_saida = 0.0
 
+    # Busca TODAS as pesagens do periodo numa unica query (evita N+1:
+    # antes eram 2 queries por animal — 100 queries para 50 animais).
+    pesagens_por_animal: dict[int, list] = {}
+    if animal_ids:
+        todas_pesagens = (
+            db.query(Pesagem)
+            .filter(
+                Pesagem.animal_id.in_(animal_ids),
+                Pesagem.data >= data_inicio,
+                Pesagem.data <= data_fim,
+            )
+            .order_by(Pesagem.animal_id, Pesagem.data.asc())
+            .all()
+        )
+        for p in todas_pesagens:
+            pesagens_por_animal.setdefault(p.animal_id, []).append(p)
+
     for animal in animais:
-        primeira = (
-            db.query(Pesagem)
-            .filter(Pesagem.animal_id == animal.id, Pesagem.data >= data_inicio, Pesagem.data <= data_fim)
-            .order_by(Pesagem.data.asc())
-            .first()
-        )
-        ultima = (
-            db.query(Pesagem)
-            .filter(Pesagem.animal_id == animal.id, Pesagem.data >= data_inicio, Pesagem.data <= data_fim)
-            .order_by(Pesagem.data.desc())
-            .first()
-        )
+        lista = pesagens_por_animal.get(animal.id, [])
+        primeira = lista[0] if lista else None
+        ultima = lista[-1] if lista else None
 
         # Define pi/pf e suas datas
-        # Caso 1: 2+ pesagens no período (primeira != ultima) — usa as pesagens como pontas
+        # Caso 1: 2+ pesagens no período — usa as pesagens como pontas
         # Caso 2: 1 pesagem no período — usa peso_entrada como inicial (referência do cadastro)
         # Caso 3: 0 pesagens — fallback pra peso_entrada como inicial, sem final
         pi = None
@@ -146,7 +154,7 @@ def analise_financeira(
         data_pi = None
         data_pf = None
 
-        if primeira and ultima and primeira.id != ultima.id:
+        if len(lista) >= 2:
             pi = primeira.peso_kg
             data_pi = primeira.data
             pf = ultima.peso_kg

@@ -1,5 +1,5 @@
 import { useState, FormEvent } from 'react'
-import farmBg from '../assets/farm_bg.png'
+import farmBg from '../assets/farm_bg.jpg'
 import logo from '../assets/logo.png'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
