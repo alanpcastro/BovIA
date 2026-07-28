@@ -26,7 +26,7 @@ const categoriaBadge: Record<string, string> = {
 
 const emptyForm = {
   brinco: '', nome: '', raca: '', sexo: 'femea', categoria: '',
-  data_nascimento: '', peso_entrada: '', origem: 'nascido', lote_id: '', observacoes: '',
+  data_nascimento: '', peso_entrada: '', data_entrada: todayLocal(), origem: 'nascido', lote_id: '', observacoes: '',
   // Compra (movimentação)
   registrar_compra: false,
   compra_valor: '', compra_preco_arroba: '', compra_origem: '',
@@ -139,6 +139,7 @@ export default function Animais() {
       categoria: form.categoria || undefined,
       data_nascimento: form.data_nascimento || undefined,
       peso_entrada: form.peso_entrada ? parseFloat(form.peso_entrada) : undefined,
+      data_entrada: form.data_entrada || undefined,
       origem: form.origem || undefined,
       lote_id: form.lote_id ? parseInt(form.lote_id) : undefined,
       observacoes: form.observacoes || undefined,
@@ -457,15 +458,22 @@ export default function Animais() {
               <input className="form-input" type="date" value={form.data_nascimento} onChange={e => setForm(p => ({ ...p, data_nascimento: e.target.value }))} />
             </div>
             <div className="form-group">
-              <label className="form-label">Peso de Entrada (kg)</label>
-              <input className="form-input" type="number" step="0.1" value={form.peso_entrada} onChange={e => setForm(p => ({ ...p, peso_entrada: e.target.value }))} placeholder="Ex: 280" />
-            </div>
-            <div className="form-group">
               <label className="form-label">Categoria</label>
               <select className="form-select" value={form.categoria} onChange={e => setForm(p => ({ ...p, categoria: e.target.value }))}>
                 <option value="">Selecionar</option>
                 {categorias.map(c => <option key={c} value={c}>{categoriaLabel[c]}</option>)}
               </select>
+            </div>
+          </div>
+          <div className="grid-2" style={{ marginBottom: 0 }}>
+            <div className="form-group">
+              <label className="form-label">Peso de Entrada (kg)</label>
+              <input className="form-input" type="number" step="0.1" value={form.peso_entrada} onChange={e => setForm(p => ({ ...p, peso_entrada: e.target.value }))} placeholder="Ex: 280" />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Data de Entrada</label>
+              <input className="form-input" type="date" max={todayLocal()} value={form.data_entrada} onChange={e => setForm(p => ({ ...p, data_entrada: e.target.value }))} />
+              <div style={{ fontSize: 11, color: 'var(--gray-500)', marginTop: 4 }}>Quando o animal entrou (compra/nascimento). Serve de base pro GMD da 1ª pesagem.</div>
             </div>
           </div>
           <div className="form-group">

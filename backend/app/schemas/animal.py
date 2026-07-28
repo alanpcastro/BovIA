@@ -33,9 +33,17 @@ class AnimalCreate(BaseModel):
     categoria: Optional[CategoriaAnimalEnum] = None
     data_nascimento: Optional[date] = None
     peso_entrada: Optional[float] = None
+    data_entrada: Optional[date] = None
     origem: Optional[str] = None
     lote_id: Optional[int] = None
     observacoes: Optional[str] = None
+
+    @field_validator('data_entrada')
+    @classmethod
+    def entrada_nao_futura(cls, v: Optional[date]) -> Optional[date]:
+        if v is not None and v > date.today():
+            raise ValueError('Data de entrada não pode ser futura')
+        return v
 
     @field_validator('brinco')
     @classmethod
@@ -70,6 +78,7 @@ class AnimalUpdate(BaseModel):
     categoria: Optional[CategoriaAnimalEnum] = None
     data_nascimento: Optional[date] = None
     peso_entrada: Optional[float] = None
+    data_entrada: Optional[date] = None
     origem: Optional[str] = None
     lote_id: Optional[int] = None
     status: Optional[StatusEnum] = None
@@ -109,6 +118,7 @@ class AnimalOut(BaseModel):
     categoria: Optional[CategoriaAnimalEnum] = None
     data_nascimento: Optional[date]
     peso_entrada: Optional[float]
+    data_entrada: Optional[date] = None
     peso_atual: Optional[float] = None  # ultima pesagem (calculado na listagem)
     origem: Optional[str]
     lote_id: Optional[int]

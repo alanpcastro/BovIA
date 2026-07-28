@@ -45,7 +45,7 @@ export default function AnimalDetalhe() {
   const [showEdit, setShowEdit] = useState(false)
   const [editForm, setEditForm] = useState({
     brinco: '', nome: '', raca: '', sexo: 'macho', categoria: '',
-    data_nascimento: '', peso_entrada: '', lote_id: '', observacoes: ''
+    data_nascimento: '', peso_entrada: '', data_entrada: '', lote_id: '', observacoes: ''
   })
 
   function load() {
@@ -72,6 +72,7 @@ export default function AnimalDetalhe() {
       brinco: a.brinco || '', nome: a.nome || '', raca: a.raca || '', sexo: a.sexo,
       categoria: a.categoria || '',
       data_nascimento: a.data_nascimento || '', peso_entrada: a.peso_entrada?.toString() || '',
+      data_entrada: a.data_entrada || '',
       lote_id: a.lote_id?.toString() || '', observacoes: a.observacoes || ''
     })
     setShowEdit(true)
@@ -89,6 +90,7 @@ export default function AnimalDetalhe() {
         categoria: editForm.categoria || null,
         data_nascimento: editForm.data_nascimento || undefined,
         peso_entrada: editForm.peso_entrada ? parseFloat(editForm.peso_entrada) : undefined,
+        data_entrada: editForm.data_entrada || undefined,
         lote_id: editForm.lote_id ? parseInt(editForm.lote_id) : null,
         observacoes: editForm.observacoes || undefined,
       })
@@ -571,6 +573,11 @@ export default function AnimalDetalhe() {
               <label className="form-label">Peso de Entrada (kg)</label>
               <input className="form-input" type="number" step="0.1" value={editForm.peso_entrada} onChange={e => setEditForm(p => ({ ...p, peso_entrada: e.target.value }))} />
             </div>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Data de Entrada</label>
+            <input className="form-input" type="date" value={editForm.data_entrada} onChange={e => setEditForm(p => ({ ...p, data_entrada: e.target.value }))} />
+            <div style={{ fontSize: 11, color: 'var(--gray-500)', marginTop: 4 }}>Base pro GMD da 1ª pesagem. Se vazio, usa a data de cadastro.</div>
           </div>
           <div className="grid-2" style={{ marginBottom: 0 }}>
             <div className="form-group">

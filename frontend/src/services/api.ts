@@ -130,6 +130,7 @@ export interface Animal {
   categoria?: CategoriaAnimal | null
   data_nascimento?: string
   peso_entrada?: number
+  data_entrada?: string
   peso_atual?: number
   origem?: string
   lote_id?: number

@@ -50,6 +50,7 @@ class Animal(Base):
     categoria = Column(Enum(CategoriaAnimalEnum), nullable=True)
     data_nascimento = Column(Date, nullable=True)
     peso_entrada = Column(Float, nullable=True)
+    data_entrada = Column(Date, nullable=True)  # quando o animal entrou (compra/nascimento); base do GMD inicial
     origem = Column(String, nullable=True)  # nascido, comprado
     status = Column(Enum(StatusEnum), default=StatusEnum.ativo)
     observacoes = Column(String, nullable=True)

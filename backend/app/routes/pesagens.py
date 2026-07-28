@@ -40,9 +40,12 @@ def _calcular_gmd(db: Session, animal_id: int, pesagem_atual: Pesagem, user_id: 
         # NAO usar data_nascimento — peso_entrada e o peso quando o animal foi cadastrado,
         # nao o peso ao nascer (animal pode ter sido comprado adulto ou cadastrado tardiamente).
         animal = db.query(Animal).filter(Animal.id == animal_id).first()
-        if animal and animal.peso_entrada and animal.created_at:
+        if animal and animal.peso_entrada:
+            # Prioriza a data de entrada informada; se vazia, usa a data de cadastro
+            data_ant = animal.data_entrada or (animal.created_at.date() if animal.created_at else None)
+            if data_ant is None:
+                return None
             peso_ant = animal.peso_entrada
-            data_ant = animal.created_at.date()
         else:
             return None
     else:

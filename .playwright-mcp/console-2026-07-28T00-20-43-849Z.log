@@ -665,3 +665,28 @@
 [  735519ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ http://localhost:5173/node_modules/.vite/deps/chunk-NUMECXU6.js?v=6ac47136:21550
 [  735530ms] [WARNING] ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition. @ http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=6ac47136:4435
 [  735530ms] [WARNING] ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath. @ http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=6ac47136:4435
+[ 2694516ms] [LOG] [vite] server connection lost. Polling for restart... @ http://localhost:5173/@vite/client:559
+[ 2694636ms] [INFO] %cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold @ http://localhost:5173/node_modules/.vite/deps/chunk-NUMECXU6.js?v=6ac47136:21550
+[ 2694648ms] [WARNING] ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition. @ http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=6ac47136:4435
+[ 2694648ms] [WARNING] ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath. @ http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=6ac47136:4435
+[ 2694765ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:5173/api/animais?page=1&page_size=50&status=ativo:0
+[ 2694767ms] AxiosError: Request failed with status code 500
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=6ac47136:1319:7)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=6ac47136:1682:7)
+    at Axios.request (http://localhost:5173/node_modules/.vite/deps/axios.js?v=6ac47136:2328:41)
+[ 2694767ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:5173/api/lotes:0
+[ 2694768ms] AxiosError: Request failed with status code 500
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=6ac47136:1319:7)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=6ac47136:1682:7)
+    at Axios.request (http://localhost:5173/node_modules/.vite/deps/axios.js?v=6ac47136:2328:41)
+[ 2694771ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:5173/api/animais?page=1&page_size=50&status=ativo:0
+[ 2694771ms] AxiosError: Request failed with status code 500
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=6ac47136:1319:7)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=6ac47136:1682:7)
+    at Axios.request (http://localhost:5173/node_modules/.vite/deps/axios.js?v=6ac47136:2328:41)
+[ 2694772ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:5173/api/lotes:0
+[ 2694772ms] AxiosError: Request failed with status code 500
+    at settle (http://localhost:5173/node_modules/.vite/deps/axios.js?v=6ac47136:1319:7)
+    at XMLHttpRequest.onloadend (http://localhost:5173/node_modules/.vite/deps/axios.js?v=6ac47136:1682:7)
+    at Axios.request (http://localhost:5173/node_modules/.vite/deps/axios.js?v=6ac47136:2328:41)
+[37279281ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o @ http://localhost:5173/login:0
