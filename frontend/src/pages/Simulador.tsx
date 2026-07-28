@@ -127,7 +127,7 @@ function InputField({ label, value, onChange, suffix, step, min }: {
       <div style={{ position: 'relative' }}>
         <input
           className="form-input"
-          type="number"
+          type="number" inputMode="decimal"
           step={step || 0.01}
           min={min ?? 0}
           value={value || ''}

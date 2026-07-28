@@ -268,11 +268,11 @@ export default function CustosNutricionais() {
           <div className="grid-2" style={{ marginBottom: 0 }}>
             <div className="form-group">
               <label className="form-label">Preco por kg (R$) *</label>
-              <input className="form-input" type="number" step="0.01" value={form.preco_kg} onChange={e => setForm(p => ({ ...p, preco_kg: e.target.value }))} required placeholder="Ex: 2.50" />
+              <input className="form-input" type="number" inputMode="decimal" step="0.01" value={form.preco_kg} onChange={e => setForm(p => ({ ...p, preco_kg: e.target.value }))} required placeholder="Ex: 2.50" />
             </div>
             <div className="form-group">
               <label className="form-label">Consumo kg/dia/cab *</label>
-              <input className="form-input" type="number" step="0.1" value={form.consumo_kg_dia} onChange={e => setForm(p => ({ ...p, consumo_kg_dia: e.target.value }))} required placeholder="Ex: 12" />
+              <input className="form-input" type="number" inputMode="decimal" step="0.1" value={form.consumo_kg_dia} onChange={e => setForm(p => ({ ...p, consumo_kg_dia: e.target.value }))} required placeholder="Ex: 12" />
             </div>
           </div>
           <div className="grid-2" style={{ marginBottom: 0 }}>

@@ -71,6 +71,26 @@ const navItems = [
   },
 ]
 
+// Atalhos da barra inferior (mobile). O 5º item ("Mais") abre a gaveta completa.
+const bottomNavItems = [
+  {
+    to: '/dashboard', label: 'Início',
+    icon: <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h4a1 1 0 001-1v-4h2v4a1 1 0 001 1h4a1 1 0 001-1V10" /></svg>
+  },
+  {
+    to: '/animais', label: 'Animais',
+    icon: <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" /></svg>
+  },
+  {
+    to: '/pesagens', label: 'Pesar',
+    icon: <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 6l3 1m0 0l-3 9a5 5 0 006.9 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5 5 0 006.9 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V6m0 16H9m3 0h3" /></svg>
+  },
+  {
+    to: '/agenda', label: 'Agenda',
+    icon: <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+  },
+]
+
 export default function Layout() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
@@ -203,6 +223,31 @@ export default function Layout() {
       <main className="app-main">
         <Outlet />
       </main>
+
+      {/* Bottom navigation (só no mobile) — atalhos rápidos operáveis com o polegar */}
+      <nav className="bottom-nav" aria-label="Navegação rápida">
+        {bottomNavItems.map(item => (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            className={({ isActive }) => `bottom-nav-item ${isActive ? 'active' : ''}`}
+          >
+            {item.icon}
+            <span>{item.label}</span>
+          </NavLink>
+        ))}
+        <button
+          type="button"
+          className={`bottom-nav-item ${drawerOpen ? 'active' : ''}`}
+          onClick={() => setDrawerOpen(true)}
+          aria-label="Abrir menu completo"
+        >
+          <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+          <span>Mais</span>
+        </button>
+      </nav>
     </div>
   )
 }

@@ -50,16 +50,36 @@ export default function Financeiro() {
 
   useEffect(() => { api.get('/lotes').then(r => setLotes(r.data)) }, [])
 
-  async function analisar() {
+  async function analisar(override?: { data_inicio: string; data_fim: string }) {
     setLoading(true)
     try {
-      const params: any = { data_inicio: filtro.data_inicio, data_fim: filtro.data_fim }
+      const params: any = {
+        data_inicio: override?.data_inicio ?? filtro.data_inicio,
+        data_fim: override?.data_fim ?? filtro.data_fim,
+      }
       if (filtro.lote_id) params.lote_id = parseInt(filtro.lote_id)
       const r = await api.get('/financeiro/analise', { params })
       setData(r.data)
     } catch {
       toastError('Erro ao carregar analise financeira')
     } finally { setLoading(false) }
+  }
+
+  // Atalhos de período: aplica as datas e já analisa (1 toque)
+  function aplicarPeriodoDias(dias: number) {
+    const fim = new Date()
+    const ini = new Date()
+    ini.setDate(ini.getDate() - dias)
+    const di = toLocalDate(ini), df = toLocalDate(fim)
+    setFiltro(p => ({ ...p, data_inicio: di, data_fim: df }))
+    analisar({ data_inicio: di, data_fim: df })
+  }
+  function aplicarEsteAno() {
+    const fim = new Date()
+    const ini = new Date(fim.getFullYear(), 0, 1)
+    const di = toLocalDate(ini), df = toLocalDate(fim)
+    setFiltro(p => ({ ...p, data_inicio: di, data_fim: df }))
+    analisar({ data_inicio: di, data_fim: df })
   }
 
   useEffect(() => { analisar() }, [])
@@ -79,7 +99,7 @@ export default function Financeiro() {
 
       {/* Filtros */}
       <div className="filters-bar" style={{ gap: 12 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div className="filter-group" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <label className="filter-label">Periodo:</label>
           <input className="form-input" type="date" style={{ width: 160 }} value={filtro.data_inicio}
             onChange={e => setFiltro(p => ({ ...p, data_inicio: e.target.value }))} />
@@ -87,7 +107,14 @@ export default function Financeiro() {
           <input className="form-input" type="date" style={{ width: 160 }} value={filtro.data_fim}
             onChange={e => setFiltro(p => ({ ...p, data_fim: e.target.value }))} />
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        {/* Atalhos rápidos de período */}
+        <div className="filter-group filter-chips" style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+          <button type="button" className="btn btn-outline btn-sm" onClick={() => aplicarPeriodoDias(30)} disabled={loading}>30 dias</button>
+          <button type="button" className="btn btn-outline btn-sm" onClick={() => aplicarPeriodoDias(90)} disabled={loading}>90 dias</button>
+          <button type="button" className="btn btn-outline btn-sm" onClick={() => aplicarPeriodoDias(365)} disabled={loading}>12 meses</button>
+          <button type="button" className="btn btn-outline btn-sm" onClick={aplicarEsteAno} disabled={loading}>Este ano</button>
+        </div>
+        <div className="filter-group" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <label className="filter-label">Lote:</label>
           <select className="form-select" style={{ width: 200 }} value={filtro.lote_id}
             onChange={e => setFiltro(p => ({ ...p, lote_id: e.target.value }))}>
@@ -95,7 +122,7 @@ export default function Financeiro() {
             {lotes.map(l => <option key={l.id} value={l.id}>{l.nome}</option>)}
           </select>
         </div>
-        <button className="btn btn-primary" onClick={analisar} disabled={loading}>
+        <button className="btn btn-primary" onClick={() => analisar()} disabled={loading}>
           {loading ? <><span className="spinner" /> Analisando...</> : 'Analisar'}
         </button>
       </div>

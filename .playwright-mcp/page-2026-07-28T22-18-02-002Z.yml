@@ -1,0 +1,105 @@
+- generic [ref=f16e3]:
+  - banner [ref=f16e4]:
+    - button "Abrir menu" [ref=f16e5] [cursor=pointer]
+    - img "BovIA" [ref=f16e8]
+    - generic [ref=f16e9]: Recantilado
+  - complementary [ref=f16e10]:
+    - generic [ref=f16e11]:
+      - img "BovIA" [ref=f16e12]
+      - generic [ref=f16e13]: Recantilado
+      - button "Fechar menu" [ref=f16e14] [cursor=pointer]
+    - navigation [ref=f16e17]:
+      - generic [ref=f16e18]: Menu
+      - link "Dashboard" [ref=f16e19] [cursor=pointer]:
+        - /url: /dashboard
+      - link "Agenda" [ref=f16e26] [cursor=pointer]:
+        - /url: /agenda
+      - link "Animais" [ref=f16e30] [cursor=pointer]:
+        - /url: /animais
+      - link "Lotes" [ref=f16e34] [cursor=pointer]:
+        - /url: /lotes
+      - link "Pastagens" [ref=f16e38] [cursor=pointer]:
+        - /url: /pastagens
+      - link "Pesagens" [ref=f16e42] [cursor=pointer]:
+        - /url: /pesagens
+      - link "Saúde" [ref=f16e46] [cursor=pointer]:
+        - /url: /saude
+      - link "Reprodução" [ref=f16e50] [cursor=pointer]:
+        - /url: /reproducao
+      - link "Movimentações" [ref=f16e54] [cursor=pointer]:
+        - /url: /movimentacoes
+      - link "Financeiro" [ref=f16e58] [cursor=pointer]:
+        - /url: /financeiro
+      - link "Simulador" [ref=f16e62] [cursor=pointer]:
+        - /url: /simulador
+      - link "Custos Nutri" [ref=f16e66] [cursor=pointer]:
+        - /url: /custos-nutricionais
+      - link "Despesas Fixas" [ref=f16e70] [cursor=pointer]:
+        - /url: /despesas-fixas
+      - link "Gráficos" [ref=f16e74] [cursor=pointer]:
+        - /url: /graficos
+      - link "Relatórios" [ref=f16e78] [cursor=pointer]:
+        - /url: /relatorios
+      - link "Configurações" [ref=f16e82] [cursor=pointer]:
+        - /url: /configuracoes
+    - generic [ref=f16e87]:
+      - generic [ref=f16e88]: Alan Pontes de Castro
+      - button "Alternar tema" [ref=f16e89] [cursor=pointer]: Modo escuro
+      - button "Sair" [ref=f16e92] [cursor=pointer]
+  - main [ref=f16e95]:
+    - generic [ref=f16e96]:
+      - button "Voltar para Animais" [ref=f16e97] [cursor=pointer]
+      - generic [ref=f16e100]:
+        - generic [ref=f16e101]:
+          - generic [ref=f16e102]:
+            - generic "Adicionar foto" [ref=f16e104] [cursor=pointer]: ♀
+            - generic [ref=f16e105]:
+              - generic [ref=f16e106]: "Brinco #"
+              - generic [ref=f16e107]:
+                - generic [ref=f16e108]: nelore
+                - generic [ref=f16e109]: ·gadão
+          - generic [ref=f16e112]:
+            - generic [ref=f16e113]: Ativo
+            - button "Mudar status" [ref=f16e114] [cursor=pointer]
+            - button "Editar" [ref=f16e115] [cursor=pointer]
+            - button "Excluir" [ref=f16e116] [cursor=pointer]
+        - generic [ref=f16e117]:
+          - generic [ref=f16e118]:
+            - generic [ref=f16e119]: Peso de Entrada
+            - generic [ref=f16e120]: 320 kg
+          - generic [ref=f16e121]:
+            - generic [ref=f16e122]: Último Peso
+            - generic [ref=f16e123]: 350,0 kg
+          - generic [ref=f16e124]:
+            - generic [ref=f16e125]: Origem
+            - generic [ref=f16e126]: Nascido na fazenda
+          - generic [ref=f16e127]:
+            - generic [ref=f16e128]: Cadastrado em
+            - generic [ref=f16e129]: 13/07/2026
+      - generic [ref=f16e130]:
+        - button "Pesagens 2" [ref=f16e131] [cursor=pointer]:
+          - text: Pesagens
+          - generic [ref=f16e132]: "2"
+        - button "Saúde" [ref=f16e133] [cursor=pointer]
+        - button "Reprodução" [ref=f16e134] [cursor=pointer]
+        - button "Movimentações" [ref=f16e135] [cursor=pointer]
+      - generic [ref=f16e136]:
+        - generic [ref=f16e137]:
+          - heading "Histórico de Pesagens" [level=3] [ref=f16e138]
+          - button "+ Registrar Pesagem" [ref=f16e139] [cursor=pointer]
+        - table [ref=f16e141]:
+          - rowgroup [ref=f16e142]:
+            - row [ref=f16e143]:
+              - cell "Data 17/07/2026" [ref=f16e144]
+              - cell "Peso 350,0 kg" [ref=f16e145]
+              - cell "GMD +2.5" [ref=f16e146]
+              - cell "Obs. —" [ref=f16e147]
+              - cell [ref=f16e148]:
+                - button "Excluir" [ref=f16e149] [cursor=pointer]
+            - row [ref=f16e152]:
+              - cell "Data 13/07/2026" [ref=f16e153]
+              - cell "Peso 340,0 kg" [ref=f16e154]
+              - cell "GMD —" [ref=f16e155]
+              - cell "Obs. —" [ref=f16e156]
+              - cell [ref=f16e157]:
+                - button "Excluir" [ref=f16e158] [cursor=pointer]

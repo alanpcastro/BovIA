@@ -335,7 +335,7 @@ export default function AnimalDetalhe() {
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 0, marginBottom: 20, borderBottom: '2px solid var(--gray-200)' }}>
+      <div className="detail-tabs" style={{ display: 'flex', gap: 0, marginBottom: 20, borderBottom: '2px solid var(--gray-200)' }}>
         {tabs.map(t => (
           <button
             key={t.key}
@@ -343,6 +343,7 @@ export default function AnimalDetalhe() {
             style={{
               padding: '10px 18px',
               border: 'none',
+              flexShrink: 0,
               borderBottom: tab === t.key ? '2px solid var(--green-700)' : '2px solid transparent',
               marginBottom: -2,
               background: 'none',
@@ -384,8 +385,8 @@ export default function AnimalDetalhe() {
           {hist.pesagens.length === 0
             ? <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--gray-500)', fontSize: 13 }}>Sem pesagens registradas</div>
             : (
-              <div className="table-wrapper">
-              <table className="data-table">
+              <div className="table-wrapper table-wrapper-cards">
+              <table className="data-table table-cards">
                 <thead>
                   <tr>
                     <th>Data</th><th>Peso</th><th>GMD (kg/dia)</th><th>Observações</th><th></th>
@@ -394,13 +395,13 @@ export default function AnimalDetalhe() {
                 <tbody>
                   {hist.pesagens.map(p => (
                     <tr key={p.id}>
-                      <td>{new Date(p.data + 'T00:00').toLocaleDateString('pt-BR')}</td>
-                      <td style={{ fontWeight: 700, color: 'var(--green-700)' }}>{formatKg(p.peso_kg, 1)}</td>
-                      <td style={{ fontWeight: 700, color: p.gmd && p.gmd > 0 ? 'var(--green-700)' : 'var(--red-600)' }}>
+                      <td data-label="Data">{new Date(p.data + 'T00:00').toLocaleDateString('pt-BR')}</td>
+                      <td data-label="Peso" style={{ fontWeight: 700, color: 'var(--green-700)' }}>{formatKg(p.peso_kg, 1)}</td>
+                      <td data-label="GMD" style={{ fontWeight: 700, color: p.gmd && p.gmd > 0 ? 'var(--green-700)' : 'var(--red-600)' }}>
                         {p.gmd != null ? `${p.gmd > 0 ? '+' : ''}${p.gmd}` : '—'}
                       </td>
-                      <td style={{ color: 'var(--gray-400)', fontSize: 13 }}>{p.observacoes || '—'}</td>
-                      <td>
+                      <td data-label="Obs." style={{ color: 'var(--gray-400)', fontSize: 13 }}>{p.observacoes || '—'}</td>
+                      <td className="cell-actions">
                         <button className="btn btn-danger btn-sm btn-icon" onClick={() => deletarPesagem(p.id)} title="Excluir">
                           <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
@@ -429,20 +430,20 @@ export default function AnimalDetalhe() {
           {hist.saudes.length === 0
             ? <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--gray-500)', fontSize: 13 }}>Sem registros de saúde</div>
             : (
-              <div className="table-wrapper">
-              <table className="data-table">
+              <div className="table-wrapper table-wrapper-cards">
+              <table className="data-table table-cards">
                 <thead>
                   <tr><th>Data</th><th>Tipo</th><th>Descrição</th><th>Medicamento</th><th>Custo</th><th>Próxima</th></tr>
                 </thead>
                 <tbody>
                   {hist.saudes.map(s => (
                     <tr key={s.id}>
-                      <td>{new Date(s.data + 'T00:00').toLocaleDateString('pt-BR')}</td>
-                      <td><span className={`badge ${tipoSaudeBadge[s.tipo] || 'badge-gray'}`}>{tipoSaudeLabel[s.tipo] || s.tipo}</span></td>
-                      <td>{s.descricao}</td>
-                      <td style={{ color: 'var(--gray-500)', fontSize: 13 }}>{s.medicamento || '—'}</td>
-                      <td style={{ fontWeight: 600, color: s.custo ? 'var(--red-600)' : 'var(--gray-400)' }}>{s.custo != null ? formatBRL(s.custo) : '—'}</td>
-                      <td style={{ color: s.proxima_data ? 'var(--amber-600)' : 'var(--gray-400)', fontWeight: 600, fontSize: 13 }}>
+                      <td data-label="Data">{new Date(s.data + 'T00:00').toLocaleDateString('pt-BR')}</td>
+                      <td data-label="Tipo"><span className={`badge ${tipoSaudeBadge[s.tipo] || 'badge-gray'}`}>{tipoSaudeLabel[s.tipo] || s.tipo}</span></td>
+                      <td data-label="Descrição">{s.descricao}</td>
+                      <td data-label="Medicamento" style={{ color: 'var(--gray-500)', fontSize: 13 }}>{s.medicamento || '—'}</td>
+                      <td data-label="Custo" style={{ fontWeight: 600, color: s.custo ? 'var(--red-600)' : 'var(--gray-400)' }}>{s.custo != null ? formatBRL(s.custo) : '—'}</td>
+                      <td data-label="Próxima" style={{ color: s.proxima_data ? 'var(--amber-600)' : 'var(--gray-400)', fontWeight: 600, fontSize: 13 }}>
                         {s.proxima_data ? new Date(s.proxima_data + 'T00:00').toLocaleDateString('pt-BR') : '—'}
                       </td>
                     </tr>
@@ -467,24 +468,24 @@ export default function AnimalDetalhe() {
           {hist.reproducoes.length === 0
             ? <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--gray-500)', fontSize: 13 }}>Sem registros reprodutivos</div>
             : (
-              <div className="table-wrapper">
-              <table className="data-table">
+              <div className="table-wrapper table-wrapper-cards">
+              <table className="data-table table-cards">
                 <thead>
                   <tr><th>Data</th><th>Tipo</th><th>Resultado</th><th>Touro</th><th>Parto Previsto</th></tr>
                 </thead>
                 <tbody>
                   {hist.reproducoes.map(r => (
                     <tr key={r.id}>
-                      <td>{new Date(r.data + 'T00:00').toLocaleDateString('pt-BR')}</td>
-                      <td style={{ fontSize: 13 }}>{r.tipo.replace(/_/g, ' ')}</td>
-                      <td>
+                      <td data-label="Data">{new Date(r.data + 'T00:00').toLocaleDateString('pt-BR')}</td>
+                      <td data-label="Tipo" style={{ fontSize: 13 }}>{r.tipo.replace(/_/g, ' ')}</td>
+                      <td data-label="Resultado">
                         {r.resultado
                           ? <span className={`badge ${resultadoReprodBadge[r.resultado] || 'badge-gray'}`}>{r.resultado}</span>
                           : <span style={{ color: 'var(--gray-400)', fontSize: 13 }}>Pendente</span>
                         }
                       </td>
-                      <td style={{ color: 'var(--gray-500)', fontSize: 13 }}>{r.touro_brinco || '—'}</td>
-                      <td style={{ color: 'var(--green-700)', fontWeight: 600, fontSize: 13 }}>
+                      <td data-label="Touro" style={{ color: 'var(--gray-500)', fontSize: 13 }}>{r.touro_brinco || '—'}</td>
+                      <td data-label="Parto previsto" style={{ color: 'var(--green-700)', fontWeight: 600, fontSize: 13 }}>
                         {r.data_prevista_parto ? new Date(r.data_prevista_parto + 'T00:00').toLocaleDateString('pt-BR') : '—'}
                       </td>
                     </tr>
@@ -504,19 +505,19 @@ export default function AnimalDetalhe() {
           {hist.movimentacoes.length === 0
             ? <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--gray-500)', fontSize: 13 }}>Sem movimentações</div>
             : (
-              <div className="table-wrapper">
-              <table className="data-table">
+              <div className="table-wrapper table-wrapper-cards">
+              <table className="data-table table-cards">
                 <thead>
                   <tr><th>Data</th><th>Tipo</th><th>Valor</th><th>Peso</th><th>Observações</th></tr>
                 </thead>
                 <tbody>
                   {hist.movimentacoes.map(m => (
                     <tr key={m.id}>
-                      <td>{new Date(m.data + 'T00:00').toLocaleDateString('pt-BR')}</td>
-                      <td>{m.tipo}</td>
-                      <td style={{ fontWeight: 600 }}>{m.valor != null ? formatBRL(m.valor) : '—'}</td>
-                      <td style={{ fontSize: 13 }}>{m.peso_kg ? formatKg(m.peso_kg) : '—'}</td>
-                      <td style={{ color: 'var(--gray-400)', fontSize: 13 }}>{m.observacoes || '—'}</td>
+                      <td data-label="Data">{new Date(m.data + 'T00:00').toLocaleDateString('pt-BR')}</td>
+                      <td data-label="Tipo">{m.tipo}</td>
+                      <td data-label="Valor" style={{ fontWeight: 600 }}>{m.valor != null ? formatBRL(m.valor) : '—'}</td>
+                      <td data-label="Peso" style={{ fontSize: 13 }}>{m.peso_kg ? formatKg(m.peso_kg) : '—'}</td>
+                      <td data-label="Obs." style={{ color: 'var(--gray-400)', fontSize: 13 }}>{m.observacoes || '—'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -571,7 +572,7 @@ export default function AnimalDetalhe() {
             </div>
             <div className="form-group">
               <label className="form-label">Peso de Entrada (kg)</label>
-              <input className="form-input" type="number" step="0.1" value={editForm.peso_entrada} onChange={e => setEditForm(p => ({ ...p, peso_entrada: e.target.value }))} />
+              <input className="form-input" type="number" inputMode="decimal" step="0.1" value={editForm.peso_entrada} onChange={e => setEditForm(p => ({ ...p, peso_entrada: e.target.value }))} />
             </div>
           </div>
           <div className="form-group">

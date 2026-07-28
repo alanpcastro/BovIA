@@ -308,7 +308,7 @@ export default function Relatorios() {
                 <label className="form-label">Ano-calendário</label>
                 <input
                   className="form-input"
-                  type="number"
+                  type="number" inputMode="decimal"
                   min={2000}
                   max={2100}
                   value={anoLivroCaixa}

@@ -1,0 +1,205 @@
+- generic [ref=f18e3]:
+  - banner [ref=f18e4]:
+    - button "Abrir menu" [ref=f18e5] [cursor=pointer]
+    - img "BovIA" [ref=f18e8]
+    - generic [ref=f18e9]: Recantilado
+  - complementary [ref=f18e10]:
+    - generic [ref=f18e11]:
+      - img "BovIA" [ref=f18e12]
+      - generic [ref=f18e13]: Recantilado
+      - button "Fechar menu" [ref=f18e14] [cursor=pointer]
+    - navigation [ref=f18e17]:
+      - generic [ref=f18e18]: Menu
+      - link "Dashboard" [ref=f18e19] [cursor=pointer]:
+        - /url: /dashboard
+      - link "Agenda" [ref=f18e26] [cursor=pointer]:
+        - /url: /agenda
+      - link "Animais" [ref=f18e30] [cursor=pointer]:
+        - /url: /animais
+      - link "Lotes" [ref=f18e34] [cursor=pointer]:
+        - /url: /lotes
+      - link "Pastagens" [ref=f18e38] [cursor=pointer]:
+        - /url: /pastagens
+      - link "Pesagens" [ref=f18e42] [cursor=pointer]:
+        - /url: /pesagens
+      - link "Saúde" [ref=f18e46] [cursor=pointer]:
+        - /url: /saude
+      - link "Reprodução" [ref=f18e50] [cursor=pointer]:
+        - /url: /reproducao
+      - link "Movimentações" [ref=f18e54] [cursor=pointer]:
+        - /url: /movimentacoes
+      - link "Financeiro" [ref=f18e58] [cursor=pointer]:
+        - /url: /financeiro
+      - link "Simulador" [ref=f18e62] [cursor=pointer]:
+        - /url: /simulador
+      - link "Custos Nutri" [ref=f18e66] [cursor=pointer]:
+        - /url: /custos-nutricionais
+      - link "Despesas Fixas" [ref=f18e70] [cursor=pointer]:
+        - /url: /despesas-fixas
+      - link "Gráficos" [ref=f18e74] [cursor=pointer]:
+        - /url: /graficos
+      - link "Relatórios" [ref=f18e78] [cursor=pointer]:
+        - /url: /relatorios
+      - link "Configurações" [ref=f18e82] [cursor=pointer]:
+        - /url: /configuracoes
+    - generic [ref=f18e87]:
+      - generic [ref=f18e88]: Alan Pontes de Castro
+      - button "Alternar tema" [ref=f18e89] [cursor=pointer]: Modo escuro
+      - button "Sair" [ref=f18e92] [cursor=pointer]
+  - main [ref=f18e95]:
+    - generic [ref=f18e96]:
+      - generic [ref=f18e97]:
+        - generic [ref=f18e98]:
+          - generic [ref=f18e99]: Analise Financeira
+          - generic [ref=f18e100]: Rentabilidade, custos e resultado do periodo
+        - generic [ref=f18e101]:
+          - button "Custos Nutri" [ref=f18e102] [cursor=pointer]
+          - button "Despesas Fixas" [ref=f18e103] [cursor=pointer]
+      - generic [ref=f18e104]:
+        - generic [ref=f18e105]:
+          - generic [ref=f18e106]: "Periodo:"
+          - textbox [ref=f18e107]: 2026-06-28
+          - generic [ref=f18e108]: ate
+          - textbox [ref=f18e109]: 2026-07-28
+        - generic [ref=f18e110]:
+          - button "30 dias" [ref=f18e111] [cursor=pointer]
+          - button "90 dias" [ref=f18e112] [cursor=pointer]
+          - button "12 meses" [ref=f18e113] [cursor=pointer]
+          - button "Este ano" [ref=f18e114] [cursor=pointer]
+        - generic [ref=f18e115]:
+          - generic [ref=f18e116]: "Lote:"
+          - combobox [ref=f18e117]:
+            - option "Toda a fazenda" [selected]
+            - option "gadão"
+            - option "bezerros"
+        - button "Analisar" [ref=f18e118] [cursor=pointer]
+      - generic [ref=f18e272]:
+        - generic [ref=f18e273]:
+          - generic [ref=f18e274]: Lucro Liquido
+          - generic [ref=f18e275]: R$ 0,00
+        - generic [ref=f18e276]:
+          - generic [ref=f18e277]: Rentabilidade
+          - generic [ref=f18e278]: —
+        - generic [ref=f18e279]:
+          - generic [ref=f18e280]: Custo / @ Produzida
+          - generic [ref=f18e281]: R$ 0,00
+        - generic [ref=f18e282]:
+          - generic [ref=f18e283]: Ganho / @
+          - generic [ref=f18e284]: —
+      - generic [ref=f18e286]:
+        - strong [ref=f18e287]: "100"
+        - text: cabecas |
+        - strong [ref=f18e288]: "30"
+        - text: "dias | Rendimento carcaca:"
+        - strong [ref=f18e289]: 52%
+      - generic [ref=f18e290]:
+        - generic [ref=f18e291]:
+          - heading [level=3] [ref=f18e292]
+          - generic [ref=f18e296]:
+            - generic [ref=f18e297]: Custo Nutricional
+            - generic [ref=f18e298]: R$ 0,00
+          - generic [ref=f18e299]:
+            - generic [ref=f18e300]: por cabeca
+            - generic [ref=f18e301]: R$ 0,00
+          - generic [ref=f18e302]:
+            - generic [ref=f18e303]: Custo Operacional
+            - generic [ref=f18e304]: R$ 0,00
+          - generic [ref=f18e305]:
+            - generic [ref=f18e306]: por cabeca
+            - generic [ref=f18e307]: R$ 0,00
+          - generic [ref=f18e308]:
+            - generic [ref=f18e309]: Custo Saude
+            - generic [ref=f18e310]: R$ 0,00
+          - generic [ref=f18e311]:
+            - generic [ref=f18e312]: Custo Total / Cabeca
+            - generic [ref=f18e313]: R$ 0,00
+          - generic [ref=f18e314]:
+            - generic [ref=f18e315]: Custo / @ Produzida
+            - generic [ref=f18e316]: R$ 0,00
+        - generic [ref=f18e317]:
+          - heading [level=3] [ref=f18e318]
+          - generic [ref=f18e322]:
+            - generic [ref=f18e323]: Receita Vendas
+            - generic [ref=f18e324]: R$ 0,00
+          - generic [ref=f18e325]:
+            - generic [ref=f18e326]: Custo Compras
+            - generic [ref=f18e327]: R$ 0,00
+          - generic [ref=f18e328]:
+            - generic [ref=f18e329]: Lucro Bruto
+            - generic [ref=f18e330]: R$ 0,00
+          - generic [ref=f18e331]:
+            - generic [ref=f18e332]: Impostos
+            - generic [ref=f18e333]: R$ 0,00
+          - generic [ref=f18e334]:
+            - generic [ref=f18e335]: Lucro Liquido
+            - generic [ref=f18e336]: R$ 0,00
+          - generic [ref=f18e337]:
+            - generic [ref=f18e338]: Lucro Liq. s/ Agil (total)
+            - generic [ref=f18e339]: R$ 0,00
+          - generic [ref=f18e340]:
+            - generic [ref=f18e341]: Lucro Liq. s/ Agil (R$/cab)
+            - generic [ref=f18e342]: R$ 0,00
+          - generic [ref=f18e343]:
+            - generic [ref=f18e344]: Rentabilidade
+            - generic [ref=f18e345]: —
+      - generic [ref=f18e346]:
+        - generic [ref=f18e347]:
+          - heading [level=3] [ref=f18e348]
+          - generic [ref=f18e352]:
+            - generic [ref=f18e353]: "@ Entrada (total)"
+            - generic [ref=f18e354]: 1.109,33 @
+          - generic [ref=f18e355]:
+            - generic [ref=f18e356]: "@ Saida (total)"
+            - generic [ref=f18e357]: 1.144,00 @
+          - generic [ref=f18e358]:
+            - generic [ref=f18e359]: "@ Produzidas"
+            - generic [ref=f18e360]: 34,67 @
+          - generic [ref=f18e361]:
+            - generic [ref=f18e362]: Ganho Periodo / @
+            - generic [ref=f18e363]: 0,35 @
+          - generic [ref=f18e364]:
+            - generic [ref=f18e365]: Preco @ Compra (medio)
+            - generic [ref=f18e366]: —
+          - generic [ref=f18e367]:
+            - generic [ref=f18e368]: Preco @ Venda (medio)
+            - generic [ref=f18e369]: —
+          - generic [ref=f18e370]:
+            - generic [ref=f18e371]: Preco Medio Animal Compra
+            - generic [ref=f18e372]: —
+          - generic [ref=f18e373]:
+            - generic [ref=f18e374]: Preco Medio Animal Venda
+            - generic [ref=f18e375]: —
+        - generic [ref=f18e376]:
+          - heading [level=3] [ref=f18e377]
+          - generic [ref=f18e381]:
+            - generic [ref=f18e382]: Peso Medio Inicial
+            - generic [ref=f18e383]: 320,0 kg
+          - generic [ref=f18e384]:
+            - generic [ref=f18e385]: Peso Medio Final
+            - generic [ref=f18e386]: 330,0 kg
+          - generic [ref=f18e387]:
+            - generic [ref=f18e388]: Peso Carcaca Medio
+            - generic [ref=f18e389]: 171,6 kg
+          - generic [ref=f18e390]:
+            - generic [ref=f18e391]: Rendimento Carcaca
+            - generic [ref=f18e392]: 52,0%
+          - generic [ref=f18e393]:
+            - generic [ref=f18e394]: GPD (kg/dia)
+            - generic [ref=f18e395]: 6,250 kg
+          - generic [ref=f18e396]:
+            - generic [ref=f18e397]: GMC (kg carcaca/dia)
+            - generic [ref=f18e398]: 3,250 kg
+      - generic [ref=f18e402]:
+        - strong [ref=f18e403]: Cadastre seus custos
+        - text: para ver a analise completa. Custos Nutricionais e Despesas Fixas
+  - navigation "Navegação rápida" [ref=f18e251]:
+    - link "Início" [ref=f18e252] [cursor=pointer]:
+      - /url: /dashboard
+    - link "Animais" [ref=f18e256] [cursor=pointer]:
+      - /url: /animais
+    - link "Pesar" [ref=f18e260] [cursor=pointer]:
+      - /url: /pesagens
+    - link "Agenda" [ref=f18e264] [cursor=pointer]:
+      - /url: /agenda
+    - button "Abrir menu completo" [ref=f18e268] [cursor=pointer]:
+      - generic [ref=f18e271]: Mais

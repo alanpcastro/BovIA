@@ -269,7 +269,7 @@ export default function DespesasFixas() {
             </div>
             <div className="form-group">
               <label className="form-label">Valor Mensal (R$) *</label>
-              <input className="form-input" type="number" step="0.01" value={form.valor_mensal} onChange={e => setForm(p => ({ ...p, valor_mensal: e.target.value }))} required placeholder="Ex: 3500" />
+              <input className="form-input" type="number" inputMode="decimal" step="0.01" value={form.valor_mensal} onChange={e => setForm(p => ({ ...p, valor_mensal: e.target.value }))} required placeholder="Ex: 3500" />
             </div>
           </div>
           <div className="form-group">

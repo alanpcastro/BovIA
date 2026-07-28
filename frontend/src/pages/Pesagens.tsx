@@ -343,7 +343,7 @@ export default function Pesagens() {
             </div>
             <div className="form-group">
               <label className="form-label">Peso (kg) *</label>
-              <input className="form-input" type="number" step="0.1" value={form.peso_kg} onChange={e => setForm(f => ({ ...f, peso_kg: e.target.value }))} required placeholder="Ex: 320" />
+              <input className="form-input" type="number" inputMode="decimal" step="0.1" value={form.peso_kg} onChange={e => setForm(f => ({ ...f, peso_kg: e.target.value }))} required placeholder="Ex: 320" />
             </div>
           </div>
           <div className="form-group">
@@ -392,7 +392,7 @@ export default function Pesagens() {
             </div>
             <div className="form-group">
               <label className="form-label">Peso médio (kg) *</label>
-              <input className="form-input" type="number" step="0.1" value={loteForm.peso_medio_kg} onChange={e => setLoteForm(f => ({ ...f, peso_medio_kg: e.target.value }))} required placeholder="Ex: 320" />
+              <input className="form-input" type="number" inputMode="decimal" step="0.1" value={loteForm.peso_medio_kg} onChange={e => setLoteForm(f => ({ ...f, peso_medio_kg: e.target.value }))} required placeholder="Ex: 320" />
             </div>
           </div>
           <div className="form-group">

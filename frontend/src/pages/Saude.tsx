@@ -336,7 +336,7 @@ export default function Saude() {
           <div className="grid-2" style={{ marginBottom: 0 }}>
             <div className="form-group">
               <label className="form-label">Custo (R$)</label>
-              <input className="form-input" type="number" step="0.01" value={form.custo} onChange={e => setForm(f => ({ ...f, custo: e.target.value }))} placeholder="0,00" />
+              <input className="form-input" type="number" inputMode="decimal" step="0.01" value={form.custo} onChange={e => setForm(f => ({ ...f, custo: e.target.value }))} placeholder="0,00" />
             </div>
             <div className="form-group">
               <label className="form-label">Próxima Data</label>
@@ -409,7 +409,7 @@ export default function Saude() {
           <div className="grid-2" style={{ marginBottom: 0 }}>
             <div className="form-group">
               <label className="form-label">Custo total (R$)</label>
-              <input className="form-input" type="number" step="0.01" value={loteForm.custo_total} onChange={e => setLoteForm(f => ({ ...f, custo_total: e.target.value }))} placeholder="Será dividido entre os animais" />
+              <input className="form-input" type="number" inputMode="decimal" step="0.01" value={loteForm.custo_total} onChange={e => setLoteForm(f => ({ ...f, custo_total: e.target.value }))} placeholder="Será dividido entre os animais" />
             </div>
             <div className="form-group">
               <label className="form-label">Próxima Data</label>

@@ -374,9 +374,28 @@ export default function Animais() {
                 <td data-label="Categoria">{a.categoria ? <span className={`badge ${categoriaBadge[a.categoria]}`}>{categoriaLabel[a.categoria]}</span> : <span style={{ color: 'var(--gray-400)' }}>—</span>}</td>
                 <td data-label="Lote" style={{ color: 'var(--gray-600)' }}>{a.lote_id ? (lotesMap[a.lote_id] || '—') : '—'}</td>
                 <td data-label="Peso Atual" style={{ fontWeight: 700, color: 'var(--gray-800)' }}>
-                  {a.peso_atual != null
-                    ? formatKg(a.peso_atual)
-                    : a.peso_entrada != null
+                  {a.peso_atual != null ? (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                      {formatKg(a.peso_atual)}
+                      {a.peso_entrada != null && a.peso_atual !== a.peso_entrada && (() => {
+                        const ganho = a.peso_atual - a.peso_entrada
+                        const pos = ganho > 0
+                        return (
+                          <span
+                            title={`Ganho desde a entrada (${formatKg(a.peso_entrada)})`}
+                            style={{
+                              fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap',
+                              color: pos ? 'var(--green-700)' : 'var(--red-600)',
+                              background: pos ? 'var(--green-50)' : 'var(--red-100)',
+                              padding: '2px 8px', borderRadius: 'var(--radius-full)',
+                            }}
+                          >
+                            {pos ? '+' : ''}{formatKg(ganho)}
+                          </span>
+                        )
+                      })()}
+                    </span>
+                  ) : a.peso_entrada != null
                       ? <span style={{ fontWeight: 400, color: 'var(--gray-400)' }}>{formatKg(a.peso_entrada)} <span style={{ fontSize: 11 }}>(entrada)</span></span>
                       : <span style={{ color: 'var(--gray-400)' }}>—</span>}
                 </td>
@@ -468,7 +487,7 @@ export default function Animais() {
           <div className="grid-2" style={{ marginBottom: 0 }}>
             <div className="form-group">
               <label className="form-label">Peso de Entrada (kg)</label>
-              <input className="form-input" type="number" step="0.1" value={form.peso_entrada} onChange={e => setForm(p => ({ ...p, peso_entrada: e.target.value }))} placeholder="Ex: 280" />
+              <input className="form-input" type="number" inputMode="decimal" step="0.1" value={form.peso_entrada} onChange={e => setForm(p => ({ ...p, peso_entrada: e.target.value }))} placeholder="Ex: 280" />
             </div>
             <div className="form-group">
               <label className="form-label">Data de Entrada</label>
@@ -491,11 +510,11 @@ export default function Animais() {
               <div className="grid-3" style={{ marginTop: 12, marginBottom: 0 }}>
                 <div className="form-group">
                   <label className="form-label">Valor (R$)</label>
-                  <input className="form-input" type="number" step="0.01" value={form.compra_valor} onChange={e => setForm(p => ({ ...p, compra_valor: e.target.value }))} placeholder="0,00" />
+                  <input className="form-input" type="number" inputMode="decimal" step="0.01" value={form.compra_valor} onChange={e => setForm(p => ({ ...p, compra_valor: e.target.value }))} placeholder="0,00" />
                 </div>
                 <div className="form-group">
                   <label className="form-label">Preco @ (R$)</label>
-                  <input className="form-input" type="number" step="0.01" value={form.compra_preco_arroba} onChange={e => setForm(p => ({ ...p, compra_preco_arroba: e.target.value }))} placeholder="Ex: 320" />
+                  <input className="form-input" type="number" inputMode="decimal" step="0.01" value={form.compra_preco_arroba} onChange={e => setForm(p => ({ ...p, compra_preco_arroba: e.target.value }))} placeholder="Ex: 320" />
                 </div>
                 <div className="form-group">
                   <label className="form-label">Origem</label>
@@ -557,7 +576,7 @@ export default function Animais() {
             </div>
             <div className="form-group">
               <label className="form-label">Quantidade de cabeças *</label>
-              <input className="form-input" type="number" min="1" value={loteForm.quantidade} onChange={e => setLoteForm(p => ({ ...p, quantidade: e.target.value }))} required placeholder="Ex: 50" />
+              <input className="form-input" type="number" inputMode="decimal" min="1" value={loteForm.quantidade} onChange={e => setLoteForm(p => ({ ...p, quantidade: e.target.value }))} required placeholder="Ex: 50" />
             </div>
           </div>
           <div className="grid-3" style={{ marginBottom: 0 }}>
@@ -574,7 +593,7 @@ export default function Animais() {
             </div>
             <div className="form-group">
               <label className="form-label">Peso médio (kg)</label>
-              <input className="form-input" type="number" step="0.1" value={loteForm.peso_medio} onChange={e => setLoteForm(p => ({ ...p, peso_medio: e.target.value }))} placeholder="Ex: 320" />
+              <input className="form-input" type="number" inputMode="decimal" step="0.1" value={loteForm.peso_medio} onChange={e => setLoteForm(p => ({ ...p, peso_medio: e.target.value }))} placeholder="Ex: 320" />
             </div>
           </div>
           <div className="grid-2" style={{ marginBottom: 0 }}>
@@ -611,7 +630,7 @@ export default function Animais() {
                 <label className="form-label">Número inicial</label>
                 <input
                   className="form-input"
-                  type="number"
+                  type="number" inputMode="decimal"
                   min={1}
                   value={loteForm.brinco_inicio}
                   onChange={e => setLoteForm(p => ({ ...p, brinco_inicio: e.target.value }))}

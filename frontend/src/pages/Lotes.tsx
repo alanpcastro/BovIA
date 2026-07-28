@@ -296,7 +296,7 @@ export default function Lotes() {
           <div className="grid-2" style={{ marginBottom: 0 }}>
             <div className="form-group">
               <label className="form-label">UA/ha consumido</label>
-              <input className="form-input" type="number" step="0.1" value={form.ua_ha} onChange={e => setForm(p => ({ ...p, ua_ha: e.target.value }))} placeholder="Ex: 1.5" />
+              <input className="form-input" type="number" inputMode="decimal" step="0.1" value={form.ua_ha} onChange={e => setForm(p => ({ ...p, ua_ha: e.target.value }))} placeholder="Ex: 1.5" />
             </div>
             <div className="form-group">
               <label className="form-label">Data de Formação</label>
@@ -331,7 +331,7 @@ export default function Lotes() {
           <div className="form-group">
             <label className="form-label">Peso médio do animal (kg) *</label>
             <input
-              className="form-input" type="number" step="1" autoFocus
+              className="form-input" type="number" inputMode="decimal" step="1" autoFocus
               value={saleForm.peso_medio}
               onChange={e => setSaleForm(p => ({ ...p, peso_medio: e.target.value }))}
               placeholder="Ex: 480"
@@ -340,7 +340,7 @@ export default function Lotes() {
           <div className="form-group">
             <label className="form-label">Preço da arroba (R$) *</label>
             <input
-              className="form-input" type="number" step="0.01"
+              className="form-input" type="number" inputMode="decimal" step="0.01"
               value={saleForm.preco_arroba}
               onChange={e => setSaleForm(p => ({ ...p, preco_arroba: e.target.value }))}
               placeholder="Ex: 350"
@@ -352,7 +352,7 @@ export default function Lotes() {
           <div className="form-group">
             <label className="form-label">Quantidade de animais</label>
             <input
-              className="form-input" type="number"
+              className="form-input" type="number" inputMode="decimal"
               value={saleForm.qtd}
               onChange={e => setSaleForm(p => ({ ...p, qtd: e.target.value }))}
             />
@@ -360,7 +360,7 @@ export default function Lotes() {
           <div className="form-group">
             <label className="form-label">Rendimento de carcaça (%)</label>
             <input
-              className="form-input" type="number" step="0.1"
+              className="form-input" type="number" inputMode="decimal" step="0.1"
               value={saleForm.rendimento}
               onChange={e => setSaleForm(p => ({ ...p, rendimento: e.target.value }))}
               placeholder="52"
@@ -372,7 +372,7 @@ export default function Lotes() {
           <div className="form-group">
             <label className="form-label">Frete por animal (R$)</label>
             <input
-              className="form-input" type="number" step="0.01"
+              className="form-input" type="number" inputMode="decimal" step="0.01"
               value={saleForm.frete_por_animal}
               onChange={e => setSaleForm(p => ({ ...p, frete_por_animal: e.target.value }))}
               placeholder="Opcional"
@@ -381,7 +381,7 @@ export default function Lotes() {
           <div className="form-group">
             <label className="form-label">Imposto/comissão (%)</label>
             <input
-              className="form-input" type="number" step="0.01"
+              className="form-input" type="number" inputMode="decimal" step="0.01"
               value={saleForm.imposto_pct}
               onChange={e => setSaleForm(p => ({ ...p, imposto_pct: e.target.value }))}
               placeholder="Opcional"

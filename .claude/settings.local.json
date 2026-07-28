@@ -21,7 +21,8 @@
       "Bash(pkill -f \"uvicorn app.main\")",
       "Bash(pkill -f \"vite\")",
       "Bash(rtk proxy *)",
-      "Bash(rtk npm *)"
+      "Bash(rtk npm *)",
+      "Bash(perl -pi -e 's/type=\"number\"\\(?! inputMode\\)/type=\"number\" inputMode=\"decimal\"/g' Animais.tsx AnimalDetalhe.tsx CustosNutricionais.tsx DespesasFixas.tsx Graficos.tsx Lotes.tsx Movimentacoes.tsx Pastagens.tsx Pesagens.tsx Relatorios.tsx Reproducao.tsx Saude.tsx Simulador.tsx)"
     ]
   }
 }

@@ -304,34 +304,34 @@ export default function Movimentacoes() {
           <div className="grid-3" style={{ marginBottom: 0 }}>
             <div className="form-group">
               <label className="form-label">Valor (R$)</label>
-              <input className="form-input" type="number" step="0.01" value={form.valor} onChange={e => setForm(f => ({ ...f, valor: e.target.value }))} placeholder="0,00" />
+              <input className="form-input" type="number" inputMode="decimal" step="0.01" value={form.valor} onChange={e => setForm(f => ({ ...f, valor: e.target.value }))} placeholder="0,00" />
             </div>
             <div className="form-group">
               <label className="form-label">Peso (kg)</label>
-              <input className="form-input" type="number" step="0.1" value={form.peso_kg} onChange={e => setForm(f => ({ ...f, peso_kg: e.target.value }))} placeholder="Ex: 400" />
+              <input className="form-input" type="number" inputMode="decimal" step="0.1" value={form.peso_kg} onChange={e => setForm(f => ({ ...f, peso_kg: e.target.value }))} placeholder="Ex: 400" />
             </div>
             {(form.tipo === 'compra' || form.tipo === 'venda') && (
               <div className="form-group">
                 <label className="form-label">Preco @ (R$)</label>
-                <input className="form-input" type="number" step="0.01" value={form.preco_arroba} onChange={e => setForm(f => ({ ...f, preco_arroba: e.target.value }))} placeholder="Ex: 320" />
+                <input className="form-input" type="number" inputMode="decimal" step="0.01" value={form.preco_arroba} onChange={e => setForm(f => ({ ...f, preco_arroba: e.target.value }))} placeholder="Ex: 320" />
               </div>
             )}
             {form.tipo === 'compra' && (
               <div className="form-group">
                 <label className="form-label">Agil / Comissao (R$)</label>
-                <input className="form-input" type="number" step="0.01" value={form.agio_compra} onChange={e => setForm(f => ({ ...f, agio_compra: e.target.value }))} placeholder="Comissao do intermediario" />
+                <input className="form-input" type="number" inputMode="decimal" step="0.01" value={form.agio_compra} onChange={e => setForm(f => ({ ...f, agio_compra: e.target.value }))} placeholder="Comissao do intermediario" />
               </div>
             )}
             {form.tipo === 'compra' && (
               <div className="form-group">
                 <label className="form-label">Frete (R$)</label>
-                <input className="form-input" type="number" step="0.01" value={form.frete} onChange={e => setForm(f => ({ ...f, frete: e.target.value }))} placeholder="Frete do transporte" />
+                <input className="form-input" type="number" inputMode="decimal" step="0.01" value={form.frete} onChange={e => setForm(f => ({ ...f, frete: e.target.value }))} placeholder="Frete do transporte" />
               </div>
             )}
             {form.tipo === 'venda' && (
               <div className="form-group">
                 <label className="form-label">Desconto (R$)</label>
-                <input className="form-input" type="number" step="0.01" value={form.desconto} onChange={e => setForm(f => ({ ...f, desconto: e.target.value }))} placeholder="Desconto concedido" />
+                <input className="form-input" type="number" inputMode="decimal" step="0.01" value={form.desconto} onChange={e => setForm(f => ({ ...f, desconto: e.target.value }))} placeholder="Desconto concedido" />
               </div>
             )}
           </div>
@@ -397,11 +397,11 @@ export default function Movimentacoes() {
           <div className="grid-2" style={{ marginBottom: 0 }}>
             <div className="form-group">
               <label className="form-label">Valor total (R$)</label>
-              <input className="form-input" type="number" step="0.01" value={loteForm.valor_total} onChange={e => setLoteForm(f => ({ ...f, valor_total: e.target.value }))} placeholder="Será dividido entre os animais" />
+              <input className="form-input" type="number" inputMode="decimal" step="0.01" value={loteForm.valor_total} onChange={e => setLoteForm(f => ({ ...f, valor_total: e.target.value }))} placeholder="Será dividido entre os animais" />
             </div>
             <div className="form-group">
               <label className="form-label">Peso médio (kg)</label>
-              <input className="form-input" type="number" step="0.1" value={loteForm.peso_medio_kg} onChange={e => setLoteForm(f => ({ ...f, peso_medio_kg: e.target.value }))} placeholder="Ex: 400" />
+              <input className="form-input" type="number" inputMode="decimal" step="0.1" value={loteForm.peso_medio_kg} onChange={e => setLoteForm(f => ({ ...f, peso_medio_kg: e.target.value }))} placeholder="Ex: 400" />
             </div>
           </div>
           <div className="grid-2" style={{ marginBottom: 0 }}>

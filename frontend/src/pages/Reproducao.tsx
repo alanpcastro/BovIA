@@ -341,7 +341,7 @@ export default function Reproducao() {
                 </div>
                 <div className="form-group">
                   <label className="form-label">Peso ao Nascer (kg)</label>
-                  <input className="form-input" type="number" step="0.1" value={form.bezerro_peso_kg} onChange={e => setForm(f => ({ ...f, bezerro_peso_kg: e.target.value }))} placeholder="Opcional" />
+                  <input className="form-input" type="number" inputMode="decimal" step="0.1" value={form.bezerro_peso_kg} onChange={e => setForm(f => ({ ...f, bezerro_peso_kg: e.target.value }))} placeholder="Opcional" />
                 </div>
               </div>
             </div>

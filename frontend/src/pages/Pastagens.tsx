@@ -344,14 +344,14 @@ export default function Pastagens() {
           <div className="grid-2" style={{ marginBottom: 0 }}>
             <div className="form-group">
               <label className="form-label">Área (ha) *</label>
-              <input className="form-input" type="number" step="0.1" required
+              <input className="form-input" type="number" inputMode="decimal" step="0.1" required
                 value={form.area_ha}
                 onChange={e => setForm(p => ({ ...p, area_ha: e.target.value }))}
                 placeholder="Ex: 50" />
             </div>
             <div className="form-group">
               <label className="form-label">Capacidade (UA/ha)</label>
-              <input className="form-input" type="number" step="0.1"
+              <input className="form-input" type="number" inputMode="decimal" step="0.1"
                 value={form.capacidade_ua_ha}
                 onChange={e => setForm(p => ({ ...p, capacidade_ua_ha: e.target.value }))}
                 placeholder="Ex: 1.5" />
