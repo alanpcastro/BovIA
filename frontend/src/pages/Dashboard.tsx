@@ -215,7 +215,7 @@ export default function Dashboard() {
       {fin && (
         <>
           <div className="section-title-big">Resultado do Mês</div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16, marginBottom: 28 }}>
+          <div className="kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16, marginBottom: 28 }}>
             <div className="kpi-big">
               <div className="kpi-big-icon" style={{
                 background: fin.lucro_liquido >= 0 ? 'var(--green-100)' : 'var(--red-100)',

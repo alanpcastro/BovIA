@@ -224,8 +224,8 @@ export default function Pesagens() {
         </div>
       )}
 
-      <div className="table-wrapper" style={pesagens.length === 0 && !filtroAnimal ? { display: 'none' } : undefined}>
-        <table className="data-table data-table-big">
+      <div className="table-wrapper table-wrapper-cards" style={pesagens.length === 0 && !filtroAnimal ? { display: 'none' } : undefined}>
+        <table className="data-table data-table-big table-cards">
           <thead>
             <tr>
               <th style={{ width: 36 }}>
@@ -262,7 +262,7 @@ export default function Pesagens() {
                   key={p.id}
                   style={{ background: isSelected ? 'var(--green-50)' : undefined }}
                 >
-                  <td>
+                  <td className="cell-check">
                     <input
                       type="checkbox"
                       checked={isSelected}
@@ -270,15 +270,16 @@ export default function Pesagens() {
                     />
                   </td>
                   <td
+                    data-label="Animal"
                     style={{ fontWeight: 600, cursor: 'pointer' }}
                     onClick={() => navigate(`/animais/${p.animal_id}`)}
                   >
                     #{animal?.brinco || p.animal_id}
                     {animal?.nome && <span style={{ color: 'var(--gray-400)', fontWeight: 400 }}> — {animal.nome}</span>}
                   </td>
-                  <td>{new Date(p.data + 'T00:00').toLocaleDateString('pt-BR')}</td>
-                  <td style={{ fontWeight: 700, color: 'var(--green-700)' }}>{formatKg(p.peso_kg, 1)}</td>
-                  <td>
+                  <td data-label="Data">{new Date(p.data + 'T00:00').toLocaleDateString('pt-BR')}</td>
+                  <td data-label="Peso" style={{ fontWeight: 700, color: 'var(--green-700)' }}>{formatKg(p.peso_kg, 1)}</td>
+                  <td data-label="GMD">
                     {p.gmd != null ? (
                       <span style={{
                         fontWeight: 700,
@@ -288,10 +289,10 @@ export default function Pesagens() {
                       </span>
                     ) : <span style={{ color: 'var(--gray-400)' }}>—</span>}
                   </td>
-                  <td style={{ color: 'var(--gray-600)', fontSize: 13, maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <td data-label="Obs." style={{ color: 'var(--gray-600)', fontSize: 13, maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {p.observacoes || '—'}
                   </td>
-                  <td>
+                  <td className="cell-actions">
                     <button
                       className="btn btn-ghost btn-sm btn-icon"
                       onClick={() => deletarPesagem(p.id)}

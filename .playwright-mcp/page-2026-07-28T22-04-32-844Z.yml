@@ -1,0 +1,90 @@
+- generic [ref=f9e3]:
+  - banner [ref=f9e4]:
+    - button "Abrir menu" [ref=f9e5] [cursor=pointer]
+    - img "BovIA" [ref=f9e8]
+    - generic [ref=f9e9]: Recantilado
+  - complementary [ref=f9e10]:
+    - generic [ref=f9e11]:
+      - img "BovIA" [ref=f9e12]
+      - generic [ref=f9e13]: Recantilado
+      - button "Fechar menu" [ref=f9e14] [cursor=pointer]
+    - navigation [ref=f9e17]:
+      - generic [ref=f9e18]: Menu
+      - link "Dashboard" [ref=f9e19] [cursor=pointer]:
+        - /url: /dashboard
+      - link "Agenda" [ref=f9e26] [cursor=pointer]:
+        - /url: /agenda
+      - link "Animais" [ref=f9e30] [cursor=pointer]:
+        - /url: /animais
+      - link "Lotes" [ref=f9e34] [cursor=pointer]:
+        - /url: /lotes
+      - link "Pastagens" [ref=f9e38] [cursor=pointer]:
+        - /url: /pastagens
+      - link "Pesagens" [ref=f9e42] [cursor=pointer]:
+        - /url: /pesagens
+      - link "Saúde" [ref=f9e46] [cursor=pointer]:
+        - /url: /saude
+      - link "Reprodução" [ref=f9e50] [cursor=pointer]:
+        - /url: /reproducao
+      - link "Movimentações" [ref=f9e54] [cursor=pointer]:
+        - /url: /movimentacoes
+      - link "Financeiro" [ref=f9e58] [cursor=pointer]:
+        - /url: /financeiro
+      - link "Simulador" [ref=f9e62] [cursor=pointer]:
+        - /url: /simulador
+      - link "Custos Nutri" [ref=f9e66] [cursor=pointer]:
+        - /url: /custos-nutricionais
+      - link "Despesas Fixas" [ref=f9e70] [cursor=pointer]:
+        - /url: /despesas-fixas
+      - link "Gráficos" [ref=f9e74] [cursor=pointer]:
+        - /url: /graficos
+      - link "Relatórios" [ref=f9e78] [cursor=pointer]:
+        - /url: /relatorios
+      - link "Configurações" [ref=f9e82] [cursor=pointer]:
+        - /url: /configuracoes
+    - generic [ref=f9e87]:
+      - generic [ref=f9e88]: Alan Pontes de Castro
+      - button "Alternar tema" [ref=f9e89] [cursor=pointer]: Modo escuro
+      - button "Sair" [ref=f9e92] [cursor=pointer]
+  - main [ref=f9e95]:
+    - generic [ref=f9e96]:
+      - generic [ref=f9e97]:
+        - generic [ref=f9e98]: Seu Rebanho
+        - generic [ref=f9e100]:
+          - generic [ref=f9e101]:
+            - generic [ref=f9e102]: "100"
+            - generic [ref=f9e103]: Animais
+          - generic [ref=f9e104]:
+            - generic [ref=f9e105]: "0"
+            - generic [ref=f9e106]: Machos
+          - generic [ref=f9e107]:
+            - generic [ref=f9e108]: "100"
+            - generic [ref=f9e109]: Fêmeas
+          - generic [ref=f9e110]:
+            - generic [ref=f9e111]: 330kg
+            - generic [ref=f9e112]: Peso Médio
+      - generic [ref=f9e113]: O que você quer fazer?
+      - generic [ref=f9e114]:
+        - button "Cadastrar Animal" [ref=f9e115] [cursor=pointer]
+        - button "Registrar Pesagem" [ref=f9e120] [cursor=pointer]
+        - button "Vacinar" [ref=f9e125] [cursor=pointer]
+        - button "Comprar / Vender" [ref=f9e130] [cursor=pointer]
+        - button "Financeiro" [ref=f9e135] [cursor=pointer]
+      - generic [ref=f9e140]: Resultado do Mês
+      - generic [ref=f9e141]:
+        - generic [ref=f9e146]:
+          - generic [ref=f9e147]: Lucro do Mês
+          - generic [ref=f9e148]: R$ 0
+        - generic [ref=f9e153]:
+          - generic [ref=f9e154]: Custo / @
+          - generic [ref=f9e155]: R$ 0,00
+        - generic [ref=f9e160]:
+          - generic [ref=f9e161]: Rentabilidade
+          - generic [ref=f9e162]: —
+      - generic [ref=f9e163]:
+        - generic [ref=f9e164]:
+          - generic [ref=f9e165]: Próximas Vacinas
+          - generic [ref=f9e169]: Nenhuma vacina agendada
+        - generic [ref=f9e170]:
+          - generic [ref=f9e171]: Partos Previstos
+          - generic [ref=f9e175]: Nenhum parto previsto

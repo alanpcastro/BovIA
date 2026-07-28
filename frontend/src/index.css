@@ -1212,3 +1212,108 @@ body {
 @media (max-width: 768px) {
   .simulador-grid { grid-template-columns: 1fr !important; }
 }
+
+/* ═══════════════════════════════════════
+   TABELAS → CARTÕES NO MOBILE
+   Tabelas com a classe .table-cards viram uma pilha de cartões
+   em telas estreitas (celular), sem scroll lateral. No desktop
+   continuam tabelas normais. Cada <td> mostra seu rótulo via
+   data-label. Ver BUGS_MOBILE.md #1.
+═══════════════════════════════════════ */
+@media (max-width: 768px) {
+  /* O wrapper deixa de ser "moldura" — os cartões têm borda própria */
+  .table-wrapper-cards {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    overflow: visible;
+  }
+
+  .table-cards,
+  .table-cards tbody,
+  .table-cards tr,
+  .table-cards td {
+    display: block;
+    width: 100%;
+  }
+
+  .table-cards thead { display: none; }
+
+  .table-cards tr {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 12px;
+    padding: 6px 14px;
+  }
+
+  /* Cada célula: rótulo à esquerda, valor à direita */
+  .table-cards td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+    text-align: right;
+    padding: 9px 0 !important;
+    border: none !important;
+    border-top: 1px solid var(--gray-100) !important;
+    min-height: 0 !important;
+    font-size: 14.5px;
+  }
+  .table-cards td:first-child,
+  .table-cards td.cell-check + td,
+  .table-cards tr > td:nth-child(2) { border-top: none !important; }
+
+  .table-cards td::before {
+    content: attr(data-label);
+    flex-shrink: 0;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  /* Células sem data-label não mostram rótulo */
+  .table-cards td:not([data-label])::before { content: ""; }
+
+  /* Checkbox de seleção: canto superior direito do cartão */
+  .table-cards td.cell-check {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    width: auto;
+    padding: 0 !important;
+    border-top: none !important;
+  }
+  .table-cards td.cell-check::before { content: none; }
+
+  /* Coluna de ação "Ver →" fica redundante (o cartão todo é clicável) */
+  .table-cards td.cell-go { display: none; }
+
+  /* Célula de botões de ação (lixeira etc.): alinha à direita, sem rótulo */
+  .table-cards td.cell-actions { justify-content: flex-end; }
+  .table-cards td.cell-actions::before { content: none; }
+
+  /* Quando o cartão tem checkbox, dá espaço no topo pra ele não cobrir texto */
+  .table-cards tr:has(td.cell-check) { padding-top: 30px; }
+}
+
+/* Dashboard: 4 indicadores do "Seu Rebanho" em grade 2×2 no mobile
+   (antes o 4º — Peso Médio — era empurrado pra fora). Ver BUGS_MOBILE.md #2. */
+@media (max-width: 768px) {
+  .field-hero-stats {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px 8px !important;
+    width: 100%;
+  }
+  .field-hero-stat { padding: 0; }
+}
+
+/* Dashboard: cards "Resultado do Mês" ocupam a largura toda no mobile */
+@media (max-width: 768px) {
+  .kpi-grid { grid-template-columns: 1fr !important; }
+}

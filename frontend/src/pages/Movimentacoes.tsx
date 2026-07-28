@@ -208,8 +208,8 @@ export default function Movimentacoes() {
         </select>
       </div>
 
-      <div className="table-wrapper">
-        <table className="data-table">
+      <div className="table-wrapper table-wrapper-cards">
+        <table className="data-table table-cards">
           <thead>
             <tr>
               <th style={{ width: 36 }}>
@@ -239,25 +239,25 @@ export default function Movimentacoes() {
               const a = animaisMap[m.animal_id]
               return (
                 <tr key={m.id} style={{ background: selectedIds.has(m.id) ? 'var(--green-50)' : undefined }}>
-                  <td>
+                  <td className="cell-check">
                     <input
                       type="checkbox"
                       checked={selectedIds.has(m.id)}
                       onChange={() => toggleSelect(m.id)}
                     />
                   </td>
-                  <td style={{ fontWeight: 600 }}>#{a ? a.brinco : m.animal_id}</td>
-                  <td>{new Date(m.data + 'T00:00').toLocaleDateString('pt-BR')}</td>
-                  <td><span className={`badge ${tipoBadge[m.tipo] || 'badge-gray'}`}>{tipoLabel[m.tipo] || m.tipo}</span></td>
-                  <td style={{ fontWeight: 700, color: m.tipo === 'venda' ? 'var(--green-700)' : m.tipo === 'compra' ? 'var(--blue-600)' : 'var(--gray-700)' }}>
+                  <td data-label="Animal" style={{ fontWeight: 600 }}>#{a ? a.brinco : m.animal_id}</td>
+                  <td data-label="Data">{new Date(m.data + 'T00:00').toLocaleDateString('pt-BR')}</td>
+                  <td data-label="Tipo"><span className={`badge ${tipoBadge[m.tipo] || 'badge-gray'}`}>{tipoLabel[m.tipo] || m.tipo}</span></td>
+                  <td data-label="Valor" style={{ fontWeight: 700, color: m.tipo === 'venda' ? 'var(--green-700)' : m.tipo === 'compra' ? 'var(--blue-600)' : 'var(--gray-700)' }}>
                     {m.valor != null ? formatBRL(m.valor) : '—'}
                   </td>
-                  <td style={{ color: 'var(--gray-500)', fontSize: 13 }}>{m.peso_kg ? formatKg(m.peso_kg) : '—'}</td>
-                  <td style={{ color: 'var(--amber-600)', fontSize: 13, fontWeight: 600 }}>{m.preco_arroba ? formatBRL(m.preco_arroba) : '—'}</td>
-                  <td style={{ color: 'var(--gray-500)', fontSize: 13 }}>{m.custo_kg != null ? formatBRL(m.custo_kg) : '—'}</td>
-                  <td style={{ color: 'var(--gray-500)', fontSize: 13 }}>{m.origem || '—'}</td>
-                  <td style={{ color: 'var(--gray-500)', fontSize: 13 }}>{m.destino || '—'}</td>
-                  <td style={{ color: 'var(--gray-400)', fontSize: 13 }}>{m.observacoes || '—'}</td>
+                  <td data-label="Peso" style={{ color: 'var(--gray-500)', fontSize: 13 }}>{m.peso_kg ? formatKg(m.peso_kg) : '—'}</td>
+                  <td data-label="@" style={{ color: 'var(--amber-600)', fontSize: 13, fontWeight: 600 }}>{m.preco_arroba ? formatBRL(m.preco_arroba) : '—'}</td>
+                  <td data-label="R$/kg" style={{ color: 'var(--gray-500)', fontSize: 13 }}>{m.custo_kg != null ? formatBRL(m.custo_kg) : '—'}</td>
+                  <td data-label="Origem" style={{ color: 'var(--gray-500)', fontSize: 13 }}>{m.origem || '—'}</td>
+                  <td data-label="Destino" style={{ color: 'var(--gray-500)', fontSize: 13 }}>{m.destino || '—'}</td>
+                  <td data-label="Obs." style={{ color: 'var(--gray-400)', fontSize: 13 }}>{m.observacoes || '—'}</td>
                 </tr>
               )
             })}

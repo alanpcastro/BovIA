@@ -1,5 +1,10 @@
 # Defeitos de layout no mobile
 
+> ✅ **TODOS RESOLVIDOS em 2026-07-28.** Verificado no viewport 390×844 com dados reais:
+> tabelas viram cartões (sem scroll lateral), dashboard mostra "Peso Médio" (grade 2×2),
+> cards do "Resultado do Mês" ocupam a largura toda. Implementação: classes `.table-cards`
+> + `data-label` nas 5 telas de tabela e media queries em `frontend/src/index.css`.
+
 Testado em viewport de iPhone (390×844), logado com dados reais. Desktop está OK — os
 problemas abaixo aparecem só em telas estreitas (celular).
 

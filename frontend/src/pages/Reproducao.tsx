@@ -178,8 +178,8 @@ export default function Reproducao() {
         </select>
       </div>
 
-      <div className="table-wrapper">
-        <table className="data-table">
+      <div className="table-wrapper table-wrapper-cards">
+        <table className="data-table table-cards">
           <thead>
             <tr>
               <th style={{ width: 36 }}>
@@ -207,28 +207,28 @@ export default function Reproducao() {
               const a = animaisMap[r.animal_id]
               return (
                 <tr key={r.id} style={{ background: selectedIds.has(r.id) ? 'var(--green-50)' : undefined }}>
-                  <td>
+                  <td className="cell-check">
                     <input
                       type="checkbox"
                       checked={selectedIds.has(r.id)}
                       onChange={() => toggleSelect(r.id)}
                     />
                   </td>
-                  <td style={{ fontWeight: 600 }}>#{a ? a.brinco : r.animal_id}</td>
-                  <td>{new Date(r.data + 'T00:00').toLocaleDateString('pt-BR')}</td>
-                  <td><span className="badge badge-teal">{tipoLabel[r.tipo] || r.tipo}</span></td>
-                  <td>
+                  <td data-label="Animal" style={{ fontWeight: 600 }}>#{a ? a.brinco : r.animal_id}</td>
+                  <td data-label="Data">{new Date(r.data + 'T00:00').toLocaleDateString('pt-BR')}</td>
+                  <td data-label="Tipo"><span className="badge badge-teal">{tipoLabel[r.tipo] || r.tipo}</span></td>
+                  <td data-label="Resultado">
                     {r.resultado
                       ? <span className={`badge ${resultadoBadge[r.resultado] || 'badge-gray'}`}>{resultadoLabel[r.resultado] || r.resultado}</span>
                       : <span style={{ color: 'var(--gray-400)', fontSize: 13 }}>Pendente</span>
                     }
                   </td>
-                  <td style={{ color: 'var(--gray-500)', fontSize: 13 }}>{r.touro_brinco ? `#${r.touro_brinco}` : '—'}</td>
-                  <td style={{ fontWeight: 600, color: 'var(--green-700)', fontSize: 13 }}>
+                  <td data-label="Touro" style={{ color: 'var(--gray-500)', fontSize: 13 }}>{r.touro_brinco ? `#${r.touro_brinco}` : '—'}</td>
+                  <td data-label="Parto previsto" style={{ fontWeight: 600, color: 'var(--green-700)', fontSize: 13 }}>
                     {r.data_prevista_parto ? new Date(r.data_prevista_parto + 'T00:00').toLocaleDateString('pt-BR') : '—'}
                   </td>
-                  <td style={{ color: 'var(--gray-500)', fontSize: 13 }}>{r.bezerro_brinco ? `#${r.bezerro_brinco}` : '—'}</td>
-                  <td>
+                  <td data-label="Bezerro" style={{ color: 'var(--gray-500)', fontSize: 13 }}>{r.bezerro_brinco ? `#${r.bezerro_brinco}` : '—'}</td>
+                  <td className="cell-actions">
                     <button className="btn btn-danger btn-sm btn-icon" onClick={() => deletar(r.id)}>
                       <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>

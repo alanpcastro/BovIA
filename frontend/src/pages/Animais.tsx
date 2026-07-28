@@ -311,8 +311,8 @@ export default function Animais() {
       )}
 
       {/* Tabela */}
-      <div className="table-wrapper" style={total === 0 && filtros.status === 'ativo' && !filtros.sexo && !filtros.categoria && !filtros.lote_id && !filtros.busca ? { display: 'none' } : undefined}>
-        <table className="data-table data-table-big">
+      <div className="table-wrapper table-wrapper-cards" style={total === 0 && filtros.status === 'ativo' && !filtros.sexo && !filtros.categoria && !filtros.lote_id && !filtros.busca ? { display: 'none' } : undefined}>
+        <table className="data-table data-table-big table-cards">
           <thead>
             <tr>
               <th style={{ width: 40, textAlign: 'center' }}>
@@ -358,7 +358,7 @@ export default function Animais() {
             )}
             {animais.map(a => (
               <tr key={a.id} className="clickable" onClick={() => navigate(`/animais/${a.id}`)} style={selectedIds.has(a.id) ? { background: 'var(--green-50)' } : undefined}>
-                <td style={{ textAlign: 'center' }} onClick={e => e.stopPropagation()}>
+                <td className="cell-check" style={{ textAlign: 'center' }} onClick={e => e.stopPropagation()}>
                   <input
                     type="checkbox"
                     aria-label={`Selecionar animal ${a.brinco || a.id}`}
@@ -367,21 +367,21 @@ export default function Animais() {
                     style={{ cursor: 'pointer', width: 16, height: 16 }}
                   />
                 </td>
-                <td style={{ fontWeight: 800, color: 'var(--gray-900)' }}>{a.brinco ? `#${a.brinco}` : <span style={{ color: 'var(--gray-400)' }}>—</span>}</td>
-                <td style={{ fontWeight: 600 }}>{a.nome || <span style={{ color: 'var(--gray-400)' }}>—</span>}</td>
-                <td style={{ color: 'var(--gray-600)' }}>{a.raca || '—'}</td>
-                <td style={{ fontWeight: 600 }}>{a.sexo === 'macho' ? 'Macho' : 'Fêmea'}</td>
-                <td>{a.categoria ? <span className={`badge ${categoriaBadge[a.categoria]}`}>{categoriaLabel[a.categoria]}</span> : <span style={{ color: 'var(--gray-400)' }}>—</span>}</td>
-                <td style={{ color: 'var(--gray-600)' }}>{a.lote_id ? (lotesMap[a.lote_id] || '—') : '—'}</td>
-                <td style={{ fontWeight: 700, color: 'var(--gray-800)' }}>
+                <td data-label="Brinco" style={{ fontWeight: 800, color: 'var(--gray-900)' }}>{a.brinco ? `#${a.brinco}` : <span style={{ color: 'var(--gray-400)' }}>—</span>}</td>
+                <td data-label="Nome" style={{ fontWeight: 600 }}>{a.nome || <span style={{ color: 'var(--gray-400)' }}>—</span>}</td>
+                <td data-label="Raça" style={{ color: 'var(--gray-600)' }}>{a.raca || '—'}</td>
+                <td data-label="Sexo" style={{ fontWeight: 600 }}>{a.sexo === 'macho' ? 'Macho' : 'Fêmea'}</td>
+                <td data-label="Categoria">{a.categoria ? <span className={`badge ${categoriaBadge[a.categoria]}`}>{categoriaLabel[a.categoria]}</span> : <span style={{ color: 'var(--gray-400)' }}>—</span>}</td>
+                <td data-label="Lote" style={{ color: 'var(--gray-600)' }}>{a.lote_id ? (lotesMap[a.lote_id] || '—') : '—'}</td>
+                <td data-label="Peso Atual" style={{ fontWeight: 700, color: 'var(--gray-800)' }}>
                   {a.peso_atual != null
                     ? formatKg(a.peso_atual)
                     : a.peso_entrada != null
                       ? <span style={{ fontWeight: 400, color: 'var(--gray-400)' }}>{formatKg(a.peso_entrada)} <span style={{ fontSize: 11 }}>(entrada)</span></span>
                       : <span style={{ color: 'var(--gray-400)' }}>—</span>}
                 </td>
-                <td><span className={`badge ${statusBadge[a.status]}`} style={{ fontSize: 13, padding: '5px 12px' }}>{statusLabel[a.status]}</span></td>
-                <td style={{ color: 'var(--green-700)', fontWeight: 700, fontSize: 14 }}>Ver →</td>
+                <td data-label="Status"><span className={`badge ${statusBadge[a.status]}`} style={{ fontSize: 13, padding: '5px 12px' }}>{statusLabel[a.status]}</span></td>
+                <td className="cell-go" style={{ color: 'var(--green-700)', fontWeight: 700, fontSize: 14 }}>Ver →</td>
               </tr>
             ))}
           </tbody>

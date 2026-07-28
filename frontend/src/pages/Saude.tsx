@@ -212,8 +212,8 @@ export default function Saude() {
         </select>
       </div>
 
-      <div className="table-wrapper">
-        <table className="data-table data-table-big">
+      <div className="table-wrapper table-wrapper-cards">
+        <table className="data-table data-table-big table-cards">
           <thead>
             <tr>
               <th style={{ width: 36 }}>
@@ -242,22 +242,22 @@ export default function Saude() {
               const vencendo = s.proxima_data && Math.ceil((new Date(s.proxima_data + 'T00:00').getTime() - Date.now()) / 86400000) <= 7
               return (
                 <tr key={s.id} style={{ background: selectedIds.has(s.id) ? 'var(--green-50)' : undefined }}>
-                  <td>
+                  <td className="cell-check">
                     <input
                       type="checkbox"
                       checked={selectedIds.has(s.id)}
                       onChange={() => toggleSelect(s.id)}
                     />
                   </td>
-                  <td style={{ fontWeight: 600 }}>#{a ? a.brinco : s.animal_id}</td>
-                  <td>{new Date(s.data + 'T00:00').toLocaleDateString('pt-BR')}</td>
-                  <td><span className={`badge ${tipoBadge[s.tipo] || 'badge-gray'}`}>{tipoLabel[s.tipo] || s.tipo}</span></td>
-                  <td style={{ maxWidth: 200 }}>{s.descricao}</td>
-                  <td style={{ color: 'var(--gray-500)', fontSize: 13 }}>{s.medicamento || '—'}</td>
-                  <td style={{ fontWeight: 600, color: s.custo ? 'var(--red-600)' : 'var(--gray-400)' }}>
+                  <td data-label="Animal" style={{ fontWeight: 600 }}>#{a ? a.brinco : s.animal_id}</td>
+                  <td data-label="Data">{new Date(s.data + 'T00:00').toLocaleDateString('pt-BR')}</td>
+                  <td data-label="Tipo"><span className={`badge ${tipoBadge[s.tipo] || 'badge-gray'}`}>{tipoLabel[s.tipo] || s.tipo}</span></td>
+                  <td data-label="Descrição" style={{ maxWidth: 200 }}>{s.descricao}</td>
+                  <td data-label="Medicamento" style={{ color: 'var(--gray-500)', fontSize: 13 }}>{s.medicamento || '—'}</td>
+                  <td data-label="Custo" style={{ fontWeight: 600, color: s.custo ? 'var(--red-600)' : 'var(--gray-400)' }}>
                     {s.custo != null ? formatBRL(s.custo) : '—'}
                   </td>
-                  <td>
+                  <td data-label="Próxima">
                     {s.proxima_data ? (
                       <span style={{ fontWeight: 600, color: vencendo ? 'var(--red-600)' : 'var(--amber-600)', fontSize: 13 }}>
                         {new Date(s.proxima_data + 'T00:00').toLocaleDateString('pt-BR')}
@@ -265,7 +265,7 @@ export default function Saude() {
                       </span>
                     ) : <span style={{ color: 'var(--gray-400)' }}>—</span>}
                   </td>
-                  <td>
+                  <td className="cell-actions">
                     <button className="btn btn-danger btn-sm btn-icon" onClick={() => deletar(s.id)}>
                       <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>

@@ -19,7 +19,9 @@
       "Bash(/bin/ls -la)",
       "Bash(/usr/bin/head -20)",
       "Bash(pkill -f \"uvicorn app.main\")",
-      "Bash(pkill -f \"vite\")"
+      "Bash(pkill -f \"vite\")",
+      "Bash(rtk proxy *)",
+      "Bash(rtk npm *)"
     ]
   }
 }
