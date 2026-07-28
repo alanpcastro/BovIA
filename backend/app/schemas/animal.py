@@ -109,6 +109,7 @@ class AnimalOut(BaseModel):
     categoria: Optional[CategoriaAnimalEnum] = None
     data_nascimento: Optional[date]
     peso_entrada: Optional[float]
+    peso_atual: Optional[float] = None  # ultima pesagem (calculado na listagem)
     origem: Optional[str]
     lote_id: Optional[int]
     status: StatusEnum

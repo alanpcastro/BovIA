@@ -14,7 +14,12 @@
       "Bash(sips -g pixelWidth -g pixelHeight frontend/src/assets/farm_bg.png)",
       "Bash(sips -s format jpeg -s formatOptions 78 farm_bg.png --out farm_bg.jpg)",
       "Bash(sips -s format jpeg -s formatOptions 55 -Z 900 farm_bg.png --out farm_bg.jpg)",
-      "Bash(awk '{print \"novo tamanho:\", $5}')"
+      "Bash(awk '{print \"novo tamanho:\", $5}')",
+      "mcp__playwright__browser_resize",
+      "Bash(/bin/ls -la)",
+      "Bash(/usr/bin/head -20)",
+      "Bash(pkill -f \"uvicorn app.main\")",
+      "Bash(pkill -f \"vite\")"
     ]
   }
 }

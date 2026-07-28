@@ -337,7 +337,7 @@ export default function Animais() {
               <th>Sexo</th>
               <th>Categoria</th>
               <th>Lote</th>
-              <th>Peso Entrada</th>
+              <th>Peso Atual</th>
               <th>Status</th>
               <th></th>
             </tr>
@@ -372,7 +372,13 @@ export default function Animais() {
                 <td style={{ fontWeight: 600 }}>{a.sexo === 'macho' ? 'Macho' : 'Fêmea'}</td>
                 <td>{a.categoria ? <span className={`badge ${categoriaBadge[a.categoria]}`}>{categoriaLabel[a.categoria]}</span> : <span style={{ color: 'var(--gray-400)' }}>—</span>}</td>
                 <td style={{ color: 'var(--gray-600)' }}>{a.lote_id ? (lotesMap[a.lote_id] || '—') : '—'}</td>
-                <td style={{ fontWeight: 700, color: 'var(--gray-800)' }}>{a.peso_entrada != null ? formatKg(a.peso_entrada) : '—'}</td>
+                <td style={{ fontWeight: 700, color: 'var(--gray-800)' }}>
+                  {a.peso_atual != null
+                    ? formatKg(a.peso_atual)
+                    : a.peso_entrada != null
+                      ? <span style={{ fontWeight: 400, color: 'var(--gray-400)' }}>{formatKg(a.peso_entrada)} <span style={{ fontSize: 11 }}>(entrada)</span></span>
+                      : <span style={{ color: 'var(--gray-400)' }}>—</span>}
+                </td>
                 <td><span className={`badge ${statusBadge[a.status]}`} style={{ fontSize: 13, padding: '5px 12px' }}>{statusLabel[a.status]}</span></td>
                 <td style={{ color: 'var(--green-700)', fontWeight: 700, fontSize: 14 }}>Ver →</td>
               </tr>

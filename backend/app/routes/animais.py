@@ -3,6 +3,7 @@ from fastapi.responses import FileResponse
 from pathlib import Path
 import uuid
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from typing import List, Optional
 from ..database import get_db
 from ..models.animal import Animal, StatusEnum, CategoriaAnimalEnum
@@ -82,7 +83,32 @@ def listar_animais(
         )
     total = q.count()
     items = q.order_by(Animal.brinco).offset((page - 1) * page_size).limit(page_size).all()
-    return AnimaisPage(total=total, page=page, page_size=page_size, items=items)
+
+    # Peso atual = ultima pesagem de cada animal desta pagina (1 query, sem N+1)
+    ids = [a.id for a in items]
+    peso_atual_map: dict[int, float] = {}
+    if ids:
+        subq = (
+            db.query(Pesagem.animal_id, func.max(Pesagem.data).label("ultima"))
+            .filter(Pesagem.animal_id.in_(ids))
+            .group_by(Pesagem.animal_id)
+            .subquery()
+        )
+        ultimas = (
+            db.query(Pesagem)
+            .join(subq, (Pesagem.animal_id == subq.c.animal_id) & (Pesagem.data == subq.c.ultima))
+            .all()
+        )
+        for p in ultimas:
+            peso_atual_map[p.animal_id] = p.peso_kg
+
+    out_items = []
+    for a in items:
+        ao = AnimalOut.model_validate(a)
+        ao.peso_atual = peso_atual_map.get(a.id)
+        out_items.append(ao)
+
+    return AnimaisPage(total=total, page=page, page_size=page_size, items=out_items)
 
 
 @router.post("", response_model=AnimalOut, status_code=201)
