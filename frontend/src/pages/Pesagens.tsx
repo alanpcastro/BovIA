@@ -224,6 +224,19 @@ export default function Pesagens() {
         </div>
       )}
 
+      {pesagens.length > 0 && (
+        <label className="mobile-select-all">
+          <input
+            type="checkbox"
+            aria-label="Selecionar todas as pesagens visíveis"
+            checked={pesagens.length > 0 && pesagens.every(p => selectedPesagemIds.has(p.id))}
+            ref={el => { if (el) { const some = pesagens.some(p => selectedPesagemIds.has(p.id)); const all = pesagens.length > 0 && pesagens.every(p => selectedPesagemIds.has(p.id)); el.indeterminate = some && !all } }}
+            onChange={toggleAllVisible}
+          />
+          <span>Selecionar todas{selectedPesagemIds.size > 0 ? ` (${selectedPesagemIds.size})` : ''}</span>
+        </label>
+      )}
+
       <div className="table-wrapper table-wrapper-cards" style={pesagens.length === 0 && !filtroAnimal ? { display: 'none' } : undefined}>
         <table className="data-table data-table-big table-cards">
           <thead>

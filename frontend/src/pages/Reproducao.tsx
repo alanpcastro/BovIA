@@ -178,6 +178,19 @@ export default function Reproducao() {
         </select>
       </div>
 
+      {registros.length > 0 && (
+        <label className="mobile-select-all">
+          <input
+            type="checkbox"
+            aria-label="Selecionar todos os registros visíveis"
+            checked={registros.length > 0 && registros.every(r => selectedIds.has(r.id))}
+            ref={el => { if (el) { const some = registros.some(r => selectedIds.has(r.id)); const all = registros.length > 0 && registros.every(r => selectedIds.has(r.id)); el.indeterminate = some && !all } }}
+            onChange={toggleAllVisible}
+          />
+          <span>Selecionar todos{selectedIds.size > 0 ? ` (${selectedIds.size})` : ''}</span>
+        </label>
+      )}
+
       <div className="table-wrapper table-wrapper-cards">
         <table className="data-table table-cards">
           <thead>

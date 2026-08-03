@@ -1,0 +1,1261 @@
+- generic [ref=f62e3]:
+  - banner [ref=f62e4]:
+    - button "Abrir menu" [ref=f62e5] [cursor=pointer]
+    - img "BovIA" [ref=f62e8]
+    - generic [ref=f62e9]: Recantilado
+  - complementary [ref=f62e10]:
+    - generic [ref=f62e11]:
+      - img "BovIA" [ref=f62e12]
+      - generic [ref=f62e13]: Recantilado
+      - button "Fechar menu" [ref=f62e14] [cursor=pointer]
+    - navigation [ref=f62e17]:
+      - generic [ref=f62e18]: Menu
+      - link "Dashboard" [ref=f62e19] [cursor=pointer]:
+        - /url: /dashboard
+      - link "Agenda" [ref=f62e26] [cursor=pointer]:
+        - /url: /agenda
+      - link "Animais" [ref=f62e30] [cursor=pointer]:
+        - /url: /animais
+      - link "Lotes" [ref=f62e34] [cursor=pointer]:
+        - /url: /lotes
+      - link "Pastagens" [ref=f62e38] [cursor=pointer]:
+        - /url: /pastagens
+      - link "Pesagens" [ref=f62e42] [cursor=pointer]:
+        - /url: /pesagens
+      - link "Saúde" [ref=f62e46] [cursor=pointer]:
+        - /url: /saude
+      - link "Reprodução" [ref=f62e50] [cursor=pointer]:
+        - /url: /reproducao
+      - link "Movimentações" [ref=f62e54] [cursor=pointer]:
+        - /url: /movimentacoes
+      - link "Financeiro" [ref=f62e58] [cursor=pointer]:
+        - /url: /financeiro
+      - link "Simulador" [ref=f62e62] [cursor=pointer]:
+        - /url: /simulador
+      - link "Custos Nutri" [ref=f62e66] [cursor=pointer]:
+        - /url: /custos-nutricionais
+      - link "Despesas Fixas" [ref=f62e70] [cursor=pointer]:
+        - /url: /despesas-fixas
+      - link "Gráficos" [ref=f62e74] [cursor=pointer]:
+        - /url: /graficos
+      - link "Relatórios" [ref=f62e78] [cursor=pointer]:
+        - /url: /relatorios
+      - link "Configurações" [ref=f62e82] [cursor=pointer]:
+        - /url: /configuracoes
+    - generic [ref=f62e87]:
+      - generic [ref=f62e88]: Alan Pontes de Castro
+      - button "Alternar tema" [ref=f62e89] [cursor=pointer]: Modo escuro
+      - button "Sair" [ref=f62e92] [cursor=pointer]
+  - main [ref=f62e95]:
+    - generic [ref=f62e96]:
+      - generic [ref=f62e97]:
+        - generic [ref=f62e98]:
+          - generic [ref=f62e99]: Animais
+          - generic [ref=f62e100]: 100 animal(is) no rebanho
+        - generic [ref=f62e101]:
+          - button "Criar em Lote" [ref=f62e102] [cursor=pointer]
+          - button "Cadastrar Animal" [ref=f62e103] [cursor=pointer]
+      - generic [ref=f62e1003]:
+        - generic [ref=f62e1004]: 50 selecionado(s)
+        - button "Limpar" [ref=f62e1005] [cursor=pointer]
+        - button "Mover de lote" [ref=f62e1006] [cursor=pointer]
+        - button "Mudar status" [ref=f62e1007] [cursor=pointer]
+        - button "Mudar categoria" [ref=f62e1008] [cursor=pointer]
+        - button "Excluir" [ref=f62e1009] [cursor=pointer]
+      - generic [ref=f62e106]:
+        - textbox "Buscar por brinco ou nome..." [ref=f62e109]
+        - combobox [ref=f62e110]:
+          - option "Todos os status"
+          - option "Ativo" [selected]
+          - option "Vendido"
+          - option "Morto"
+          - option "Transferido"
+        - combobox [ref=f62e111]:
+          - option "Todos os sexos" [selected]
+          - option "♂ Macho"
+          - option "♀ Fêmea"
+        - combobox [ref=f62e112]:
+          - option "Todas as categorias" [selected]
+          - option "Bezerro"
+          - option "Garrote"
+          - option "Novilha"
+          - option "Vaca"
+          - option "Boi Magro"
+          - option "Boi Gordo"
+        - combobox [ref=f62e113]:
+          - option "Todos os lotes" [selected]
+          - option "gadão"
+          - option "bezerros"
+      - generic [ref=f62e141] [cursor=pointer]:
+        - checkbox "Selecionar todos os animais visíveis" [checked] [active] [ref=f62e142]
+        - generic [ref=f62e143]: Selecionar todos (50)
+      - generic [ref=f62e144]:
+        - table [ref=f62e145]:
+          - rowgroup [ref=f62e146]:
+            - row [ref=f62e147] [cursor=pointer]:
+              - cell [ref=f62e148]:
+                - checkbox "Selecionar animal 646" [checked] [ref=f62e149]
+              - cell "Brinco —" [ref=f62e150]:
+                - text: Brinco
+                - generic [ref=f62e151]: —
+              - cell "Nome —" [ref=f62e152]:
+                - text: Nome
+                - generic [ref=f62e153]: —
+              - cell "Raça nelore" [ref=f62e154]
+              - cell "Sexo Fêmea" [ref=f62e155]
+              - cell "Categoria —" [ref=f62e156]:
+                - text: Categoria
+                - generic [ref=f62e157]: —
+              - cell "Lote gadão" [ref=f62e158]
+              - cell "Peso Atual 350 kg +30 kg" [ref=f62e159]:
+                - text: Peso Atual
+                - generic [ref=f62e160]:
+                  - text: 350 kg
+                  - generic "Ganho desde a entrada (320 kg)" [ref=f62e161]: +30 kg
+              - cell "Status Ativo" [ref=f62e162]:
+                - text: Status
+                - generic [ref=f62e163]: Ativo
+            - row [ref=f62e164] [cursor=pointer]:
+              - cell [ref=f62e165]:
+                - checkbox "Selecionar animal 647" [checked] [ref=f62e166]
+              - cell "Brinco —" [ref=f62e167]:
+                - text: Brinco
+                - generic [ref=f62e168]: —
+              - cell "Nome —" [ref=f62e169]:
+                - text: Nome
+                - generic [ref=f62e170]: —
+              - cell "Raça nelore" [ref=f62e171]
+              - cell "Sexo Fêmea" [ref=f62e172]
+              - cell "Categoria —" [ref=f62e173]:
+                - text: Categoria
+                - generic [ref=f62e174]: —
+              - cell "Lote gadão" [ref=f62e175]
+              - cell "Peso Atual 350 kg +30 kg" [ref=f62e176]:
+                - text: Peso Atual
+                - generic [ref=f62e177]:
+                  - text: 350 kg
+                  - generic "Ganho desde a entrada (320 kg)" [ref=f62e178]: +30 kg
+              - cell "Status Ativo" [ref=f62e179]:
+                - text: Status
+                - generic [ref=f62e180]: Ativo
+            - row [ref=f62e181] [cursor=pointer]:
+              - cell [ref=f62e182]:
+                - checkbox "Selecionar animal 685" [checked] [ref=f62e183]
+              - cell "Brinco —" [ref=f62e184]:
+                - text: Brinco
+                - generic [ref=f62e185]: —
+              - cell "Nome —" [ref=f62e186]:
+                - text: Nome
+                - generic [ref=f62e187]: —
+              - cell "Raça nelore" [ref=f62e188]
+              - cell "Sexo Fêmea" [ref=f62e189]
+              - cell "Categoria —" [ref=f62e190]:
+                - text: Categoria
+                - generic [ref=f62e191]: —
+              - cell "Lote bezerros" [ref=f62e192]
+              - cell "Peso Atual 310 kg +10 kg" [ref=f62e193]:
+                - text: Peso Atual
+                - generic [ref=f62e194]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f62e195]: +10 kg
+              - cell "Status Ativo" [ref=f62e196]:
+                - text: Status
+                - generic [ref=f62e197]: Ativo
+            - row [ref=f62e198] [cursor=pointer]:
+              - cell [ref=f62e199]:
+                - checkbox "Selecionar animal 686" [checked] [ref=f62e200]
+              - cell "Brinco —" [ref=f62e201]:
+                - text: Brinco
+                - generic [ref=f62e202]: —
+              - cell "Nome —" [ref=f62e203]:
+                - text: Nome
+                - generic [ref=f62e204]: —
+              - cell "Raça nelore" [ref=f62e205]
+              - cell "Sexo Fêmea" [ref=f62e206]
+              - cell "Categoria —" [ref=f62e207]:
+                - text: Categoria
+                - generic [ref=f62e208]: —
+              - cell "Lote bezerros" [ref=f62e209]
+              - cell "Peso Atual 310 kg +10 kg" [ref=f62e210]:
+                - text: Peso Atual
+                - generic [ref=f62e211]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f62e212]: +10 kg
+              - cell "Status Ativo" [ref=f62e213]:
+                - text: Status
+                - generic [ref=f62e214]: Ativo
+            - row [ref=f62e215] [cursor=pointer]:
+              - cell [ref=f62e216]:
+                - checkbox "Selecionar animal 687" [checked] [ref=f62e217]
+              - cell "Brinco —" [ref=f62e218]:
+                - text: Brinco
+                - generic [ref=f62e219]: —
+              - cell "Nome —" [ref=f62e220]:
+                - text: Nome
+                - generic [ref=f62e221]: —
+              - cell "Raça nelore" [ref=f62e222]
+              - cell "Sexo Fêmea" [ref=f62e223]
+              - cell "Categoria —" [ref=f62e224]:
+                - text: Categoria
+                - generic [ref=f62e225]: —
+              - cell "Lote bezerros" [ref=f62e226]
+              - cell "Peso Atual 310 kg +10 kg" [ref=f62e227]:
+                - text: Peso Atual
+                - generic [ref=f62e228]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f62e229]: +10 kg
+              - cell "Status Ativo" [ref=f62e230]:
+                - text: Status
+                - generic [ref=f62e231]: Ativo
+            - row [ref=f62e232] [cursor=pointer]:
+              - cell [ref=f62e233]:
+                - checkbox "Selecionar animal 688" [checked] [ref=f62e234]
+              - cell "Brinco —" [ref=f62e235]:
+                - text: Brinco
+                - generic [ref=f62e236]: —
+              - cell "Nome —" [ref=f62e237]:
+                - text: Nome
+                - generic [ref=f62e238]: —
+              - cell "Raça nelore" [ref=f62e239]
+              - cell "Sexo Fêmea" [ref=f62e240]
+              - cell "Categoria —" [ref=f62e241]:
+                - text: Categoria
+                - generic [ref=f62e242]: —
+              - cell "Lote bezerros" [ref=f62e243]
+              - cell "Peso Atual 310 kg +10 kg" [ref=f62e244]:
+                - text: Peso Atual
+                - generic [ref=f62e245]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f62e246]: +10 kg
+              - cell "Status Ativo" [ref=f62e247]:
+                - text: Status
+                - generic [ref=f62e248]: Ativo
+            - row [ref=f62e249] [cursor=pointer]:
+              - cell [ref=f62e250]:
+                - checkbox "Selecionar animal 689" [checked] [ref=f62e251]
+              - cell "Brinco —" [ref=f62e252]:
+                - text: Brinco
+                - generic [ref=f62e253]: —
+              - cell "Nome —" [ref=f62e254]:
+                - text: Nome
+                - generic [ref=f62e255]: —
+              - cell "Raça nelore" [ref=f62e256]
+              - cell "Sexo Fêmea" [ref=f62e257]
+              - cell "Categoria —" [ref=f62e258]:
+                - text: Categoria
+                - generic [ref=f62e259]: —
+              - cell "Lote bezerros" [ref=f62e260]
+              - cell "Peso Atual 310 kg +10 kg" [ref=f62e261]:
+                - text: Peso Atual
+                - generic [ref=f62e262]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f62e263]: +10 kg
+              - cell "Status Ativo" [ref=f62e264]:
+                - text: Status
+                - generic [ref=f62e265]: Ativo
+            - row [ref=f62e266] [cursor=pointer]:
+              - cell [ref=f62e267]:
+                - checkbox "Selecionar animal 690" [checked] [ref=f62e268]
+              - cell "Brinco —" [ref=f62e269]:
+                - text: Brinco
+                - generic [ref=f62e270]: —
+              - cell "Nome —" [ref=f62e271]:
+                - text: Nome
+                - generic [ref=f62e272]: —
+              - cell "Raça nelore" [ref=f62e273]
+              - cell "Sexo Fêmea" [ref=f62e274]
+              - cell "Categoria —" [ref=f62e275]:
+                - text: Categoria
+                - generic [ref=f62e276]: —
+              - cell "Lote bezerros" [ref=f62e277]
+              - cell "Peso Atual 310 kg +10 kg" [ref=f62e278]:
+                - text: Peso Atual
+                - generic [ref=f62e279]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f62e280]: +10 kg
+              - cell "Status Ativo" [ref=f62e281]:
+                - text: Status
+                - generic [ref=f62e282]: Ativo
+            - row [ref=f62e283] [cursor=pointer]:
+              - cell [ref=f62e284]:
+                - checkbox "Selecionar animal 691" [checked] [ref=f62e285]
+              - cell "Brinco —" [ref=f62e286]:
+                - text: Brinco
+                - generic [ref=f62e287]: —
+              - cell "Nome —" [ref=f62e288]:
+                - text: Nome
+                - generic [ref=f62e289]: —
+              - cell "Raça nelore" [ref=f62e290]
+              - cell "Sexo Fêmea" [ref=f62e291]
+              - cell "Categoria —" [ref=f62e292]:
+                - text: Categoria
+                - generic [ref=f62e293]: —
+              - cell "Lote bezerros" [ref=f62e294]
+              - cell "Peso Atual 310 kg +10 kg" [ref=f62e295]:
+                - text: Peso Atual
+                - generic [ref=f62e296]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f62e297]: +10 kg
+              - cell "Status Ativo" [ref=f62e298]:
+                - text: Status
+                - generic [ref=f62e299]: Ativo
+            - row [ref=f62e300] [cursor=pointer]:
+              - cell [ref=f62e301]:
+                - checkbox "Selecionar animal 692" [checked] [ref=f62e302]
+              - cell "Brinco —" [ref=f62e303]:
+                - text: Brinco
+                - generic [ref=f62e304]: —
+              - cell "Nome —" [ref=f62e305]:
+                - text: Nome
+                - generic [ref=f62e306]: —
+              - cell "Raça nelore" [ref=f62e307]
+              - cell "Sexo Fêmea" [ref=f62e308]
+              - cell "Categoria —" [ref=f62e309]:
+                - text: Categoria
+                - generic [ref=f62e310]: —
+              - cell "Lote bezerros" [ref=f62e311]
+              - cell "Peso Atual 310 kg +10 kg" [ref=f62e312]:
+                - text: Peso Atual
+                - generic [ref=f62e313]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f62e314]: +10 kg
+              - cell "Status Ativo" [ref=f62e315]:
+                - text: Status
+                - generic [ref=f62e316]: Ativo
+            - row [ref=f62e317] [cursor=pointer]:
+              - cell [ref=f62e318]:
+                - checkbox "Selecionar animal 693" [checked] [ref=f62e319]
+              - cell "Brinco —" [ref=f62e320]:
+                - text: Brinco
+                - generic [ref=f62e321]: —
+              - cell "Nome —" [ref=f62e322]:
+                - text: Nome
+                - generic [ref=f62e323]: —
+              - cell "Raça nelore" [ref=f62e324]
+              - cell "Sexo Fêmea" [ref=f62e325]
+              - cell "Categoria —" [ref=f62e326]:
+                - text: Categoria
+                - generic [ref=f62e327]: —
+              - cell "Lote bezerros" [ref=f62e328]
+              - cell "Peso Atual 310 kg +10 kg" [ref=f62e329]:
+                - text: Peso Atual
+                - generic [ref=f62e330]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f62e331]: +10 kg
+              - cell "Status Ativo" [ref=f62e332]:
+                - text: Status
+                - generic [ref=f62e333]: Ativo
+            - row [ref=f62e334] [cursor=pointer]:
+              - cell [ref=f62e335]:
+                - checkbox "Selecionar animal 694" [checked] [ref=f62e336]
+              - cell "Brinco —" [ref=f62e337]:
+                - text: Brinco
+                - generic [ref=f62e338]: —
+              - cell "Nome —" [ref=f62e339]:
+                - text: Nome
+                - generic [ref=f62e340]: —
+              - cell "Raça nelore" [ref=f62e341]
+              - cell "Sexo Fêmea" [ref=f62e342]
+              - cell "Categoria —" [ref=f62e343]:
+                - text: Categoria
+                - generic [ref=f62e344]: —
+              - cell "Lote bezerros" [ref=f62e345]
+              - cell "Peso Atual 310 kg +10 kg" [ref=f62e346]:
+                - text: Peso Atual
+                - generic [ref=f62e347]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f62e348]: +10 kg
+              - cell "Status Ativo" [ref=f62e349]:
+                - text: Status
+                - generic [ref=f62e350]: Ativo
+            - row [ref=f62e351] [cursor=pointer]:
+              - cell [ref=f62e352]:
+                - checkbox "Selecionar animal 695" [checked] [ref=f62e353]
+              - cell "Brinco —" [ref=f62e354]:
+                - text: Brinco
+                - generic [ref=f62e355]: —
+              - cell "Nome —" [ref=f62e356]:
+                - text: Nome
+                - generic [ref=f62e357]: —
+              - cell "Raça nelore" [ref=f62e358]
+              - cell "Sexo Fêmea" [ref=f62e359]
+              - cell "Categoria —" [ref=f62e360]:
+                - text: Categoria
+                - generic [ref=f62e361]: —
+              - cell "Lote bezerros" [ref=f62e362]
+              - cell "Peso Atual 310 kg +10 kg" [ref=f62e363]:
+                - text: Peso Atual
+                - generic [ref=f62e364]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f62e365]: +10 kg
+              - cell "Status Ativo" [ref=f62e366]:
+                - text: Status
+                - generic [ref=f62e367]: Ativo
+            - row [ref=f62e368] [cursor=pointer]:
+              - cell [ref=f62e369]:
+                - checkbox "Selecionar animal 696" [checked] [ref=f62e370]
+              - cell "Brinco —" [ref=f62e371]:
+                - text: Brinco
+                - generic [ref=f62e372]: —
+              - cell "Nome —" [ref=f62e373]:
+                - text: Nome
+                - generic [ref=f62e374]: —
+              - cell "Raça nelore" [ref=f62e375]
+              - cell "Sexo Fêmea" [ref=f62e376]
+              - cell "Categoria —" [ref=f62e377]:
+                - text: Categoria
+                - generic [ref=f62e378]: —
+              - cell "Lote bezerros" [ref=f62e379]
+              - cell "Peso Atual 310 kg +10 kg" [ref=f62e380]:
+                - text: Peso Atual
+                - generic [ref=f62e381]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f62e382]: +10 kg
+              - cell "Status Ativo" [ref=f62e383]:
+                - text: Status
+                - generic [ref=f62e384]: Ativo
+            - row [ref=f62e385] [cursor=pointer]:
+              - cell [ref=f62e386]:
+                - checkbox "Selecionar animal 697" [checked] [ref=f62e387]
+              - cell "Brinco —" [ref=f62e388]:
+                - text: Brinco
+                - generic [ref=f62e389]: —
+              - cell "Nome —" [ref=f62e390]:
+                - text: Nome
+                - generic [ref=f62e391]: —
+              - cell "Raça nelore" [ref=f62e392]
+              - cell "Sexo Fêmea" [ref=f62e393]
+              - cell "Categoria —" [ref=f62e394]:
+                - text: Categoria
+                - generic [ref=f62e395]: —
+              - cell "Lote bezerros" [ref=f62e396]
+              - cell "Peso Atual 310 kg +10 kg" [ref=f62e397]:
+                - text: Peso Atual
+                - generic [ref=f62e398]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f62e399]: +10 kg
+              - cell "Status Ativo" [ref=f62e400]:
+                - text: Status
+                - generic [ref=f62e401]: Ativo
+            - row [ref=f62e402] [cursor=pointer]:
+              - cell [ref=f62e403]:
+                - checkbox "Selecionar animal 648" [checked] [ref=f62e404]
+              - cell "Brinco —" [ref=f62e405]:
+                - text: Brinco
+                - generic [ref=f62e406]: —
+              - cell "Nome —" [ref=f62e407]:
+                - text: Nome
+                - generic [ref=f62e408]: —
+              - cell "Raça nelore" [ref=f62e409]
+              - cell "Sexo Fêmea" [ref=f62e410]
+              - cell "Categoria —" [ref=f62e411]:
+                - text: Categoria
+                - generic [ref=f62e412]: —
+              - cell "Lote bezerros" [ref=f62e413]
+              - cell "Peso Atual 310 kg +10 kg" [ref=f62e414]:
+                - text: Peso Atual
+                - generic [ref=f62e415]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f62e416]: +10 kg
+              - cell "Status Ativo" [ref=f62e417]:
+                - text: Status
+                - generic [ref=f62e418]: Ativo
+            - row [ref=f62e419] [cursor=pointer]:
+              - cell [ref=f62e420]:
+                - checkbox "Selecionar animal 649" [checked] [ref=f62e421]
+              - cell "Brinco —" [ref=f62e422]:
+                - text: Brinco
+                - generic [ref=f62e423]: —
+              - cell "Nome —" [ref=f62e424]:
+                - text: Nome
+                - generic [ref=f62e425]: —
+              - cell "Raça nelore" [ref=f62e426]
+              - cell "Sexo Fêmea" [ref=f62e427]
+              - cell "Categoria —" [ref=f62e428]:
+                - text: Categoria
+                - generic [ref=f62e429]: —
+              - cell "Lote bezerros" [ref=f62e430]
+              - cell "Peso Atual 310 kg +10 kg" [ref=f62e431]:
+                - text: Peso Atual
+                - generic [ref=f62e432]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f62e433]: +10 kg
+              - cell "Status Ativo" [ref=f62e434]:
+                - text: Status
+                - generic [ref=f62e435]: Ativo
+            - row [ref=f62e436] [cursor=pointer]:
+              - cell [ref=f62e437]:
+                - checkbox "Selecionar animal 650" [checked] [ref=f62e438]
+              - cell "Brinco —" [ref=f62e439]:
+                - text: Brinco
+                - generic [ref=f62e440]: —
+              - cell "Nome —" [ref=f62e441]:
+                - text: Nome
+                - generic [ref=f62e442]: —
+              - cell "Raça nelore" [ref=f62e443]
+              - cell "Sexo Fêmea" [ref=f62e444]
+              - cell "Categoria —" [ref=f62e445]:
+                - text: Categoria
+                - generic [ref=f62e446]: —
+              - cell "Lote bezerros" [ref=f62e447]
+              - cell "Peso Atual 310 kg +10 kg" [ref=f62e448]:
+                - text: Peso Atual
+                - generic [ref=f62e449]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f62e450]: +10 kg
+              - cell "Status Ativo" [ref=f62e451]:
+                - text: Status
+                - generic [ref=f62e452]: Ativo
+            - row [ref=f62e453] [cursor=pointer]:
+              - cell [ref=f62e454]:
+                - checkbox "Selecionar animal 651" [checked] [ref=f62e455]
+              - cell "Brinco —" [ref=f62e456]:
+                - text: Brinco
+                - generic [ref=f62e457]: —
+              - cell "Nome —" [ref=f62e458]:
+                - text: Nome
+                - generic [ref=f62e459]: —
+              - cell "Raça nelore" [ref=f62e460]
+              - cell "Sexo Fêmea" [ref=f62e461]
+              - cell "Categoria —" [ref=f62e462]:
+                - text: Categoria
+                - generic [ref=f62e463]: —
+              - cell "Lote bezerros" [ref=f62e464]
+              - cell "Peso Atual 310 kg +10 kg" [ref=f62e465]:
+                - text: Peso Atual
+                - generic [ref=f62e466]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f62e467]: +10 kg
+              - cell "Status Ativo" [ref=f62e468]:
+                - text: Status
+                - generic [ref=f62e469]: Ativo
+            - row [ref=f62e470] [cursor=pointer]:
+              - cell [ref=f62e471]:
+                - checkbox "Selecionar animal 652" [checked] [ref=f62e472]
+              - cell "Brinco —" [ref=f62e473]:
+                - text: Brinco
+                - generic [ref=f62e474]: —
+              - cell "Nome —" [ref=f62e475]:
+                - text: Nome
+                - generic [ref=f62e476]: —
+              - cell "Raça nelore" [ref=f62e477]
+              - cell "Sexo Fêmea" [ref=f62e478]
+              - cell "Categoria —" [ref=f62e479]:
+                - text: Categoria
+                - generic [ref=f62e480]: —
+              - cell "Lote bezerros" [ref=f62e481]
+              - cell "Peso Atual 310 kg +10 kg" [ref=f62e482]:
+                - text: Peso Atual
+                - generic [ref=f62e483]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f62e484]: +10 kg
+              - cell "Status Ativo" [ref=f62e485]:
+                - text: Status
+                - generic [ref=f62e486]: Ativo
+            - row [ref=f62e487] [cursor=pointer]:
+              - cell [ref=f62e488]:
+                - checkbox "Selecionar animal 653" [checked] [ref=f62e489]
+              - cell "Brinco —" [ref=f62e490]:
+                - text: Brinco
+                - generic [ref=f62e491]: —
+              - cell "Nome —" [ref=f62e492]:
+                - text: Nome
+                - generic [ref=f62e493]: —
+              - cell "Raça nelore" [ref=f62e494]
+              - cell "Sexo Fêmea" [ref=f62e495]
+              - cell "Categoria —" [ref=f62e496]:
+                - text: Categoria
+                - generic [ref=f62e497]: —
+              - cell "Lote bezerros" [ref=f62e498]
+              - cell "Peso Atual 310 kg +10 kg" [ref=f62e499]:
+                - text: Peso Atual
+                - generic [ref=f62e500]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f62e501]: +10 kg
+              - cell "Status Ativo" [ref=f62e502]:
+                - text: Status
+                - generic [ref=f62e503]: Ativo
+            - row [ref=f62e504] [cursor=pointer]:
+              - cell [ref=f62e505]:
+                - checkbox "Selecionar animal 654" [checked] [ref=f62e506]
+              - cell "Brinco —" [ref=f62e507]:
+                - text: Brinco
+                - generic [ref=f62e508]: —
+              - cell "Nome —" [ref=f62e509]:
+                - text: Nome
+                - generic [ref=f62e510]: —
+              - cell "Raça nelore" [ref=f62e511]
+              - cell "Sexo Fêmea" [ref=f62e512]
+              - cell "Categoria —" [ref=f62e513]:
+                - text: Categoria
+                - generic [ref=f62e514]: —
+              - cell "Lote bezerros" [ref=f62e515]
+              - cell "Peso Atual 310 kg +10 kg" [ref=f62e516]:
+                - text: Peso Atual
+                - generic [ref=f62e517]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f62e518]: +10 kg
+              - cell "Status Ativo" [ref=f62e519]:
+                - text: Status
+                - generic [ref=f62e520]: Ativo
+            - row [ref=f62e521] [cursor=pointer]:
+              - cell [ref=f62e522]:
+                - checkbox "Selecionar animal 655" [checked] [ref=f62e523]
+              - cell "Brinco —" [ref=f62e524]:
+                - text: Brinco
+                - generic [ref=f62e525]: —
+              - cell "Nome —" [ref=f62e526]:
+                - text: Nome
+                - generic [ref=f62e527]: —
+              - cell "Raça nelore" [ref=f62e528]
+              - cell "Sexo Fêmea" [ref=f62e529]
+              - cell "Categoria —" [ref=f62e530]:
+                - text: Categoria
+                - generic [ref=f62e531]: —
+              - cell "Lote bezerros" [ref=f62e532]
+              - cell "Peso Atual 310 kg +10 kg" [ref=f62e533]:
+                - text: Peso Atual
+                - generic [ref=f62e534]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f62e535]: +10 kg
+              - cell "Status Ativo" [ref=f62e536]:
+                - text: Status
+                - generic [ref=f62e537]: Ativo
+            - row [ref=f62e538] [cursor=pointer]:
+              - cell [ref=f62e539]:
+                - checkbox "Selecionar animal 656" [checked] [ref=f62e540]
+              - cell "Brinco —" [ref=f62e541]:
+                - text: Brinco
+                - generic [ref=f62e542]: —
+              - cell "Nome —" [ref=f62e543]:
+                - text: Nome
+                - generic [ref=f62e544]: —
+              - cell "Raça nelore" [ref=f62e545]
+              - cell "Sexo Fêmea" [ref=f62e546]
+              - cell "Categoria —" [ref=f62e547]:
+                - text: Categoria
+                - generic [ref=f62e548]: —
+              - cell "Lote bezerros" [ref=f62e549]
+              - cell "Peso Atual 310 kg +10 kg" [ref=f62e550]:
+                - text: Peso Atual
+                - generic [ref=f62e551]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f62e552]: +10 kg
+              - cell "Status Ativo" [ref=f62e553]:
+                - text: Status
+                - generic [ref=f62e554]: Ativo
+            - row [ref=f62e555] [cursor=pointer]:
+              - cell [ref=f62e556]:
+                - checkbox "Selecionar animal 657" [checked] [ref=f62e557]
+              - cell "Brinco —" [ref=f62e558]:
+                - text: Brinco
+                - generic [ref=f62e559]: —
+              - cell "Nome —" [ref=f62e560]:
+                - text: Nome
+                - generic [ref=f62e561]: —
+              - cell "Raça nelore" [ref=f62e562]
+              - cell "Sexo Fêmea" [ref=f62e563]
+              - cell "Categoria —" [ref=f62e564]:
+                - text: Categoria
+                - generic [ref=f62e565]: —
+              - cell "Lote bezerros" [ref=f62e566]
+              - cell "Peso Atual 310 kg +10 kg" [ref=f62e567]:
+                - text: Peso Atual
+                - generic [ref=f62e568]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f62e569]: +10 kg
+              - cell "Status Ativo" [ref=f62e570]:
+                - text: Status
+                - generic [ref=f62e571]: Ativo
+            - row [ref=f62e572] [cursor=pointer]:
+              - cell [ref=f62e573]:
+                - checkbox "Selecionar animal 658" [checked] [ref=f62e574]
+              - cell "Brinco —" [ref=f62e575]:
+                - text: Brinco
+                - generic [ref=f62e576]: —
+              - cell "Nome —" [ref=f62e577]:
+                - text: Nome
+                - generic [ref=f62e578]: —
+              - cell "Raça nelore" [ref=f62e579]
+              - cell "Sexo Fêmea" [ref=f62e580]
+              - cell "Categoria —" [ref=f62e581]:
+                - text: Categoria
+                - generic [ref=f62e582]: —
+              - cell "Lote bezerros" [ref=f62e583]
+              - cell "Peso Atual 310 kg +10 kg" [ref=f62e584]:
+                - text: Peso Atual
+                - generic [ref=f62e585]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f62e586]: +10 kg
+              - cell "Status Ativo" [ref=f62e587]:
+                - text: Status
+                - generic [ref=f62e588]: Ativo
+            - row [ref=f62e589] [cursor=pointer]:
+              - cell [ref=f62e590]:
+                - checkbox "Selecionar animal 659" [checked] [ref=f62e591]
+              - cell "Brinco —" [ref=f62e592]:
+                - text: Brinco
+                - generic [ref=f62e593]: —
+              - cell "Nome —" [ref=f62e594]:
+                - text: Nome
+                - generic [ref=f62e595]: —
+              - cell "Raça nelore" [ref=f62e596]
+              - cell "Sexo Fêmea" [ref=f62e597]
+              - cell "Categoria —" [ref=f62e598]:
+                - text: Categoria
+                - generic [ref=f62e599]: —
+              - cell "Lote bezerros" [ref=f62e600]
+              - cell "Peso Atual 310 kg +10 kg" [ref=f62e601]:
+                - text: Peso Atual
+                - generic [ref=f62e602]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f62e603]: +10 kg
+              - cell "Status Ativo" [ref=f62e604]:
+                - text: Status
+                - generic [ref=f62e605]: Ativo
+            - row [ref=f62e606] [cursor=pointer]:
+              - cell [ref=f62e607]:
+                - checkbox "Selecionar animal 660" [checked] [ref=f62e608]
+              - cell "Brinco —" [ref=f62e609]:
+                - text: Brinco
+                - generic [ref=f62e610]: —
+              - cell "Nome —" [ref=f62e611]:
+                - text: Nome
+                - generic [ref=f62e612]: —
+              - cell "Raça nelore" [ref=f62e613]
+              - cell "Sexo Fêmea" [ref=f62e614]
+              - cell "Categoria —" [ref=f62e615]:
+                - text: Categoria
+                - generic [ref=f62e616]: —
+              - cell "Lote bezerros" [ref=f62e617]
+              - cell "Peso Atual 310 kg +10 kg" [ref=f62e618]:
+                - text: Peso Atual
+                - generic [ref=f62e619]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f62e620]: +10 kg
+              - cell "Status Ativo" [ref=f62e621]:
+                - text: Status
+                - generic [ref=f62e622]: Ativo
+            - row [ref=f62e623] [cursor=pointer]:
+              - cell [ref=f62e624]:
+                - checkbox "Selecionar animal 661" [checked] [ref=f62e625]
+              - cell "Brinco —" [ref=f62e626]:
+                - text: Brinco
+                - generic [ref=f62e627]: —
+              - cell "Nome —" [ref=f62e628]:
+                - text: Nome
+                - generic [ref=f62e629]: —
+              - cell "Raça nelore" [ref=f62e630]
+              - cell "Sexo Fêmea" [ref=f62e631]
+              - cell "Categoria —" [ref=f62e632]:
+                - text: Categoria
+                - generic [ref=f62e633]: —
+              - cell "Lote bezerros" [ref=f62e634]
+              - cell "Peso Atual 310 kg +10 kg" [ref=f62e635]:
+                - text: Peso Atual
+                - generic [ref=f62e636]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f62e637]: +10 kg
+              - cell "Status Ativo" [ref=f62e638]:
+                - text: Status
+                - generic [ref=f62e639]: Ativo
+            - row [ref=f62e640] [cursor=pointer]:
+              - cell [ref=f62e641]:
+                - checkbox "Selecionar animal 662" [checked] [ref=f62e642]
+              - cell "Brinco —" [ref=f62e643]:
+                - text: Brinco
+                - generic [ref=f62e644]: —
+              - cell "Nome —" [ref=f62e645]:
+                - text: Nome
+                - generic [ref=f62e646]: —
+              - cell "Raça nelore" [ref=f62e647]
+              - cell "Sexo Fêmea" [ref=f62e648]
+              - cell "Categoria —" [ref=f62e649]:
+                - text: Categoria
+                - generic [ref=f62e650]: —
+              - cell "Lote bezerros" [ref=f62e651]
+              - cell "Peso Atual 310 kg +10 kg" [ref=f62e652]:
+                - text: Peso Atual
+                - generic [ref=f62e653]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f62e654]: +10 kg
+              - cell "Status Ativo" [ref=f62e655]:
+                - text: Status
+                - generic [ref=f62e656]: Ativo
+            - row [ref=f62e657] [cursor=pointer]:
+              - cell [ref=f62e658]:
+                - checkbox "Selecionar animal 663" [checked] [ref=f62e659]
+              - cell "Brinco —" [ref=f62e660]:
+                - text: Brinco
+                - generic [ref=f62e661]: —
+              - cell "Nome —" [ref=f62e662]:
+                - text: Nome
+                - generic [ref=f62e663]: —
+              - cell "Raça nelore" [ref=f62e664]
+              - cell "Sexo Fêmea" [ref=f62e665]
+              - cell "Categoria —" [ref=f62e666]:
+                - text: Categoria
+                - generic [ref=f62e667]: —
+              - cell "Lote bezerros" [ref=f62e668]
+              - cell "Peso Atual 310 kg +10 kg" [ref=f62e669]:
+                - text: Peso Atual
+                - generic [ref=f62e670]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f62e671]: +10 kg
+              - cell "Status Ativo" [ref=f62e672]:
+                - text: Status
+                - generic [ref=f62e673]: Ativo
+            - row [ref=f62e674] [cursor=pointer]:
+              - cell [ref=f62e675]:
+                - checkbox "Selecionar animal 664" [checked] [ref=f62e676]
+              - cell "Brinco —" [ref=f62e677]:
+                - text: Brinco
+                - generic [ref=f62e678]: —
+              - cell "Nome —" [ref=f62e679]:
+                - text: Nome
+                - generic [ref=f62e680]: —
+              - cell "Raça nelore" [ref=f62e681]
+              - cell "Sexo Fêmea" [ref=f62e682]
+              - cell "Categoria —" [ref=f62e683]:
+                - text: Categoria
+                - generic [ref=f62e684]: —
+              - cell "Lote bezerros" [ref=f62e685]
+              - cell "Peso Atual 310 kg +10 kg" [ref=f62e686]:
+                - text: Peso Atual
+                - generic [ref=f62e687]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f62e688]: +10 kg
+              - cell "Status Ativo" [ref=f62e689]:
+                - text: Status
+                - generic [ref=f62e690]: Ativo
+            - row [ref=f62e691] [cursor=pointer]:
+              - cell [ref=f62e692]:
+                - checkbox "Selecionar animal 665" [checked] [ref=f62e693]
+              - cell "Brinco —" [ref=f62e694]:
+                - text: Brinco
+                - generic [ref=f62e695]: —
+              - cell "Nome —" [ref=f62e696]:
+                - text: Nome
+                - generic [ref=f62e697]: —
+              - cell "Raça nelore" [ref=f62e698]
+              - cell "Sexo Fêmea" [ref=f62e699]
+              - cell "Categoria —" [ref=f62e700]:
+                - text: Categoria
+                - generic [ref=f62e701]: —
+              - cell "Lote bezerros" [ref=f62e702]
+              - cell "Peso Atual 310 kg +10 kg" [ref=f62e703]:
+                - text: Peso Atual
+                - generic [ref=f62e704]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f62e705]: +10 kg
+              - cell "Status Ativo" [ref=f62e706]:
+                - text: Status
+                - generic [ref=f62e707]: Ativo
+            - row [ref=f62e708] [cursor=pointer]:
+              - cell [ref=f62e709]:
+                - checkbox "Selecionar animal 666" [checked] [ref=f62e710]
+              - cell "Brinco —" [ref=f62e711]:
+                - text: Brinco
+                - generic [ref=f62e712]: —
+              - cell "Nome —" [ref=f62e713]:
+                - text: Nome
+                - generic [ref=f62e714]: —
+              - cell "Raça nelore" [ref=f62e715]
+              - cell "Sexo Fêmea" [ref=f62e716]
+              - cell "Categoria —" [ref=f62e717]:
+                - text: Categoria
+                - generic [ref=f62e718]: —
+              - cell "Lote bezerros" [ref=f62e719]
+              - cell "Peso Atual 310 kg +10 kg" [ref=f62e720]:
+                - text: Peso Atual
+                - generic [ref=f62e721]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f62e722]: +10 kg
+              - cell "Status Ativo" [ref=f62e723]:
+                - text: Status
+                - generic [ref=f62e724]: Ativo
+            - row [ref=f62e725] [cursor=pointer]:
+              - cell [ref=f62e726]:
+                - checkbox "Selecionar animal 667" [checked] [ref=f62e727]
+              - cell "Brinco —" [ref=f62e728]:
+                - text: Brinco
+                - generic [ref=f62e729]: —
+              - cell "Nome —" [ref=f62e730]:
+                - text: Nome
+                - generic [ref=f62e731]: —
+              - cell "Raça nelore" [ref=f62e732]
+              - cell "Sexo Fêmea" [ref=f62e733]
+              - cell "Categoria —" [ref=f62e734]:
+                - text: Categoria
+                - generic [ref=f62e735]: —
+              - cell "Lote bezerros" [ref=f62e736]
+              - cell "Peso Atual 310 kg +10 kg" [ref=f62e737]:
+                - text: Peso Atual
+                - generic [ref=f62e738]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f62e739]: +10 kg
+              - cell "Status Ativo" [ref=f62e740]:
+                - text: Status
+                - generic [ref=f62e741]: Ativo
+            - row [ref=f62e742] [cursor=pointer]:
+              - cell [ref=f62e743]:
+                - checkbox "Selecionar animal 668" [checked] [ref=f62e744]
+              - cell "Brinco —" [ref=f62e745]:
+                - text: Brinco
+                - generic [ref=f62e746]: —
+              - cell "Nome —" [ref=f62e747]:
+                - text: Nome
+                - generic [ref=f62e748]: —
+              - cell "Raça nelore" [ref=f62e749]
+              - cell "Sexo Fêmea" [ref=f62e750]
+              - cell "Categoria —" [ref=f62e751]:
+                - text: Categoria
+                - generic [ref=f62e752]: —
+              - cell "Lote bezerros" [ref=f62e753]
+              - cell "Peso Atual 310 kg +10 kg" [ref=f62e754]:
+                - text: Peso Atual
+                - generic [ref=f62e755]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f62e756]: +10 kg
+              - cell "Status Ativo" [ref=f62e757]:
+                - text: Status
+                - generic [ref=f62e758]: Ativo
+            - row [ref=f62e759] [cursor=pointer]:
+              - cell [ref=f62e760]:
+                - checkbox "Selecionar animal 669" [checked] [ref=f62e761]
+              - cell "Brinco —" [ref=f62e762]:
+                - text: Brinco
+                - generic [ref=f62e763]: —
+              - cell "Nome —" [ref=f62e764]:
+                - text: Nome
+                - generic [ref=f62e765]: —
+              - cell "Raça nelore" [ref=f62e766]
+              - cell "Sexo Fêmea" [ref=f62e767]
+              - cell "Categoria —" [ref=f62e768]:
+                - text: Categoria
+                - generic [ref=f62e769]: —
+              - cell "Lote bezerros" [ref=f62e770]
+              - cell "Peso Atual 310 kg +10 kg" [ref=f62e771]:
+                - text: Peso Atual
+                - generic [ref=f62e772]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f62e773]: +10 kg
+              - cell "Status Ativo" [ref=f62e774]:
+                - text: Status
+                - generic [ref=f62e775]: Ativo
+            - row [ref=f62e776] [cursor=pointer]:
+              - cell [ref=f62e777]:
+                - checkbox "Selecionar animal 670" [checked] [ref=f62e778]
+              - cell "Brinco —" [ref=f62e779]:
+                - text: Brinco
+                - generic [ref=f62e780]: —
+              - cell "Nome —" [ref=f62e781]:
+                - text: Nome
+                - generic [ref=f62e782]: —
+              - cell "Raça nelore" [ref=f62e783]
+              - cell "Sexo Fêmea" [ref=f62e784]
+              - cell "Categoria —" [ref=f62e785]:
+                - text: Categoria
+                - generic [ref=f62e786]: —
+              - cell "Lote bezerros" [ref=f62e787]
+              - cell "Peso Atual 310 kg +10 kg" [ref=f62e788]:
+                - text: Peso Atual
+                - generic [ref=f62e789]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f62e790]: +10 kg
+              - cell "Status Ativo" [ref=f62e791]:
+                - text: Status
+                - generic [ref=f62e792]: Ativo
+            - row [ref=f62e793] [cursor=pointer]:
+              - cell [ref=f62e794]:
+                - checkbox "Selecionar animal 671" [checked] [ref=f62e795]
+              - cell "Brinco —" [ref=f62e796]:
+                - text: Brinco
+                - generic [ref=f62e797]: —
+              - cell "Nome —" [ref=f62e798]:
+                - text: Nome
+                - generic [ref=f62e799]: —
+              - cell "Raça nelore" [ref=f62e800]
+              - cell "Sexo Fêmea" [ref=f62e801]
+              - cell "Categoria —" [ref=f62e802]:
+                - text: Categoria
+                - generic [ref=f62e803]: —
+              - cell "Lote bezerros" [ref=f62e804]
+              - cell "Peso Atual 310 kg +10 kg" [ref=f62e805]:
+                - text: Peso Atual
+                - generic [ref=f62e806]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f62e807]: +10 kg
+              - cell "Status Ativo" [ref=f62e808]:
+                - text: Status
+                - generic [ref=f62e809]: Ativo
+            - row [ref=f62e810] [cursor=pointer]:
+              - cell [ref=f62e811]:
+                - checkbox "Selecionar animal 672" [checked] [ref=f62e812]
+              - cell "Brinco —" [ref=f62e813]:
+                - text: Brinco
+                - generic [ref=f62e814]: —
+              - cell "Nome —" [ref=f62e815]:
+                - text: Nome
+                - generic [ref=f62e816]: —
+              - cell "Raça nelore" [ref=f62e817]
+              - cell "Sexo Fêmea" [ref=f62e818]
+              - cell "Categoria —" [ref=f62e819]:
+                - text: Categoria
+                - generic [ref=f62e820]: —
+              - cell "Lote bezerros" [ref=f62e821]
+              - cell "Peso Atual 310 kg +10 kg" [ref=f62e822]:
+                - text: Peso Atual
+                - generic [ref=f62e823]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f62e824]: +10 kg
+              - cell "Status Ativo" [ref=f62e825]:
+                - text: Status
+                - generic [ref=f62e826]: Ativo
+            - row [ref=f62e827] [cursor=pointer]:
+              - cell [ref=f62e828]:
+                - checkbox "Selecionar animal 673" [checked] [ref=f62e829]
+              - cell "Brinco —" [ref=f62e830]:
+                - text: Brinco
+                - generic [ref=f62e831]: —
+              - cell "Nome —" [ref=f62e832]:
+                - text: Nome
+                - generic [ref=f62e833]: —
+              - cell "Raça nelore" [ref=f62e834]
+              - cell "Sexo Fêmea" [ref=f62e835]
+              - cell "Categoria —" [ref=f62e836]:
+                - text: Categoria
+                - generic [ref=f62e837]: —
+              - cell "Lote bezerros" [ref=f62e838]
+              - cell "Peso Atual 310 kg +10 kg" [ref=f62e839]:
+                - text: Peso Atual
+                - generic [ref=f62e840]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f62e841]: +10 kg
+              - cell "Status Ativo" [ref=f62e842]:
+                - text: Status
+                - generic [ref=f62e843]: Ativo
+            - row [ref=f62e844] [cursor=pointer]:
+              - cell [ref=f62e845]:
+                - checkbox "Selecionar animal 674" [checked] [ref=f62e846]
+              - cell "Brinco —" [ref=f62e847]:
+                - text: Brinco
+                - generic [ref=f62e848]: —
+              - cell "Nome —" [ref=f62e849]:
+                - text: Nome
+                - generic [ref=f62e850]: —
+              - cell "Raça nelore" [ref=f62e851]
+              - cell "Sexo Fêmea" [ref=f62e852]
+              - cell "Categoria —" [ref=f62e853]:
+                - text: Categoria
+                - generic [ref=f62e854]: —
+              - cell "Lote bezerros" [ref=f62e855]
+              - cell "Peso Atual 310 kg +10 kg" [ref=f62e856]:
+                - text: Peso Atual
+                - generic [ref=f62e857]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f62e858]: +10 kg
+              - cell "Status Ativo" [ref=f62e859]:
+                - text: Status
+                - generic [ref=f62e860]: Ativo
+            - row [ref=f62e861] [cursor=pointer]:
+              - cell [ref=f62e862]:
+                - checkbox "Selecionar animal 675" [checked] [ref=f62e863]
+              - cell "Brinco —" [ref=f62e864]:
+                - text: Brinco
+                - generic [ref=f62e865]: —
+              - cell "Nome —" [ref=f62e866]:
+                - text: Nome
+                - generic [ref=f62e867]: —
+              - cell "Raça nelore" [ref=f62e868]
+              - cell "Sexo Fêmea" [ref=f62e869]
+              - cell "Categoria —" [ref=f62e870]:
+                - text: Categoria
+                - generic [ref=f62e871]: —
+              - cell "Lote bezerros" [ref=f62e872]
+              - cell "Peso Atual 310 kg +10 kg" [ref=f62e873]:
+                - text: Peso Atual
+                - generic [ref=f62e874]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f62e875]: +10 kg
+              - cell "Status Ativo" [ref=f62e876]:
+                - text: Status
+                - generic [ref=f62e877]: Ativo
+            - row [ref=f62e878] [cursor=pointer]:
+              - cell [ref=f62e879]:
+                - checkbox "Selecionar animal 676" [checked] [ref=f62e880]
+              - cell "Brinco —" [ref=f62e881]:
+                - text: Brinco
+                - generic [ref=f62e882]: —
+              - cell "Nome —" [ref=f62e883]:
+                - text: Nome
+                - generic [ref=f62e884]: —
+              - cell "Raça nelore" [ref=f62e885]
+              - cell "Sexo Fêmea" [ref=f62e886]
+              - cell "Categoria —" [ref=f62e887]:
+                - text: Categoria
+                - generic [ref=f62e888]: —
+              - cell "Lote bezerros" [ref=f62e889]
+              - cell "Peso Atual 310 kg +10 kg" [ref=f62e890]:
+                - text: Peso Atual
+                - generic [ref=f62e891]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f62e892]: +10 kg
+              - cell "Status Ativo" [ref=f62e893]:
+                - text: Status
+                - generic [ref=f62e894]: Ativo
+            - row [ref=f62e895] [cursor=pointer]:
+              - cell [ref=f62e896]:
+                - checkbox "Selecionar animal 677" [checked] [ref=f62e897]
+              - cell "Brinco —" [ref=f62e898]:
+                - text: Brinco
+                - generic [ref=f62e899]: —
+              - cell "Nome —" [ref=f62e900]:
+                - text: Nome
+                - generic [ref=f62e901]: —
+              - cell "Raça nelore" [ref=f62e902]
+              - cell "Sexo Fêmea" [ref=f62e903]
+              - cell "Categoria —" [ref=f62e904]:
+                - text: Categoria
+                - generic [ref=f62e905]: —
+              - cell "Lote bezerros" [ref=f62e906]
+              - cell "Peso Atual 310 kg +10 kg" [ref=f62e907]:
+                - text: Peso Atual
+                - generic [ref=f62e908]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f62e909]: +10 kg
+              - cell "Status Ativo" [ref=f62e910]:
+                - text: Status
+                - generic [ref=f62e911]: Ativo
+            - row [ref=f62e912] [cursor=pointer]:
+              - cell [ref=f62e913]:
+                - checkbox "Selecionar animal 678" [checked] [ref=f62e914]
+              - cell "Brinco —" [ref=f62e915]:
+                - text: Brinco
+                - generic [ref=f62e916]: —
+              - cell "Nome —" [ref=f62e917]:
+                - text: Nome
+                - generic [ref=f62e918]: —
+              - cell "Raça nelore" [ref=f62e919]
+              - cell "Sexo Fêmea" [ref=f62e920]
+              - cell "Categoria —" [ref=f62e921]:
+                - text: Categoria
+                - generic [ref=f62e922]: —
+              - cell "Lote bezerros" [ref=f62e923]
+              - cell "Peso Atual 310 kg +10 kg" [ref=f62e924]:
+                - text: Peso Atual
+                - generic [ref=f62e925]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f62e926]: +10 kg
+              - cell "Status Ativo" [ref=f62e927]:
+                - text: Status
+                - generic [ref=f62e928]: Ativo
+            - row [ref=f62e929] [cursor=pointer]:
+              - cell [ref=f62e930]:
+                - checkbox "Selecionar animal 679" [checked] [ref=f62e931]
+              - cell "Brinco —" [ref=f62e932]:
+                - text: Brinco
+                - generic [ref=f62e933]: —
+              - cell "Nome —" [ref=f62e934]:
+                - text: Nome
+                - generic [ref=f62e935]: —
+              - cell "Raça nelore" [ref=f62e936]
+              - cell "Sexo Fêmea" [ref=f62e937]
+              - cell "Categoria —" [ref=f62e938]:
+                - text: Categoria
+                - generic [ref=f62e939]: —
+              - cell "Lote bezerros" [ref=f62e940]
+              - cell "Peso Atual 310 kg +10 kg" [ref=f62e941]:
+                - text: Peso Atual
+                - generic [ref=f62e942]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f62e943]: +10 kg
+              - cell "Status Ativo" [ref=f62e944]:
+                - text: Status
+                - generic [ref=f62e945]: Ativo
+            - row [ref=f62e946] [cursor=pointer]:
+              - cell [ref=f62e947]:
+                - checkbox "Selecionar animal 680" [checked] [ref=f62e948]
+              - cell "Brinco —" [ref=f62e949]:
+                - text: Brinco
+                - generic [ref=f62e950]: —
+              - cell "Nome —" [ref=f62e951]:
+                - text: Nome
+                - generic [ref=f62e952]: —
+              - cell "Raça nelore" [ref=f62e953]
+              - cell "Sexo Fêmea" [ref=f62e954]
+              - cell "Categoria —" [ref=f62e955]:
+                - text: Categoria
+                - generic [ref=f62e956]: —
+              - cell "Lote bezerros" [ref=f62e957]
+              - cell "Peso Atual 310 kg +10 kg" [ref=f62e958]:
+                - text: Peso Atual
+                - generic [ref=f62e959]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f62e960]: +10 kg
+              - cell "Status Ativo" [ref=f62e961]:
+                - text: Status
+                - generic [ref=f62e962]: Ativo
+            - row [ref=f62e963] [cursor=pointer]:
+              - cell [ref=f62e964]:
+                - checkbox "Selecionar animal 681" [checked] [ref=f62e965]
+              - cell "Brinco —" [ref=f62e966]:
+                - text: Brinco
+                - generic [ref=f62e967]: —
+              - cell "Nome —" [ref=f62e968]:
+                - text: Nome
+                - generic [ref=f62e969]: —
+              - cell "Raça nelore" [ref=f62e970]
+              - cell "Sexo Fêmea" [ref=f62e971]
+              - cell "Categoria —" [ref=f62e972]:
+                - text: Categoria
+                - generic [ref=f62e973]: —
+              - cell "Lote bezerros" [ref=f62e974]
+              - cell "Peso Atual 310 kg +10 kg" [ref=f62e975]:
+                - text: Peso Atual
+                - generic [ref=f62e976]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f62e977]: +10 kg
+              - cell "Status Ativo" [ref=f62e978]:
+                - text: Status
+                - generic [ref=f62e979]: Ativo
+            - row [ref=f62e980] [cursor=pointer]:
+              - cell [ref=f62e981]:
+                - checkbox "Selecionar animal 682" [checked] [ref=f62e982]
+              - cell "Brinco —" [ref=f62e983]:
+                - text: Brinco
+                - generic [ref=f62e984]: —
+              - cell "Nome —" [ref=f62e985]:
+                - text: Nome
+                - generic [ref=f62e986]: —
+              - cell "Raça nelore" [ref=f62e987]
+              - cell "Sexo Fêmea" [ref=f62e988]
+              - cell "Categoria —" [ref=f62e989]:
+                - text: Categoria
+                - generic [ref=f62e990]: —
+              - cell "Lote bezerros" [ref=f62e991]
+              - cell "Peso Atual 310 kg +10 kg" [ref=f62e992]:
+                - text: Peso Atual
+                - generic [ref=f62e993]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f62e994]: +10 kg
+              - cell "Status Ativo" [ref=f62e995]:
+                - text: Status
+                - generic [ref=f62e996]: Ativo
+        - generic [ref=f62e997]:
+          - generic [ref=f62e998]: 100 animal(is) no total
+          - generic [ref=f62e999]:
+            - button "← Anterior" [disabled] [ref=f62e1000]
+            - generic [ref=f62e1001]: Página 1 de 2
+            - button "Próxima →" [ref=f62e1002] [cursor=pointer]
+  - navigation "Navegação rápida" [ref=f62e120]:
+    - link "Início" [ref=f62e121] [cursor=pointer]:
+      - /url: /dashboard
+    - link "Animais" [ref=f62e125] [cursor=pointer]:
+      - /url: /animais
+    - link "Pesar" [ref=f62e129] [cursor=pointer]:
+      - /url: /pesagens
+    - link "Agenda" [ref=f62e133] [cursor=pointer]:
+      - /url: /agenda
+    - button "Abrir menu completo" [ref=f62e137] [cursor=pointer]:
+      - generic [ref=f62e140]: Mais

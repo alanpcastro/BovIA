@@ -310,6 +310,20 @@ export default function Animais() {
         </div>
       )}
 
+      {/* Selecionar todos (só no mobile — no desktop fica no cabeçalho) */}
+      {animais.length > 0 && (
+        <label className="mobile-select-all">
+          <input
+            type="checkbox"
+            aria-label="Selecionar todos os animais visíveis"
+            checked={animais.length > 0 && animais.every(a => selectedIds.has(a.id))}
+            ref={el => { if (el) { const some = animais.some(a => selectedIds.has(a.id)); const all = animais.length > 0 && animais.every(a => selectedIds.has(a.id)); el.indeterminate = some && !all } }}
+            onChange={toggleAllVisible}
+          />
+          <span>Selecionar todos{selectedIds.size > 0 ? ` (${selectedIds.size})` : ''}</span>
+        </label>
+      )}
+
       {/* Tabela */}
       <div className="table-wrapper table-wrapper-cards" style={total === 0 && filtros.status === 'ativo' && !filtros.sexo && !filtros.categoria && !filtros.lote_id && !filtros.busca ? { display: 'none' } : undefined}>
         <table className="data-table data-table-big table-cards">

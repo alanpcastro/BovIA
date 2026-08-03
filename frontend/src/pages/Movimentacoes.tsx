@@ -208,6 +208,19 @@ export default function Movimentacoes() {
         </select>
       </div>
 
+      {movs.length > 0 && (
+        <label className="mobile-select-all">
+          <input
+            type="checkbox"
+            aria-label="Selecionar todas as movimentações visíveis"
+            checked={movs.length > 0 && movs.every(m => selectedIds.has(m.id))}
+            ref={el => { if (el) { const some = movs.some(m => selectedIds.has(m.id)); const all = movs.length > 0 && movs.every(m => selectedIds.has(m.id)); el.indeterminate = some && !all } }}
+            onChange={toggleAllVisible}
+          />
+          <span>Selecionar todas{selectedIds.size > 0 ? ` (${selectedIds.size})` : ''}</span>
+        </label>
+      )}
+
       <div className="table-wrapper table-wrapper-cards">
         <table className="data-table table-cards">
           <thead>

@@ -836,6 +836,12 @@ body {
   display: none;
 }
 
+/* Barra "Selecionar todos" — só no mobile (no desktop o checkbox fica no
+   cabeçalho da tabela, que some quando vira cartão). Regra em @media abaixo. */
+.mobile-select-all {
+  display: none;
+}
+
 /* ═══════════════════════════════════════
    RESPONSIVO MOBILE
 ═══════════════════════════════════════ */
@@ -1361,6 +1367,29 @@ body {
 
   /* Quando o cartão tem checkbox, dá espaço no topo pra ele não cobrir texto */
   .table-cards tr:has(td.cell-check) { padding-top: 30px; }
+
+  /* Barra "Selecionar todos" acima da lista de cartões */
+  .mobile-select-all {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    background: var(--surface);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--gray-700);
+    cursor: pointer;
+  }
+  .mobile-select-all input {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
 }
 
 /* Dashboard: 4 indicadores do "Seu Rebanho" em grade 2×2 no mobile

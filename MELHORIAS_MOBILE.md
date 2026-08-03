@@ -14,6 +14,11 @@ com uma mão, sol forte, às vezes de luva). Ordenado por **impacto ÷ esforço*
   as tabelas de histórico dentro das abas estouravam. Agora as abas **rolam de lado**
   e os históricos viraram **cartões**.
 - ✅ **Tabelas → cartões** nas telas de lista (ver [BUGS_MOBILE.md](BUGS_MOBILE.md)).
+- ✅ **"Selecionar todos" no mobile** — o checkbox de selecionar tudo ficava no
+  cabeçalho da tabela, que some no modo cartão. Adicionada uma barra "Selecionar
+  todos (N)" acima da lista, só no mobile, nas 5 telas com seleção (Animais,
+  Pesagens, Movimentações, Saúde, Reprodução). Reflete estado parcial
+  (indeterminado) e abre a barra de ações em massa.
 
 ---
 

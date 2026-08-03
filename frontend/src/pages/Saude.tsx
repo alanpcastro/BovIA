@@ -212,6 +212,19 @@ export default function Saude() {
         </select>
       </div>
 
+      {registrosFiltrados.length > 0 && (
+        <label className="mobile-select-all">
+          <input
+            type="checkbox"
+            aria-label="Selecionar todos os registros visíveis"
+            checked={registrosFiltrados.length > 0 && registrosFiltrados.every(r => selectedIds.has(r.id))}
+            ref={el => { if (el) { const some = registrosFiltrados.some(r => selectedIds.has(r.id)); const all = registrosFiltrados.length > 0 && registrosFiltrados.every(r => selectedIds.has(r.id)); el.indeterminate = some && !all } }}
+            onChange={toggleAllVisible}
+          />
+          <span>Selecionar todos{selectedIds.size > 0 ? ` (${selectedIds.size})` : ''}</span>
+        </label>
+      )}
+
       <div className="table-wrapper table-wrapper-cards">
         <table className="data-table data-table-big table-cards">
           <thead>
