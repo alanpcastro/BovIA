@@ -12,3 +12,6 @@ frontend/.env
 
 # macOS
 .DS_Store
+
+# Playwright MCP logs and state
+.playwright-mcp/
