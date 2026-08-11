@@ -1,0 +1,914 @@
+- generic [ref=f68e3]:
+  - complementary [ref=f68e4]:
+    - generic [ref=f68e5]:
+      - img "BovIA" [ref=f68e6]
+      - generic [ref=f68e7]: Recantilado
+    - navigation [ref=f68e8]:
+      - generic [ref=f68e9]: Menu
+      - link "Dashboard" [ref=f68e10] [cursor=pointer]:
+        - /url: /dashboard
+      - link "Agenda" [ref=f68e17] [cursor=pointer]:
+        - /url: /agenda
+      - link "Animais" [ref=f68e21] [cursor=pointer]:
+        - /url: /animais
+      - link "Lotes" [ref=f68e25] [cursor=pointer]:
+        - /url: /lotes
+      - link "Pastagens" [ref=f68e29] [cursor=pointer]:
+        - /url: /pastagens
+      - link "Pesagens" [ref=f68e33] [cursor=pointer]:
+        - /url: /pesagens
+      - link "Saúde" [ref=f68e37] [cursor=pointer]:
+        - /url: /saude
+      - link "Reprodução" [ref=f68e41] [cursor=pointer]:
+        - /url: /reproducao
+      - link "Movimentações" [ref=f68e45] [cursor=pointer]:
+        - /url: /movimentacoes
+      - link "Financeiro" [ref=f68e49] [cursor=pointer]:
+        - /url: /financeiro
+      - link "Simulador" [ref=f68e53] [cursor=pointer]:
+        - /url: /simulador
+      - link "Custos Nutri" [ref=f68e57] [cursor=pointer]:
+        - /url: /custos-nutricionais
+      - link "Despesas Fixas" [ref=f68e61] [cursor=pointer]:
+        - /url: /despesas-fixas
+      - link "Gráficos" [ref=f68e65] [cursor=pointer]:
+        - /url: /graficos
+      - link "Relatórios" [ref=f68e69] [cursor=pointer]:
+        - /url: /relatorios
+      - link "Configurações" [ref=f68e73] [cursor=pointer]:
+        - /url: /configuracoes
+    - generic [ref=f68e78]:
+      - generic [ref=f68e79]: Alan Pontes de Castro
+      - button "Alternar tema" [ref=f68e80] [cursor=pointer]: Modo escuro
+      - button "Sair" [ref=f68e83] [cursor=pointer]
+  - main [ref=f68e86]:
+    - generic [ref=f68e87]:
+      - generic [ref=f68e88]:
+        - generic [ref=f68e89]:
+          - generic [ref=f68e90]: Animais
+          - generic [ref=f68e91]: 100 animal(is) no rebanho
+        - generic [ref=f68e92]:
+          - button "Criar em Lote" [ref=f68e93] [cursor=pointer]
+          - button "Cadastrar Animal" [ref=f68e94] [cursor=pointer]
+      - generic [ref=f68e97]:
+        - textbox "Buscar por brinco ou nome..." [ref=f68e100]
+        - combobox [ref=f68e101]:
+          - option "Todos os status"
+          - option "Ativo" [selected]
+          - option "Vendido"
+          - option "Morto"
+          - option "Transferido"
+        - combobox [ref=f68e102]:
+          - option "Todos os sexos" [selected]
+          - option "♂ Macho"
+          - option "♀ Fêmea"
+        - combobox [ref=f68e103]:
+          - option "Todas as categorias" [selected]
+          - option "Bezerro"
+          - option "Garrote"
+          - option "Novilha"
+          - option "Vaca"
+          - option "Boi Magro"
+          - option "Boi Gordo"
+        - combobox [ref=f68e104]:
+          - option "Todos os lotes" [selected]
+          - option "gadão"
+          - option "bezerros"
+      - generic [ref=f68e111]:
+        - table [ref=f68e112]:
+          - rowgroup [ref=f68e113]:
+            - row [ref=f68e114]:
+              - columnheader [ref=f68e115]:
+                - checkbox "Selecionar todos os animais visíveis" [ref=f68e116] [cursor=pointer]
+              - columnheader "Brinco" [ref=f68e117]
+              - columnheader "Nome" [ref=f68e118]
+              - columnheader "Raça" [ref=f68e119]
+              - columnheader "Sexo" [ref=f68e120]
+              - columnheader "Categoria" [ref=f68e121]
+              - columnheader "Lote" [ref=f68e122]
+              - columnheader "Peso Atual" [ref=f68e123]
+              - columnheader "Status" [ref=f68e124]
+              - columnheader [ref=f68e125]
+          - rowgroup [ref=f68e126]:
+            - link "Ver detalhes do animal 646" [ref=f68e127] [cursor=pointer]:
+              - cell [ref=f68e128]:
+                - checkbox "Selecionar animal 646" [ref=f68e129]
+              - cell "—" [ref=f68e130]
+              - cell "—" [ref=f68e131]
+              - cell "nelore" [ref=f68e132]
+              - cell "Fêmea" [ref=f68e133]
+              - cell "—" [ref=f68e134]
+              - cell "gadão" [ref=f68e135]
+              - cell "350 kg +30 kg" [ref=f68e136]:
+                - generic [ref=f68e137]:
+                  - text: 350 kg
+                  - generic "Ganho desde a entrada (320 kg)" [ref=f68e138]: +30 kg
+              - cell "Ativo" [ref=f68e139]
+              - cell "Ver →" [ref=f68e141]
+            - link "Ver detalhes do animal 647" [ref=f68e142] [cursor=pointer]:
+              - cell [ref=f68e143]:
+                - checkbox "Selecionar animal 647" [ref=f68e144]
+              - cell "—" [ref=f68e145]
+              - cell "—" [ref=f68e146]
+              - cell "nelore" [ref=f68e147]
+              - cell "Fêmea" [ref=f68e148]
+              - cell "—" [ref=f68e149]
+              - cell "gadão" [ref=f68e150]
+              - cell "350 kg +30 kg" [ref=f68e151]:
+                - generic [ref=f68e152]:
+                  - text: 350 kg
+                  - generic "Ganho desde a entrada (320 kg)" [ref=f68e153]: +30 kg
+              - cell "Ativo" [ref=f68e154]
+              - cell "Ver →" [ref=f68e156]
+            - link "Ver detalhes do animal 685" [ref=f68e157] [cursor=pointer]:
+              - cell [ref=f68e158]:
+                - checkbox "Selecionar animal 685" [ref=f68e159]
+              - cell "—" [ref=f68e160]
+              - cell "—" [ref=f68e161]
+              - cell "nelore" [ref=f68e162]
+              - cell "Fêmea" [ref=f68e163]
+              - cell "—" [ref=f68e164]
+              - cell "bezerros" [ref=f68e165]
+              - cell "310 kg +10 kg" [ref=f68e166]:
+                - generic [ref=f68e167]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f68e168]: +10 kg
+              - cell "Ativo" [ref=f68e169]
+              - cell "Ver →" [ref=f68e171]
+            - link "Ver detalhes do animal 686" [ref=f68e172] [cursor=pointer]:
+              - cell [ref=f68e173]:
+                - checkbox "Selecionar animal 686" [ref=f68e174]
+              - cell "—" [ref=f68e175]
+              - cell "—" [ref=f68e176]
+              - cell "nelore" [ref=f68e177]
+              - cell "Fêmea" [ref=f68e178]
+              - cell "—" [ref=f68e179]
+              - cell "bezerros" [ref=f68e180]
+              - cell "310 kg +10 kg" [ref=f68e181]:
+                - generic [ref=f68e182]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f68e183]: +10 kg
+              - cell "Ativo" [ref=f68e184]
+              - cell "Ver →" [ref=f68e186]
+            - link "Ver detalhes do animal 687" [ref=f68e187] [cursor=pointer]:
+              - cell [ref=f68e188]:
+                - checkbox "Selecionar animal 687" [ref=f68e189]
+              - cell "—" [ref=f68e190]
+              - cell "—" [ref=f68e191]
+              - cell "nelore" [ref=f68e192]
+              - cell "Fêmea" [ref=f68e193]
+              - cell "—" [ref=f68e194]
+              - cell "bezerros" [ref=f68e195]
+              - cell "310 kg +10 kg" [ref=f68e196]:
+                - generic [ref=f68e197]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f68e198]: +10 kg
+              - cell "Ativo" [ref=f68e199]
+              - cell "Ver →" [ref=f68e201]
+            - link "Ver detalhes do animal 688" [ref=f68e202] [cursor=pointer]:
+              - cell [ref=f68e203]:
+                - checkbox "Selecionar animal 688" [ref=f68e204]
+              - cell "—" [ref=f68e205]
+              - cell "—" [ref=f68e206]
+              - cell "nelore" [ref=f68e207]
+              - cell "Fêmea" [ref=f68e208]
+              - cell "—" [ref=f68e209]
+              - cell "bezerros" [ref=f68e210]
+              - cell "310 kg +10 kg" [ref=f68e211]:
+                - generic [ref=f68e212]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f68e213]: +10 kg
+              - cell "Ativo" [ref=f68e214]
+              - cell "Ver →" [ref=f68e216]
+            - link "Ver detalhes do animal 689" [ref=f68e217] [cursor=pointer]:
+              - cell [ref=f68e218]:
+                - checkbox "Selecionar animal 689" [ref=f68e219]
+              - cell "—" [ref=f68e220]
+              - cell "—" [ref=f68e221]
+              - cell "nelore" [ref=f68e222]
+              - cell "Fêmea" [ref=f68e223]
+              - cell "—" [ref=f68e224]
+              - cell "bezerros" [ref=f68e225]
+              - cell "310 kg +10 kg" [ref=f68e226]:
+                - generic [ref=f68e227]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f68e228]: +10 kg
+              - cell "Ativo" [ref=f68e229]
+              - cell "Ver →" [ref=f68e231]
+            - link "Ver detalhes do animal 690" [ref=f68e232] [cursor=pointer]:
+              - cell [ref=f68e233]:
+                - checkbox "Selecionar animal 690" [ref=f68e234]
+              - cell "—" [ref=f68e235]
+              - cell "—" [ref=f68e236]
+              - cell "nelore" [ref=f68e237]
+              - cell "Fêmea" [ref=f68e238]
+              - cell "—" [ref=f68e239]
+              - cell "bezerros" [ref=f68e240]
+              - cell "310 kg +10 kg" [ref=f68e241]:
+                - generic [ref=f68e242]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f68e243]: +10 kg
+              - cell "Ativo" [ref=f68e244]
+              - cell "Ver →" [ref=f68e246]
+            - link "Ver detalhes do animal 691" [ref=f68e247] [cursor=pointer]:
+              - cell [ref=f68e248]:
+                - checkbox "Selecionar animal 691" [ref=f68e249]
+              - cell "—" [ref=f68e250]
+              - cell "—" [ref=f68e251]
+              - cell "nelore" [ref=f68e252]
+              - cell "Fêmea" [ref=f68e253]
+              - cell "—" [ref=f68e254]
+              - cell "bezerros" [ref=f68e255]
+              - cell "310 kg +10 kg" [ref=f68e256]:
+                - generic [ref=f68e257]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f68e258]: +10 kg
+              - cell "Ativo" [ref=f68e259]
+              - cell "Ver →" [ref=f68e261]
+            - link "Ver detalhes do animal 692" [ref=f68e262] [cursor=pointer]:
+              - cell [ref=f68e263]:
+                - checkbox "Selecionar animal 692" [ref=f68e264]
+              - cell "—" [ref=f68e265]
+              - cell "—" [ref=f68e266]
+              - cell "nelore" [ref=f68e267]
+              - cell "Fêmea" [ref=f68e268]
+              - cell "—" [ref=f68e269]
+              - cell "bezerros" [ref=f68e270]
+              - cell "310 kg +10 kg" [ref=f68e271]:
+                - generic [ref=f68e272]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f68e273]: +10 kg
+              - cell "Ativo" [ref=f68e274]
+              - cell "Ver →" [ref=f68e276]
+            - link "Ver detalhes do animal 693" [ref=f68e277] [cursor=pointer]:
+              - cell [ref=f68e278]:
+                - checkbox "Selecionar animal 693" [ref=f68e279]
+              - cell "—" [ref=f68e280]
+              - cell "—" [ref=f68e281]
+              - cell "nelore" [ref=f68e282]
+              - cell "Fêmea" [ref=f68e283]
+              - cell "—" [ref=f68e284]
+              - cell "bezerros" [ref=f68e285]
+              - cell "310 kg +10 kg" [ref=f68e286]:
+                - generic [ref=f68e287]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f68e288]: +10 kg
+              - cell "Ativo" [ref=f68e289]
+              - cell "Ver →" [ref=f68e291]
+            - link "Ver detalhes do animal 694" [ref=f68e292] [cursor=pointer]:
+              - cell [ref=f68e293]:
+                - checkbox "Selecionar animal 694" [ref=f68e294]
+              - cell "—" [ref=f68e295]
+              - cell "—" [ref=f68e296]
+              - cell "nelore" [ref=f68e297]
+              - cell "Fêmea" [ref=f68e298]
+              - cell "—" [ref=f68e299]
+              - cell "bezerros" [ref=f68e300]
+              - cell "310 kg +10 kg" [ref=f68e301]:
+                - generic [ref=f68e302]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f68e303]: +10 kg
+              - cell "Ativo" [ref=f68e304]
+              - cell "Ver →" [ref=f68e306]
+            - link "Ver detalhes do animal 695" [ref=f68e307] [cursor=pointer]:
+              - cell [ref=f68e308]:
+                - checkbox "Selecionar animal 695" [ref=f68e309]
+              - cell "—" [ref=f68e310]
+              - cell "—" [ref=f68e311]
+              - cell "nelore" [ref=f68e312]
+              - cell "Fêmea" [ref=f68e313]
+              - cell "—" [ref=f68e314]
+              - cell "bezerros" [ref=f68e315]
+              - cell "310 kg +10 kg" [ref=f68e316]:
+                - generic [ref=f68e317]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f68e318]: +10 kg
+              - cell "Ativo" [ref=f68e319]
+              - cell "Ver →" [ref=f68e321]
+            - link "Ver detalhes do animal 696" [ref=f68e322] [cursor=pointer]:
+              - cell [ref=f68e323]:
+                - checkbox "Selecionar animal 696" [ref=f68e324]
+              - cell "—" [ref=f68e325]
+              - cell "—" [ref=f68e326]
+              - cell "nelore" [ref=f68e327]
+              - cell "Fêmea" [ref=f68e328]
+              - cell "—" [ref=f68e329]
+              - cell "bezerros" [ref=f68e330]
+              - cell "310 kg +10 kg" [ref=f68e331]:
+                - generic [ref=f68e332]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f68e333]: +10 kg
+              - cell "Ativo" [ref=f68e334]
+              - cell "Ver →" [ref=f68e336]
+            - link "Ver detalhes do animal 697" [ref=f68e337] [cursor=pointer]:
+              - cell [ref=f68e338]:
+                - checkbox "Selecionar animal 697" [ref=f68e339]
+              - cell "—" [ref=f68e340]
+              - cell "—" [ref=f68e341]
+              - cell "nelore" [ref=f68e342]
+              - cell "Fêmea" [ref=f68e343]
+              - cell "—" [ref=f68e344]
+              - cell "bezerros" [ref=f68e345]
+              - cell "310 kg +10 kg" [ref=f68e346]:
+                - generic [ref=f68e347]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f68e348]: +10 kg
+              - cell "Ativo" [ref=f68e349]
+              - cell "Ver →" [ref=f68e351]
+            - link "Ver detalhes do animal 648" [ref=f68e352] [cursor=pointer]:
+              - cell [ref=f68e353]:
+                - checkbox "Selecionar animal 648" [ref=f68e354]
+              - cell "—" [ref=f68e355]
+              - cell "—" [ref=f68e356]
+              - cell "nelore" [ref=f68e357]
+              - cell "Fêmea" [ref=f68e358]
+              - cell "—" [ref=f68e359]
+              - cell "bezerros" [ref=f68e360]
+              - cell "310 kg +10 kg" [ref=f68e361]:
+                - generic [ref=f68e362]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f68e363]: +10 kg
+              - cell "Ativo" [ref=f68e364]
+              - cell "Ver →" [ref=f68e366]
+            - link "Ver detalhes do animal 649" [ref=f68e367] [cursor=pointer]:
+              - cell [ref=f68e368]:
+                - checkbox "Selecionar animal 649" [ref=f68e369]
+              - cell "—" [ref=f68e370]
+              - cell "—" [ref=f68e371]
+              - cell "nelore" [ref=f68e372]
+              - cell "Fêmea" [ref=f68e373]
+              - cell "—" [ref=f68e374]
+              - cell "bezerros" [ref=f68e375]
+              - cell "310 kg +10 kg" [ref=f68e376]:
+                - generic [ref=f68e377]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f68e378]: +10 kg
+              - cell "Ativo" [ref=f68e379]
+              - cell "Ver →" [ref=f68e381]
+            - link "Ver detalhes do animal 650" [ref=f68e382] [cursor=pointer]:
+              - cell [ref=f68e383]:
+                - checkbox "Selecionar animal 650" [ref=f68e384]
+              - cell "—" [ref=f68e385]
+              - cell "—" [ref=f68e386]
+              - cell "nelore" [ref=f68e387]
+              - cell "Fêmea" [ref=f68e388]
+              - cell "—" [ref=f68e389]
+              - cell "bezerros" [ref=f68e390]
+              - cell "310 kg +10 kg" [ref=f68e391]:
+                - generic [ref=f68e392]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f68e393]: +10 kg
+              - cell "Ativo" [ref=f68e394]
+              - cell "Ver →" [ref=f68e396]
+            - link "Ver detalhes do animal 651" [ref=f68e397] [cursor=pointer]:
+              - cell [ref=f68e398]:
+                - checkbox "Selecionar animal 651" [ref=f68e399]
+              - cell "—" [ref=f68e400]
+              - cell "—" [ref=f68e401]
+              - cell "nelore" [ref=f68e402]
+              - cell "Fêmea" [ref=f68e403]
+              - cell "—" [ref=f68e404]
+              - cell "bezerros" [ref=f68e405]
+              - cell "310 kg +10 kg" [ref=f68e406]:
+                - generic [ref=f68e407]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f68e408]: +10 kg
+              - cell "Ativo" [ref=f68e409]
+              - cell "Ver →" [ref=f68e411]
+            - link "Ver detalhes do animal 652" [ref=f68e412] [cursor=pointer]:
+              - cell [ref=f68e413]:
+                - checkbox "Selecionar animal 652" [ref=f68e414]
+              - cell "—" [ref=f68e415]
+              - cell "—" [ref=f68e416]
+              - cell "nelore" [ref=f68e417]
+              - cell "Fêmea" [ref=f68e418]
+              - cell "—" [ref=f68e419]
+              - cell "bezerros" [ref=f68e420]
+              - cell "310 kg +10 kg" [ref=f68e421]:
+                - generic [ref=f68e422]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f68e423]: +10 kg
+              - cell "Ativo" [ref=f68e424]
+              - cell "Ver →" [ref=f68e426]
+            - link "Ver detalhes do animal 653" [ref=f68e427] [cursor=pointer]:
+              - cell [ref=f68e428]:
+                - checkbox "Selecionar animal 653" [ref=f68e429]
+              - cell "—" [ref=f68e430]
+              - cell "—" [ref=f68e431]
+              - cell "nelore" [ref=f68e432]
+              - cell "Fêmea" [ref=f68e433]
+              - cell "—" [ref=f68e434]
+              - cell "bezerros" [ref=f68e435]
+              - cell "310 kg +10 kg" [ref=f68e436]:
+                - generic [ref=f68e437]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f68e438]: +10 kg
+              - cell "Ativo" [ref=f68e439]
+              - cell "Ver →" [ref=f68e441]
+            - link "Ver detalhes do animal 654" [ref=f68e442] [cursor=pointer]:
+              - cell [ref=f68e443]:
+                - checkbox "Selecionar animal 654" [ref=f68e444]
+              - cell "—" [ref=f68e445]
+              - cell "—" [ref=f68e446]
+              - cell "nelore" [ref=f68e447]
+              - cell "Fêmea" [ref=f68e448]
+              - cell "—" [ref=f68e449]
+              - cell "bezerros" [ref=f68e450]
+              - cell "310 kg +10 kg" [ref=f68e451]:
+                - generic [ref=f68e452]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f68e453]: +10 kg
+              - cell "Ativo" [ref=f68e454]
+              - cell "Ver →" [ref=f68e456]
+            - link "Ver detalhes do animal 655" [ref=f68e457] [cursor=pointer]:
+              - cell [ref=f68e458]:
+                - checkbox "Selecionar animal 655" [ref=f68e459]
+              - cell "—" [ref=f68e460]
+              - cell "—" [ref=f68e461]
+              - cell "nelore" [ref=f68e462]
+              - cell "Fêmea" [ref=f68e463]
+              - cell "—" [ref=f68e464]
+              - cell "bezerros" [ref=f68e465]
+              - cell "310 kg +10 kg" [ref=f68e466]:
+                - generic [ref=f68e467]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f68e468]: +10 kg
+              - cell "Ativo" [ref=f68e469]
+              - cell "Ver →" [ref=f68e471]
+            - link "Ver detalhes do animal 656" [ref=f68e472] [cursor=pointer]:
+              - cell [ref=f68e473]:
+                - checkbox "Selecionar animal 656" [ref=f68e474]
+              - cell "—" [ref=f68e475]
+              - cell "—" [ref=f68e476]
+              - cell "nelore" [ref=f68e477]
+              - cell "Fêmea" [ref=f68e478]
+              - cell "—" [ref=f68e479]
+              - cell "bezerros" [ref=f68e480]
+              - cell "310 kg +10 kg" [ref=f68e481]:
+                - generic [ref=f68e482]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f68e483]: +10 kg
+              - cell "Ativo" [ref=f68e484]
+              - cell "Ver →" [ref=f68e486]
+            - link "Ver detalhes do animal 657" [ref=f68e487] [cursor=pointer]:
+              - cell [ref=f68e488]:
+                - checkbox "Selecionar animal 657" [ref=f68e489]
+              - cell "—" [ref=f68e490]
+              - cell "—" [ref=f68e491]
+              - cell "nelore" [ref=f68e492]
+              - cell "Fêmea" [ref=f68e493]
+              - cell "—" [ref=f68e494]
+              - cell "bezerros" [ref=f68e495]
+              - cell "310 kg +10 kg" [ref=f68e496]:
+                - generic [ref=f68e497]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f68e498]: +10 kg
+              - cell "Ativo" [ref=f68e499]
+              - cell "Ver →" [ref=f68e501]
+            - link "Ver detalhes do animal 658" [ref=f68e502] [cursor=pointer]:
+              - cell [ref=f68e503]:
+                - checkbox "Selecionar animal 658" [ref=f68e504]
+              - cell "—" [ref=f68e505]
+              - cell "—" [ref=f68e506]
+              - cell "nelore" [ref=f68e507]
+              - cell "Fêmea" [ref=f68e508]
+              - cell "—" [ref=f68e509]
+              - cell "bezerros" [ref=f68e510]
+              - cell "310 kg +10 kg" [ref=f68e511]:
+                - generic [ref=f68e512]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f68e513]: +10 kg
+              - cell "Ativo" [ref=f68e514]
+              - cell "Ver →" [ref=f68e516]
+            - link "Ver detalhes do animal 659" [ref=f68e517] [cursor=pointer]:
+              - cell [ref=f68e518]:
+                - checkbox "Selecionar animal 659" [ref=f68e519]
+              - cell "—" [ref=f68e520]
+              - cell "—" [ref=f68e521]
+              - cell "nelore" [ref=f68e522]
+              - cell "Fêmea" [ref=f68e523]
+              - cell "—" [ref=f68e524]
+              - cell "bezerros" [ref=f68e525]
+              - cell "310 kg +10 kg" [ref=f68e526]:
+                - generic [ref=f68e527]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f68e528]: +10 kg
+              - cell "Ativo" [ref=f68e529]
+              - cell "Ver →" [ref=f68e531]
+            - link "Ver detalhes do animal 660" [ref=f68e532] [cursor=pointer]:
+              - cell [ref=f68e533]:
+                - checkbox "Selecionar animal 660" [ref=f68e534]
+              - cell "—" [ref=f68e535]
+              - cell "—" [ref=f68e536]
+              - cell "nelore" [ref=f68e537]
+              - cell "Fêmea" [ref=f68e538]
+              - cell "—" [ref=f68e539]
+              - cell "bezerros" [ref=f68e540]
+              - cell "310 kg +10 kg" [ref=f68e541]:
+                - generic [ref=f68e542]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f68e543]: +10 kg
+              - cell "Ativo" [ref=f68e544]
+              - cell "Ver →" [ref=f68e546]
+            - link "Ver detalhes do animal 661" [ref=f68e547] [cursor=pointer]:
+              - cell [ref=f68e548]:
+                - checkbox "Selecionar animal 661" [ref=f68e549]
+              - cell "—" [ref=f68e550]
+              - cell "—" [ref=f68e551]
+              - cell "nelore" [ref=f68e552]
+              - cell "Fêmea" [ref=f68e553]
+              - cell "—" [ref=f68e554]
+              - cell "bezerros" [ref=f68e555]
+              - cell "310 kg +10 kg" [ref=f68e556]:
+                - generic [ref=f68e557]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f68e558]: +10 kg
+              - cell "Ativo" [ref=f68e559]
+              - cell "Ver →" [ref=f68e561]
+            - link "Ver detalhes do animal 662" [ref=f68e562] [cursor=pointer]:
+              - cell [ref=f68e563]:
+                - checkbox "Selecionar animal 662" [ref=f68e564]
+              - cell "—" [ref=f68e565]
+              - cell "—" [ref=f68e566]
+              - cell "nelore" [ref=f68e567]
+              - cell "Fêmea" [ref=f68e568]
+              - cell "—" [ref=f68e569]
+              - cell "bezerros" [ref=f68e570]
+              - cell "310 kg +10 kg" [ref=f68e571]:
+                - generic [ref=f68e572]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f68e573]: +10 kg
+              - cell "Ativo" [ref=f68e574]
+              - cell "Ver →" [ref=f68e576]
+            - link "Ver detalhes do animal 663" [ref=f68e577] [cursor=pointer]:
+              - cell [ref=f68e578]:
+                - checkbox "Selecionar animal 663" [ref=f68e579]
+              - cell "—" [ref=f68e580]
+              - cell "—" [ref=f68e581]
+              - cell "nelore" [ref=f68e582]
+              - cell "Fêmea" [ref=f68e583]
+              - cell "—" [ref=f68e584]
+              - cell "bezerros" [ref=f68e585]
+              - cell "310 kg +10 kg" [ref=f68e586]:
+                - generic [ref=f68e587]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f68e588]: +10 kg
+              - cell "Ativo" [ref=f68e589]
+              - cell "Ver →" [ref=f68e591]
+            - link "Ver detalhes do animal 664" [ref=f68e592] [cursor=pointer]:
+              - cell [ref=f68e593]:
+                - checkbox "Selecionar animal 664" [ref=f68e594]
+              - cell "—" [ref=f68e595]
+              - cell "—" [ref=f68e596]
+              - cell "nelore" [ref=f68e597]
+              - cell "Fêmea" [ref=f68e598]
+              - cell "—" [ref=f68e599]
+              - cell "bezerros" [ref=f68e600]
+              - cell "310 kg +10 kg" [ref=f68e601]:
+                - generic [ref=f68e602]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f68e603]: +10 kg
+              - cell "Ativo" [ref=f68e604]
+              - cell "Ver →" [ref=f68e606]
+            - link "Ver detalhes do animal 665" [ref=f68e607] [cursor=pointer]:
+              - cell [ref=f68e608]:
+                - checkbox "Selecionar animal 665" [ref=f68e609]
+              - cell "—" [ref=f68e610]
+              - cell "—" [ref=f68e611]
+              - cell "nelore" [ref=f68e612]
+              - cell "Fêmea" [ref=f68e613]
+              - cell "—" [ref=f68e614]
+              - cell "bezerros" [ref=f68e615]
+              - cell "310 kg +10 kg" [ref=f68e616]:
+                - generic [ref=f68e617]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f68e618]: +10 kg
+              - cell "Ativo" [ref=f68e619]
+              - cell "Ver →" [ref=f68e621]
+            - link "Ver detalhes do animal 666" [ref=f68e622] [cursor=pointer]:
+              - cell [ref=f68e623]:
+                - checkbox "Selecionar animal 666" [ref=f68e624]
+              - cell "—" [ref=f68e625]
+              - cell "—" [ref=f68e626]
+              - cell "nelore" [ref=f68e627]
+              - cell "Fêmea" [ref=f68e628]
+              - cell "—" [ref=f68e629]
+              - cell "bezerros" [ref=f68e630]
+              - cell "310 kg +10 kg" [ref=f68e631]:
+                - generic [ref=f68e632]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f68e633]: +10 kg
+              - cell "Ativo" [ref=f68e634]
+              - cell "Ver →" [ref=f68e636]
+            - link "Ver detalhes do animal 667" [ref=f68e637] [cursor=pointer]:
+              - cell [ref=f68e638]:
+                - checkbox "Selecionar animal 667" [ref=f68e639]
+              - cell "—" [ref=f68e640]
+              - cell "—" [ref=f68e641]
+              - cell "nelore" [ref=f68e642]
+              - cell "Fêmea" [ref=f68e643]
+              - cell "—" [ref=f68e644]
+              - cell "bezerros" [ref=f68e645]
+              - cell "310 kg +10 kg" [ref=f68e646]:
+                - generic [ref=f68e647]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f68e648]: +10 kg
+              - cell "Ativo" [ref=f68e649]
+              - cell "Ver →" [ref=f68e651]
+            - link "Ver detalhes do animal 668" [ref=f68e652] [cursor=pointer]:
+              - cell [ref=f68e653]:
+                - checkbox "Selecionar animal 668" [ref=f68e654]
+              - cell "—" [ref=f68e655]
+              - cell "—" [ref=f68e656]
+              - cell "nelore" [ref=f68e657]
+              - cell "Fêmea" [ref=f68e658]
+              - cell "—" [ref=f68e659]
+              - cell "bezerros" [ref=f68e660]
+              - cell "310 kg +10 kg" [ref=f68e661]:
+                - generic [ref=f68e662]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f68e663]: +10 kg
+              - cell "Ativo" [ref=f68e664]
+              - cell "Ver →" [ref=f68e666]
+            - link "Ver detalhes do animal 669" [ref=f68e667] [cursor=pointer]:
+              - cell [ref=f68e668]:
+                - checkbox "Selecionar animal 669" [ref=f68e669]
+              - cell "—" [ref=f68e670]
+              - cell "—" [ref=f68e671]
+              - cell "nelore" [ref=f68e672]
+              - cell "Fêmea" [ref=f68e673]
+              - cell "—" [ref=f68e674]
+              - cell "bezerros" [ref=f68e675]
+              - cell "310 kg +10 kg" [ref=f68e676]:
+                - generic [ref=f68e677]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f68e678]: +10 kg
+              - cell "Ativo" [ref=f68e679]
+              - cell "Ver →" [ref=f68e681]
+            - link "Ver detalhes do animal 670" [ref=f68e682] [cursor=pointer]:
+              - cell [ref=f68e683]:
+                - checkbox "Selecionar animal 670" [ref=f68e684]
+              - cell "—" [ref=f68e685]
+              - cell "—" [ref=f68e686]
+              - cell "nelore" [ref=f68e687]
+              - cell "Fêmea" [ref=f68e688]
+              - cell "—" [ref=f68e689]
+              - cell "bezerros" [ref=f68e690]
+              - cell "310 kg +10 kg" [ref=f68e691]:
+                - generic [ref=f68e692]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f68e693]: +10 kg
+              - cell "Ativo" [ref=f68e694]
+              - cell "Ver →" [ref=f68e696]
+            - link "Ver detalhes do animal 671" [ref=f68e697] [cursor=pointer]:
+              - cell [ref=f68e698]:
+                - checkbox "Selecionar animal 671" [ref=f68e699]
+              - cell "—" [ref=f68e700]
+              - cell "—" [ref=f68e701]
+              - cell "nelore" [ref=f68e702]
+              - cell "Fêmea" [ref=f68e703]
+              - cell "—" [ref=f68e704]
+              - cell "bezerros" [ref=f68e705]
+              - cell "310 kg +10 kg" [ref=f68e706]:
+                - generic [ref=f68e707]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f68e708]: +10 kg
+              - cell "Ativo" [ref=f68e709]
+              - cell "Ver →" [ref=f68e711]
+            - link "Ver detalhes do animal 672" [ref=f68e712] [cursor=pointer]:
+              - cell [ref=f68e713]:
+                - checkbox "Selecionar animal 672" [ref=f68e714]
+              - cell "—" [ref=f68e715]
+              - cell "—" [ref=f68e716]
+              - cell "nelore" [ref=f68e717]
+              - cell "Fêmea" [ref=f68e718]
+              - cell "—" [ref=f68e719]
+              - cell "bezerros" [ref=f68e720]
+              - cell "310 kg +10 kg" [ref=f68e721]:
+                - generic [ref=f68e722]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f68e723]: +10 kg
+              - cell "Ativo" [ref=f68e724]
+              - cell "Ver →" [ref=f68e726]
+            - link "Ver detalhes do animal 673" [ref=f68e727] [cursor=pointer]:
+              - cell [ref=f68e728]:
+                - checkbox "Selecionar animal 673" [ref=f68e729]
+              - cell "—" [ref=f68e730]
+              - cell "—" [ref=f68e731]
+              - cell "nelore" [ref=f68e732]
+              - cell "Fêmea" [ref=f68e733]
+              - cell "—" [ref=f68e734]
+              - cell "bezerros" [ref=f68e735]
+              - cell "310 kg +10 kg" [ref=f68e736]:
+                - generic [ref=f68e737]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f68e738]: +10 kg
+              - cell "Ativo" [ref=f68e739]
+              - cell "Ver →" [ref=f68e741]
+            - link "Ver detalhes do animal 674" [ref=f68e742] [cursor=pointer]:
+              - cell [ref=f68e743]:
+                - checkbox "Selecionar animal 674" [ref=f68e744]
+              - cell "—" [ref=f68e745]
+              - cell "—" [ref=f68e746]
+              - cell "nelore" [ref=f68e747]
+              - cell "Fêmea" [ref=f68e748]
+              - cell "—" [ref=f68e749]
+              - cell "bezerros" [ref=f68e750]
+              - cell "310 kg +10 kg" [ref=f68e751]:
+                - generic [ref=f68e752]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f68e753]: +10 kg
+              - cell "Ativo" [ref=f68e754]
+              - cell "Ver →" [ref=f68e756]
+            - link "Ver detalhes do animal 675" [ref=f68e757] [cursor=pointer]:
+              - cell [ref=f68e758]:
+                - checkbox "Selecionar animal 675" [ref=f68e759]
+              - cell "—" [ref=f68e760]
+              - cell "—" [ref=f68e761]
+              - cell "nelore" [ref=f68e762]
+              - cell "Fêmea" [ref=f68e763]
+              - cell "—" [ref=f68e764]
+              - cell "bezerros" [ref=f68e765]
+              - cell "310 kg +10 kg" [ref=f68e766]:
+                - generic [ref=f68e767]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f68e768]: +10 kg
+              - cell "Ativo" [ref=f68e769]
+              - cell "Ver →" [ref=f68e771]
+            - link "Ver detalhes do animal 676" [ref=f68e772] [cursor=pointer]:
+              - cell [ref=f68e773]:
+                - checkbox "Selecionar animal 676" [ref=f68e774]
+              - cell "—" [ref=f68e775]
+              - cell "—" [ref=f68e776]
+              - cell "nelore" [ref=f68e777]
+              - cell "Fêmea" [ref=f68e778]
+              - cell "—" [ref=f68e779]
+              - cell "bezerros" [ref=f68e780]
+              - cell "310 kg +10 kg" [ref=f68e781]:
+                - generic [ref=f68e782]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f68e783]: +10 kg
+              - cell "Ativo" [ref=f68e784]
+              - cell "Ver →" [ref=f68e786]
+            - link "Ver detalhes do animal 677" [ref=f68e787] [cursor=pointer]:
+              - cell [ref=f68e788]:
+                - checkbox "Selecionar animal 677" [ref=f68e789]
+              - cell "—" [ref=f68e790]
+              - cell "—" [ref=f68e791]
+              - cell "nelore" [ref=f68e792]
+              - cell "Fêmea" [ref=f68e793]
+              - cell "—" [ref=f68e794]
+              - cell "bezerros" [ref=f68e795]
+              - cell "310 kg +10 kg" [ref=f68e796]:
+                - generic [ref=f68e797]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f68e798]: +10 kg
+              - cell "Ativo" [ref=f68e799]
+              - cell "Ver →" [ref=f68e801]
+            - link "Ver detalhes do animal 678" [ref=f68e802] [cursor=pointer]:
+              - cell [ref=f68e803]:
+                - checkbox "Selecionar animal 678" [ref=f68e804]
+              - cell "—" [ref=f68e805]
+              - cell "—" [ref=f68e806]
+              - cell "nelore" [ref=f68e807]
+              - cell "Fêmea" [ref=f68e808]
+              - cell "—" [ref=f68e809]
+              - cell "bezerros" [ref=f68e810]
+              - cell "310 kg +10 kg" [ref=f68e811]:
+                - generic [ref=f68e812]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f68e813]: +10 kg
+              - cell "Ativo" [ref=f68e814]
+              - cell "Ver →" [ref=f68e816]
+            - link "Ver detalhes do animal 679" [ref=f68e817] [cursor=pointer]:
+              - cell [ref=f68e818]:
+                - checkbox "Selecionar animal 679" [ref=f68e819]
+              - cell "—" [ref=f68e820]
+              - cell "—" [ref=f68e821]
+              - cell "nelore" [ref=f68e822]
+              - cell "Fêmea" [ref=f68e823]
+              - cell "—" [ref=f68e824]
+              - cell "bezerros" [ref=f68e825]
+              - cell "310 kg +10 kg" [ref=f68e826]:
+                - generic [ref=f68e827]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f68e828]: +10 kg
+              - cell "Ativo" [ref=f68e829]
+              - cell "Ver →" [ref=f68e831]
+            - link "Ver detalhes do animal 680" [ref=f68e832] [cursor=pointer]:
+              - cell [ref=f68e833]:
+                - checkbox "Selecionar animal 680" [ref=f68e834]
+              - cell "—" [ref=f68e835]
+              - cell "—" [ref=f68e836]
+              - cell "nelore" [ref=f68e837]
+              - cell "Fêmea" [ref=f68e838]
+              - cell "—" [ref=f68e839]
+              - cell "bezerros" [ref=f68e840]
+              - cell "310 kg +10 kg" [ref=f68e841]:
+                - generic [ref=f68e842]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f68e843]: +10 kg
+              - cell "Ativo" [ref=f68e844]
+              - cell "Ver →" [ref=f68e846]
+            - link "Ver detalhes do animal 681" [ref=f68e847] [cursor=pointer]:
+              - cell [ref=f68e848]:
+                - checkbox "Selecionar animal 681" [ref=f68e849]
+              - cell "—" [ref=f68e850]
+              - cell "—" [ref=f68e851]
+              - cell "nelore" [ref=f68e852]
+              - cell "Fêmea" [ref=f68e853]
+              - cell "—" [ref=f68e854]
+              - cell "bezerros" [ref=f68e855]
+              - cell "310 kg +10 kg" [ref=f68e856]:
+                - generic [ref=f68e857]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f68e858]: +10 kg
+              - cell "Ativo" [ref=f68e859]
+              - cell "Ver →" [ref=f68e861]
+            - link "Ver detalhes do animal 682" [ref=f68e862] [cursor=pointer]:
+              - cell [ref=f68e863]:
+                - checkbox "Selecionar animal 682" [ref=f68e864]
+              - cell "—" [ref=f68e865]
+              - cell "—" [ref=f68e866]
+              - cell "nelore" [ref=f68e867]
+              - cell "Fêmea" [ref=f68e868]
+              - cell "—" [ref=f68e869]
+              - cell "bezerros" [ref=f68e870]
+              - cell "310 kg +10 kg" [ref=f68e871]:
+                - generic [ref=f68e872]:
+                  - text: 310 kg
+                  - generic "Ganho desde a entrada (300 kg)" [ref=f68e873]: +10 kg
+              - cell "Ativo" [ref=f68e874]
+              - cell "Ver →" [ref=f68e876]
+        - generic [ref=f68e877]:
+          - generic [ref=f68e878]: 100 animal(is) no total
+          - generic [ref=f68e879]:
+            - button "← Anterior" [disabled] [ref=f68e880]
+            - generic [ref=f68e881]: Página 1 de 2
+            - button "Próxima →" [ref=f68e882] [cursor=pointer]
+      - dialog "Cadastrar Novo Animal" [ref=f68e884]:
+        - generic [ref=f68e885]:
+          - generic [ref=f68e886]: Cadastrar Novo Animal
+          - button "Fechar" [ref=f68e887] [cursor=pointer]: ×
+        - generic [ref=f68e889]:
+          - generic [ref=f68e890]:
+            - generic [ref=f68e891]:
+              - generic [ref=f68e892]: Brinco
+              - 'textbox "Ex: 001" [active] [ref=f68e893]'
+            - generic [ref=f68e894]:
+              - generic [ref=f68e895]: Nome
+              - textbox "Opcional" [ref=f68e896]
+            - generic [ref=f68e897]:
+              - generic [ref=f68e898]: Raça
+              - 'textbox "Ex: Nelore" [ref=f68e899]'
+          - generic [ref=f68e900]:
+            - generic [ref=f68e901]:
+              - generic [ref=f68e902]: Sexo *
+              - combobox [ref=f68e903]:
+                - option "♂ Macho"
+                - option "♀ Fêmea" [selected]
+            - generic [ref=f68e904]:
+              - generic [ref=f68e905]: Origem
+              - combobox [ref=f68e906]:
+                - option "Nascido na fazenda" [selected]
+                - option "Comprado"
+            - generic [ref=f68e907]:
+              - generic [ref=f68e908]: Lote
+              - combobox [ref=f68e909]:
+                - option "Sem lote" [selected]
+                - option "gadão"
+                - option "bezerros"
+          - generic [ref=f68e910]:
+            - generic [ref=f68e911]:
+              - generic [ref=f68e912]: Data de Nascimento
+              - textbox [ref=f68e913]
+            - generic [ref=f68e914]:
+              - generic [ref=f68e915]: Categoria
+              - combobox [ref=f68e916]:
+                - option "Selecionar" [selected]
+                - option "Bezerro"
+                - option "Garrote"
+                - option "Novilha"
+                - option "Vaca"
+                - option "Boi Magro"
+                - option "Boi Gordo"
+          - generic [ref=f68e917]:
+            - generic [ref=f68e918]:
+              - generic [ref=f68e919]: Peso de Entrada (kg)
+              - 'spinbutton "Ex: 280" [ref=f68e920]'
+            - generic [ref=f68e921]:
+              - generic [ref=f68e922]: Data de Entrada
+              - textbox [ref=f68e923]: 2026-08-03
+              - generic [ref=f68e924]: Quando o animal entrou (compra/nascimento). Serve de base pro GMD da 1ª pesagem.
+          - generic [ref=f68e925]:
+            - generic [ref=f68e926]: Observações
+            - textbox "Opcional..." [ref=f68e927]
+          - generic [ref=f68e929] [cursor=pointer]:
+            - checkbox "Registrar compra junto" [ref=f68e930]
+            - text: Registrar compra junto
+          - generic [ref=f68e932] [cursor=pointer]:
+            - checkbox "Registrar vacinacao junto" [ref=f68e933]
+            - text: Registrar vacinacao junto
+        - generic [ref=f68e934]:
+          - button "Cancelar" [ref=f68e935] [cursor=pointer]
+          - button "Cadastrar Animal" [ref=f68e936] [cursor=pointer]

@@ -371,7 +371,21 @@ export default function Animais() {
               </td></tr>
             )}
             {animais.map(a => (
-              <tr key={a.id} className="clickable" onClick={() => navigate(`/animais/${a.id}`)} style={selectedIds.has(a.id) ? { background: 'var(--green-50)' } : undefined}>
+              <tr
+                key={a.id}
+                className="clickable"
+                onClick={() => navigate(`/animais/${a.id}`)}
+                tabIndex={0}
+                role="link"
+                aria-label={`Ver detalhes do animal ${a.brinco || a.id}`}
+                onKeyDown={e => {
+                  if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
+                    e.preventDefault()
+                    navigate(`/animais/${a.id}`)
+                  }
+                }}
+                style={selectedIds.has(a.id) ? { background: 'var(--green-50)' } : undefined}
+              >
                 <td className="cell-check" style={{ textAlign: 'center' }} onClick={e => e.stopPropagation()}>
                   <input
                     type="checkbox"

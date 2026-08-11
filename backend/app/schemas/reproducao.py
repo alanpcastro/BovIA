@@ -37,6 +37,31 @@ class ReproducaoCreate(BaseModel):
         return self
 
 
+class ReproducaoLoteCreate(BaseModel):
+    """Registra o mesmo evento reprodutivo para todas as fêmeas ativas de um lote
+    (ex: IATF / estação de monta — insemina/cobre o lote inteiro no mesmo dia)."""
+    lote_id: int
+    tipo: TipoReproducaoEnum
+    data: date
+    touro_brinco: Optional[str] = None
+    resultado: Optional[str] = None
+    data_prevista_parto: Optional[date] = None
+    observacoes: Optional[str] = None
+
+    @field_validator('data')
+    @classmethod
+    def data_nao_futura(cls, v: date) -> date:
+        if v > date.today():
+            raise ValueError('Data do evento nao pode ser futura')
+        return v
+
+    @model_validator(mode='after')
+    def parto_apos_cobertura(self) -> 'ReproducaoLoteCreate':
+        if self.data_prevista_parto and self.data_prevista_parto <= self.data:
+            raise ValueError('Data prevista de parto deve ser posterior a data do evento')
+        return self
+
+
 class ReproducaoUpdate(BaseModel):
     tipo: Optional[TipoReproducaoEnum] = None
     data: Optional[date] = None

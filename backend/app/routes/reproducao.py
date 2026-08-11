@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from ..database import get_db
 from ..models.reproducao import Reproducao
 from ..models.animal import Animal, CategoriaAnimalEnum
-from ..schemas.reproducao import ReproducaoCreate, ReproducaoUpdate, ReproducaoOut, TipoReproducaoEnum
+from ..schemas.reproducao import ReproducaoCreate, ReproducaoLoteCreate, ReproducaoUpdate, ReproducaoOut, TipoReproducaoEnum
 from ..auth import get_current_user, check_assinatura_ativa
 from ..models.user import User
 
@@ -25,6 +25,7 @@ class BulkResult(BaseModel):
 @router.get("", response_model=List[ReproducaoOut])
 def listar_reproducao(
     animal_id: Optional[int] = Query(None),
+    lote_id: Optional[int] = Query(None),
     tipo: Optional[str] = Query(None),
     partos_esperados: Optional[bool] = Query(None, description="Partos previstos a partir de hoje"),
     db: Session = Depends(get_db),
@@ -36,6 +37,8 @@ def listar_reproducao(
     )
     if animal_id:
         q = q.filter(Reproducao.animal_id == animal_id)
+    if lote_id:
+        q = q.filter(Animal.lote_id == lote_id)
     if tipo:
         q = q.filter(Reproducao.tipo == tipo)
     if partos_esperados:
@@ -89,6 +92,39 @@ def criar_reproducao(data: ReproducaoCreate, db: Session = Depends(get_db), curr
     db.commit()
     db.refresh(repro)
     return repro
+
+
+@router.post("/lote", response_model=BulkResult, status_code=201)
+def criar_reproducao_lote(
+    data: ReproducaoLoteCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(check_assinatura_ativa),
+):
+    """IATF / estação de monta: cria o mesmo evento para todas as fêmeas ativas do lote.
+    Não cria bezerros automaticamente (isso é lançamento individual)."""
+    femeas = db.query(Animal).filter(
+        Animal.user_id == current_user.id,
+        Animal.lote_id == data.lote_id,
+        Animal.sexo == "femea",
+        Animal.status == "ativo",
+        Animal.deletado_em.is_(None),
+    ).all()
+    if not femeas:
+        raise HTTPException(status_code=400, detail="Nenhuma fêmea ativa nesse lote")
+
+    for a in femeas:
+        db.add(Reproducao(
+            user_id=current_user.id,
+            animal_id=a.id,
+            tipo=data.tipo,
+            data=data.data,
+            touro_brinco=data.touro_brinco,
+            resultado=data.resultado,
+            data_prevista_parto=data.data_prevista_parto,
+            observacoes=data.observacoes,
+        ))
+    db.commit()
+    return BulkResult(total=len(femeas), afetados=len(femeas))
 
 
 @router.get("/{repro_id}", response_model=ReproducaoOut)

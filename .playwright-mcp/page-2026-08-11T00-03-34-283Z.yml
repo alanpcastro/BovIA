@@ -1,0 +1,24 @@
+- generic [ref=f1e3]:
+  - generic [ref=f1e6]:
+    - generic [ref=f1e7]: Gestão Pecuária Inteligente
+    - generic [ref=f1e8]: Controle seu rebanho com eficiência
+    - generic [ref=f1e9]: Pesagens, saúde, reprodução e financeiro em um só lugar.
+  - generic [ref=f1e10]:
+    - generic [ref=f1e11]:
+      - img "BovIA" [ref=f1e12]
+      - generic [ref=f1e13]: Bem-vindo de volta
+      - generic [ref=f1e14]: Entre na sua conta para continuar
+    - generic [ref=f1e15]:
+      - generic [ref=f1e16]:
+        - generic [ref=f1e17]: E-mail
+        - textbox "seu@email.com" [active] [ref=f1e19]
+      - generic [ref=f1e20]:
+        - generic [ref=f1e21]: Senha
+        - textbox "••••••••" [ref=f1e23]
+      - link "Esqueci minha senha" [ref=f1e25] [cursor=pointer]:
+        - /url: /esqueci-senha
+      - button "Entrar" [ref=f1e26] [cursor=pointer]
+    - generic [ref=f1e27]:
+      - text: Não tem conta?
+      - link "Cadastre-se gratuitamente" [ref=f1e28] [cursor=pointer]:
+        - /url: /register
