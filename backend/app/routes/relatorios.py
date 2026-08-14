@@ -452,7 +452,25 @@ def resumo_contador_pdf(
         else:
             custo_despesas_op += rateio
 
-    custo_total = custo_compras + fretes + custo_saude + custo_despesas_op
+    # Custos nutricionais (rateio: preco_kg * consumo_kg_dia * dias * cabeças)
+    custos_nutri = db.query(CustoNutricional).filter(CustoNutricional.user_id == uid).all()
+    custo_nutricao = 0.0
+    for c in custos_nutri:
+        dias = _overlap_days(c.data_inicio, c.data_fim, data_inicio, data_fim)
+        if dias <= 0:
+            continue
+        if c.lote_id:
+            n = db.query(sqlfunc.count(Animal.id)).filter(
+                Animal.lote_id == c.lote_id, Animal.user_id == uid, Animal.deletado_em == None,  # noqa: E711
+            ).scalar() or 0
+        else:
+            n = db.query(sqlfunc.count(Animal.id)).filter(
+                Animal.user_id == uid, Animal.deletado_em == None, Animal.status == StatusEnum.ativo,  # noqa: E711
+            ).scalar() or 0
+        custo_nutricao += (c.preco_kg or 0) * (c.consumo_kg_dia or 0) * dias * n
+    custo_nutricao = round(custo_nutricao, 2)
+
+    custo_total = custo_compras + fretes + custo_saude + custo_nutricao + custo_despesas_op
     lucro_bruto = receita_liquida - custo_total
     lucro_liquido = lucro_bruto - custo_impostos
 
@@ -500,6 +518,7 @@ def resumo_contador_pdf(
         ["Compras de animais", _money(custo_compras)],
         ["Fretes", _money(fretes)],
         ["Saúde / sanidade", _money(custo_saude)],
+        ["Nutrição (ração/sal/suplemento, pro rata)", _money(custo_nutricao)],
         ["Despesas fixas operacionais (pro rata)", _money(custo_despesas_op)],
         ["Custo total operacional", _money(custo_total)],
     ], colWidths=[12 * cm, 5 * cm])

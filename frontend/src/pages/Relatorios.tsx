@@ -257,7 +257,7 @@ export default function Relatorios() {
               <div>
                 <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--gray-900)' }}>Resumo contábil consolidado</div>
                 <div style={{ fontSize: 12, color: 'var(--gray-500)', marginTop: 2 }}>
-                  Receita líquida, custos (compras, fretes, saúde, despesas pro rata) e lucro consolidado do período
+                  Receita líquida, custos (compras, fretes, saúde, nutrição, despesas pro rata) e lucro consolidado do período
                 </div>
               </div>
             </div>

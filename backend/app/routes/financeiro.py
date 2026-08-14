@@ -268,13 +268,19 @@ def analise_financeira(
         custo_por_arroba = round(custo_total / arrobas_produzidas, 2)
 
     # ── Movimentações financeiras ────────────────────────────────────────────
+    # Considera TODAS as movimentações do período — NÃO só as de animais ativos.
+    # Quando um animal é vendido/morre, o status deixa de ser "ativo", mas a compra e a
+    # venda dele continuam sendo fatos financeiros do período e precisam contar. (Antes,
+    # filtrar por animais ativos fazia custo de compra e receita de venda de vendidos
+    # sumirem da análise.)
     q_mov = db.query(Movimentacao).filter(
         Movimentacao.user_id == uid,
         Movimentacao.data >= data_inicio,
         Movimentacao.data <= data_fim,
     )
-    if animal_ids:
-        q_mov = q_mov.filter(Movimentacao.animal_id.in_(animal_ids))
+    if lote_id:
+        # Restringe às movimentações dos animais desse lote, mesmo os já vendidos
+        q_mov = q_mov.join(Animal).filter(Animal.lote_id == lote_id)
     movs = q_mov.all()
 
     # Receita de vendas: valor menos desconto concedido
