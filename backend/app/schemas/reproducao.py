@@ -15,6 +15,7 @@ class ReproducaoCreate(BaseModel):
     animal_id: int
     tipo: TipoReproducaoEnum
     data: date
+    data_fim: Optional[date] = None   # fim do período (cobertura natural / estação de monta)
     touro_brinco: Optional[str] = None
     resultado: Optional[str] = None
     data_prevista_parto: Optional[date] = None
@@ -31,7 +32,12 @@ class ReproducaoCreate(BaseModel):
         return v
 
     @model_validator(mode='after')
-    def parto_apos_cobertura(self) -> 'ReproducaoCreate':
+    def valida_periodo_e_parto(self) -> 'ReproducaoCreate':
+        if self.data_fim:
+            if self.data_fim < self.data:
+                raise ValueError('Data de fim deve ser igual ou posterior a data de início')
+            if self.data_fim > date.today():
+                raise ValueError('Data de fim nao pode ser futura')
         if self.data_prevista_parto and self.data_prevista_parto <= self.data:
             raise ValueError('Data prevista de parto deve ser posterior a data do evento')
         return self
@@ -43,6 +49,7 @@ class ReproducaoLoteCreate(BaseModel):
     lote_id: int
     tipo: TipoReproducaoEnum
     data: date
+    data_fim: Optional[date] = None   # fim do período (cobertura natural / estação de monta)
     touro_brinco: Optional[str] = None
     resultado: Optional[str] = None
     data_prevista_parto: Optional[date] = None
@@ -56,7 +63,12 @@ class ReproducaoLoteCreate(BaseModel):
         return v
 
     @model_validator(mode='after')
-    def parto_apos_cobertura(self) -> 'ReproducaoLoteCreate':
+    def valida_periodo_e_parto(self) -> 'ReproducaoLoteCreate':
+        if self.data_fim:
+            if self.data_fim < self.data:
+                raise ValueError('Data de fim deve ser igual ou posterior a data de início')
+            if self.data_fim > date.today():
+                raise ValueError('Data de fim nao pode ser futura')
         if self.data_prevista_parto and self.data_prevista_parto <= self.data:
             raise ValueError('Data prevista de parto deve ser posterior a data do evento')
         return self
@@ -65,6 +77,7 @@ class ReproducaoLoteCreate(BaseModel):
 class ReproducaoUpdate(BaseModel):
     tipo: Optional[TipoReproducaoEnum] = None
     data: Optional[date] = None
+    data_fim: Optional[date] = None
     touro_brinco: Optional[str] = None
     resultado: Optional[str] = None
     data_prevista_parto: Optional[date] = None
@@ -77,6 +90,7 @@ class ReproducaoOut(BaseModel):
     animal_id: int
     tipo: TipoReproducaoEnum
     data: date
+    data_fim: Optional[date] = None
     touro_brinco: Optional[str]
     resultado: Optional[str]
     data_prevista_parto: Optional[date]

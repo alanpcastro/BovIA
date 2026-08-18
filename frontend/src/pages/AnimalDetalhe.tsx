@@ -476,7 +476,10 @@ export default function AnimalDetalhe() {
                 <tbody>
                   {hist.reproducoes.map(r => (
                     <tr key={r.id}>
-                      <td data-label="Data">{new Date(r.data + 'T00:00').toLocaleDateString('pt-BR')}</td>
+                      <td data-label="Data">
+                        {new Date(r.data + 'T00:00').toLocaleDateString('pt-BR')}
+                        {r.data_fim && <span style={{ color: 'var(--gray-500)' }}> a {new Date(r.data_fim + 'T00:00').toLocaleDateString('pt-BR')}</span>}
+                      </td>
                       <td data-label="Tipo" style={{ fontSize: 13 }}>{r.tipo.replace(/_/g, ' ')}</td>
                       <td data-label="Resultado">
                         {r.resultado

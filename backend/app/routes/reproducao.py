@@ -1,8 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from datetime import date
+from datetime import date, timedelta
 from pydantic import BaseModel
+
+# Gestação média do bovino (dias). Usada pra estimar a previsão de parto da cobertura natural.
+GESTACAO_DIAS = 285
 from ..database import get_db
 from ..models.reproducao import Reproducao
 from ..models.animal import Animal, CategoriaAnimalEnum
@@ -56,6 +59,11 @@ def criar_reproducao(data: ReproducaoCreate, db: Session = Depends(get_db), curr
     payload = data.model_dump()
     bezerro_sexo = payload.pop('bezerro_sexo', None)
     bezerro_peso_kg = payload.pop('bezerro_peso_kg', None)
+
+    # Cobertura natural sem previsão informada: estima o parto mais cedo possível
+    # (início + gestação). O período de cobertura vira uma janela de partos no app.
+    if data.tipo == TipoReproducaoEnum.cobertura_natural and payload.get('data_prevista_parto') is None:
+        payload['data_prevista_parto'] = data.data + timedelta(days=GESTACAO_DIAS)
 
     repro = Reproducao(**payload, user_id=current_user.id)
     db.add(repro)
@@ -112,15 +120,21 @@ def criar_reproducao_lote(
     if not femeas:
         raise HTTPException(status_code=400, detail="Nenhuma fêmea ativa nesse lote")
 
+    # Cobertura natural sem previsão informada: estima o parto mais cedo possível
+    previsao = data.data_prevista_parto
+    if previsao is None and data.tipo == TipoReproducaoEnum.cobertura_natural:
+        previsao = data.data + timedelta(days=GESTACAO_DIAS)
+
     for a in femeas:
         db.add(Reproducao(
             user_id=current_user.id,
             animal_id=a.id,
             tipo=data.tipo,
             data=data.data,
+            data_fim=data.data_fim,
             touro_brinco=data.touro_brinco,
             resultado=data.resultado,
-            data_prevista_parto=data.data_prevista_parto,
+            data_prevista_parto=previsao,
             observacoes=data.observacoes,
         ))
     db.commit()

@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import api, { Reproducao as ReproducaoType, Animal, Lote } from '../services/api'
 import Modal from '../components/Modal'
 import { useToast } from '../components/Toast'
-import { todayLocal } from '../utils/date'
+import { todayLocal, addDaysISO, formatBRISO } from '../utils/date'
 import { apiErrorMessage } from '../utils/apiError'
 
 const tipos = ['cobertura_natural', 'inseminacao', 'transferencia_embriao', 'parto']
@@ -21,9 +21,21 @@ const resultadoBadge: Record<string, string> = {
   prenha: 'badge-green', vazia: 'badge-gray', 'nasceu bezerro': 'badge-pink', aborto: 'badge-red'
 }
 
+// Gestação média do bovino (dias). Usada pra estimar a janela de parto da cobertura natural.
+const GESTACAO_DIAS = 285
+
+// Janela de parto pra cobertura natural: [início+285, fim+285].
+// Se não tem fim (ou é igual ao início), vira data única.
+function janelaParto(inicio: string, fim: string): string {
+  if (!inicio) return ''
+  const ini = addDaysISO(inicio, GESTACAO_DIAS)
+  const end = fim ? addDaysISO(fim, GESTACAO_DIAS) : ini
+  return ini === end ? formatBRISO(ini) : `${formatBRISO(ini)} a ${formatBRISO(end)}`
+}
+
 const emptyForm = {
   animal_id: '', brinco_vaca: '', tipo: 'inseminacao',
-  data: todayLocal(),
+  data: todayLocal(), data_fim: '',
   touro_brinco: '', resultado: '', data_prevista_parto: '',
   bezerro_brinco: '', bezerro_sexo: 'femea', bezerro_peso_kg: '',
   observacoes: ''
@@ -47,7 +59,7 @@ export default function Reproducao() {
 
   // Registro em lote (IATF / estação de monta)
   const [showLoteModal, setShowLoteModal] = useState(false)
-  const [loteForm, setLoteForm] = useState({ lote_id: '', tipo: 'inseminacao', data: todayLocal(), touro_brinco: '', resultado: '', data_prevista_parto: '', observacoes: '' })
+  const [loteForm, setLoteForm] = useState({ lote_id: '', tipo: 'inseminacao', data: todayLocal(), data_fim: '', touro_brinco: '', resultado: '', data_prevista_parto: '', observacoes: '' })
 
   useEffect(() => {
     api.get('/animais', { params: { status: 'ativo', sexo: 'femea', page_size: 200 } }).then(r => setAnimais(r.data.items))
@@ -72,13 +84,18 @@ export default function Reproducao() {
     setErro('')
     setSaving(true)
     try {
+      const isCobertura = loteForm.tipo === 'cobertura_natural'
+      // Previsão de parto: se vazia numa cobertura, usa início + gestação (parto mais cedo possível)
+      const previsao = loteForm.data_prevista_parto
+        || (isCobertura && loteForm.data ? addDaysISO(loteForm.data, GESTACAO_DIAS) : '')
       const r = await api.post('/reproducao/lote', {
         lote_id: parseInt(loteForm.lote_id),
         tipo: loteForm.tipo,
         data: loteForm.data,
+        data_fim: isCobertura ? (loteForm.data_fim || undefined) : undefined,
         touro_brinco: loteForm.touro_brinco || undefined,
         resultado: loteForm.resultado || undefined,
-        data_prevista_parto: loteForm.data_prevista_parto || undefined,
+        data_prevista_parto: previsao || undefined,
         observacoes: loteForm.observacoes || undefined,
       })
       setShowLoteModal(false)
@@ -104,11 +121,15 @@ export default function Reproducao() {
       if (brincoNovo !== brincoAtual && form.animal_id) {
         await api.put(`/animais/${form.animal_id}`, { brinco: brincoNovo || null })
       }
+      const isCobertura = form.tipo === 'cobertura_natural'
+      const previsao = form.data_prevista_parto
+        || (isCobertura && form.data ? addDaysISO(form.data, GESTACAO_DIAS) : '')
       await api.post('/reproducao', {
         animal_id: parseInt(form.animal_id), tipo: form.tipo, data: form.data,
+        data_fim: isCobertura ? (form.data_fim || undefined) : undefined,
         touro_brinco: form.touro_brinco || undefined,
         resultado: form.resultado || undefined,
-        data_prevista_parto: form.data_prevista_parto || undefined,
+        data_prevista_parto: previsao || undefined,
         bezerro_brinco: form.bezerro_brinco || undefined,
         bezerro_sexo: form.bezerro_sexo || undefined,
         bezerro_peso_kg: form.bezerro_peso_kg ? parseFloat(form.bezerro_peso_kg) : undefined,
@@ -181,7 +202,7 @@ export default function Reproducao() {
           <div className="page-subtitle">Controle de cobertura, inseminação e partos</div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn btn-ghost btn-xl" onClick={() => { setErro(''); setLoteForm({ lote_id: '', tipo: 'inseminacao', data: todayLocal(), touro_brinco: '', resultado: '', data_prevista_parto: '', observacoes: '' }); setShowLoteModal(true) }}>
+          <button className="btn btn-ghost btn-xl" onClick={() => { setErro(''); setLoteForm({ lote_id: '', tipo: 'inseminacao', data: todayLocal(), data_fim: '', touro_brinco: '', resultado: '', data_prevista_parto: '', observacoes: '' }); setShowLoteModal(true) }}>
             Registrar em Lote
           </button>
           <button className="btn btn-primary" onClick={() => { setErro(''); setForm(emptyForm); setShowModal(true) }}>
@@ -275,7 +296,10 @@ export default function Reproducao() {
                     />
                   </td>
                   <td data-label="Animal" style={{ fontWeight: 600 }}>#{a ? a.brinco : r.animal_id}</td>
-                  <td data-label="Data">{new Date(r.data + 'T00:00').toLocaleDateString('pt-BR')}</td>
+                  <td data-label="Data">
+                    {formatBRISO(r.data)}
+                    {r.data_fim && <span style={{ color: 'var(--gray-500)' }}> a {formatBRISO(r.data_fim)}</span>}
+                  </td>
                   <td data-label="Tipo"><span className="badge badge-teal">{tipoLabel[r.tipo] || r.tipo}</span></td>
                   <td data-label="Resultado">
                     {r.resultado
@@ -355,15 +379,45 @@ export default function Reproducao() {
                 {tipos.map(t => <option key={t} value={t}>{tipoLabel[t]}</option>)}
               </select>
             </div>
-            <div className="form-group">
-              <label className="form-label">Data *</label>
-              <input className="form-input" type="date" value={form.data} onChange={e => setForm(f => ({ ...f, data: e.target.value }))} required />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Brinco do Touro</label>
-              <input className="form-input" value={form.touro_brinco} onChange={e => setForm(f => ({ ...f, touro_brinco: e.target.value }))} placeholder="Ex: T-001" />
-            </div>
+            {form.tipo === 'cobertura_natural' ? (
+              <>
+                <div className="form-group">
+                  <label className="form-label">Início *</label>
+                  <input className="form-input" type="date" max={todayLocal()} value={form.data} onChange={e => setForm(f => ({ ...f, data: e.target.value }))} required />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Fim *</label>
+                  <input className="form-input" type="date" min={form.data} max={todayLocal()} value={form.data_fim} onChange={e => setForm(f => ({ ...f, data_fim: e.target.value }))} required />
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="form-group">
+                  <label className="form-label">Data *</label>
+                  <input className="form-input" type="date" max={todayLocal()} value={form.data} onChange={e => setForm(f => ({ ...f, data: e.target.value }))} required />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Brinco do Touro</label>
+                  <input className="form-input" value={form.touro_brinco} onChange={e => setForm(f => ({ ...f, touro_brinco: e.target.value }))} placeholder="Ex: T-001" />
+                </div>
+              </>
+            )}
           </div>
+          {form.tipo === 'cobertura_natural' && (
+            <div className="grid-2" style={{ marginBottom: 0 }}>
+              <div className="form-group">
+                <label className="form-label">Brinco do Touro</label>
+                <input className="form-input" value={form.touro_brinco} onChange={e => setForm(f => ({ ...f, touro_brinco: e.target.value }))} placeholder="Ex: T-001" />
+              </div>
+              {form.data && (
+                <div className="form-group" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+                  <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--green-800)', padding: '9px 12px', background: 'var(--green-50)', border: '1px solid var(--green-100)', borderRadius: 'var(--radius)' }}>
+                    🐄 Partos previstos: {janelaParto(form.data, form.data_fim)}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
           <div className="grid-2" style={{ marginBottom: 0 }}>
             <div className="form-group">
               <label className="form-label">Resultado</label>
@@ -373,7 +427,9 @@ export default function Reproducao() {
               </select>
             </div>
             <div className="form-group">
-              <label className="form-label">Previsão de Parto</label>
+              <label className="form-label">
+                {form.tipo === 'cobertura_natural' ? 'Previsão de Parto (ajuste opcional)' : 'Previsão de Parto'}
+              </label>
               <input className="form-input" type="date" value={form.data_prevista_parto} onChange={e => setForm(f => ({ ...f, data_prevista_parto: e.target.value }))} />
             </div>
           </div>
@@ -458,19 +514,43 @@ export default function Reproducao() {
             </div>
           </div>
           <div className="grid-3" style={{ marginBottom: 0 }}>
-            <div className="form-group">
-              <label className="form-label">Data *</label>
-              <input className="form-input" type="date" value={loteForm.data} onChange={e => setLoteForm(f => ({ ...f, data: e.target.value }))} required />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Brinco do Touro</label>
-              <input className="form-input" value={loteForm.touro_brinco} onChange={e => setLoteForm(f => ({ ...f, touro_brinco: e.target.value }))} placeholder="Ex: T-001 / protocolo" />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Previsão de Parto</label>
-              <input className="form-input" type="date" value={loteForm.data_prevista_parto} onChange={e => setLoteForm(f => ({ ...f, data_prevista_parto: e.target.value }))} />
-            </div>
+            {loteForm.tipo === 'cobertura_natural' ? (
+              <>
+                <div className="form-group">
+                  <label className="form-label">Início *</label>
+                  <input className="form-input" type="date" max={todayLocal()} value={loteForm.data} onChange={e => setLoteForm(f => ({ ...f, data: e.target.value }))} required />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Fim *</label>
+                  <input className="form-input" type="date" min={loteForm.data} max={todayLocal()} value={loteForm.data_fim} onChange={e => setLoteForm(f => ({ ...f, data_fim: e.target.value }))} required />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Brinco do Touro</label>
+                  <input className="form-input" value={loteForm.touro_brinco} onChange={e => setLoteForm(f => ({ ...f, touro_brinco: e.target.value }))} placeholder="Ex: T-001 / protocolo" />
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="form-group">
+                  <label className="form-label">Data *</label>
+                  <input className="form-input" type="date" max={todayLocal()} value={loteForm.data} onChange={e => setLoteForm(f => ({ ...f, data: e.target.value }))} required />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Brinco do Touro</label>
+                  <input className="form-input" value={loteForm.touro_brinco} onChange={e => setLoteForm(f => ({ ...f, touro_brinco: e.target.value }))} placeholder="Ex: T-001 / protocolo" />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Previsão de Parto</label>
+                  <input className="form-input" type="date" value={loteForm.data_prevista_parto} onChange={e => setLoteForm(f => ({ ...f, data_prevista_parto: e.target.value }))} />
+                </div>
+              </>
+            )}
           </div>
+          {loteForm.tipo === 'cobertura_natural' && loteForm.data && (
+            <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--green-800)', padding: '9px 12px', background: 'var(--green-50)', border: '1px solid var(--green-100)', borderRadius: 'var(--radius)', marginBottom: 16 }}>
+              🐄 Partos previstos: {janelaParto(loteForm.data, loteForm.data_fim)}
+            </div>
+          )}
           <div className="grid-2" style={{ marginBottom: 0 }}>
             <div className="form-group">
               <label className="form-label">Resultado</label>

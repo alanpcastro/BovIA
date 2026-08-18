@@ -20,7 +20,8 @@ class Reproducao(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
     tipo = Column(Enum(TipoReproducaoEnum), nullable=False)
-    data = Column(Date, nullable=False)
+    data = Column(Date, nullable=False)  # data do evento; para cobertura natural = início do período
+    data_fim = Column(Date, nullable=True)  # fim do período (só cobertura natural / estação de monta)
     touro_brinco = Column(String, nullable=True)
     resultado = Column(String, nullable=True)  # prenha, vazia, nasceu bezerro
     data_prevista_parto = Column(Date, nullable=True)

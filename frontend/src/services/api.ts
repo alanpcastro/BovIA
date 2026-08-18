@@ -177,6 +177,7 @@ export interface Reproducao {
   animal_id: number
   tipo: string
   data: string
+  data_fim?: string
   touro_brinco?: string
   resultado?: string
   data_prevista_parto?: string
