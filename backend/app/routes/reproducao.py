@@ -25,6 +25,36 @@ class BulkResult(BaseModel):
     afetados: int
 
 
+def _houve_nascimento(tipo, resultado) -> bool:
+    """True quando o evento representa um nascimento (nasceu bezerro, ou parto não-aborto)."""
+    return resultado == "nasceu bezerro" or (tipo == TipoReproducaoEnum.parto and resultado != "aborto")
+
+
+def _criar_bezerro(db, uid, mae, *, brinco, sexo, peso, data_nascimento):
+    """Cria o animal bezerro filho de `mae`. Valida brinco duplicado."""
+    if brinco:
+        existe = db.query(Animal).filter(
+            Animal.user_id == uid,
+            Animal.brinco == brinco,
+            Animal.deletado_em.is_(None),
+        ).first()
+        if existe:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Brinco '{brinco}' ja cadastrado em outro animal",
+            )
+    db.add(Animal(
+        user_id=uid,
+        brinco=brinco,
+        sexo=sexo or "femea",
+        categoria=CategoriaAnimalEnum.bezerro,
+        data_nascimento=data_nascimento,
+        peso_entrada=peso,
+        lote_id=mae.lote_id,
+        origem=(f"Filho(a) de #{mae.brinco}" if mae.brinco else "Nascido na fazenda"),
+    ))
+
+
 @router.get("", response_model=List[ReproducaoOut])
 def listar_reproducao(
     animal_id: Optional[int] = Query(None),
@@ -68,34 +98,13 @@ def criar_reproducao(data: ReproducaoCreate, db: Session = Depends(get_db), curr
     repro = Reproducao(**payload, user_id=current_user.id)
     db.add(repro)
 
-    # Cria automaticamente um animal "bezerro" quando o evento e um parto ou houve nascimento
-    deve_criar_bezerro = (
-        data.resultado == "nasceu bezerro"
-        or (data.tipo == TipoReproducaoEnum.parto and data.resultado != "aborto")
-    )
-    if deve_criar_bezerro:
-        if data.bezerro_brinco:
-            existe = db.query(Animal).filter(
-                Animal.user_id == current_user.id,
-                Animal.brinco == data.bezerro_brinco,
-                Animal.deletado_em.is_(None),
-            ).first()
-            if existe:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Brinco '{data.bezerro_brinco}' ja cadastrado em outro animal",
-                )
-        bezerro = Animal(
-            user_id=current_user.id,
-            brinco=data.bezerro_brinco,
-            sexo=bezerro_sexo or "femea",
-            categoria=CategoriaAnimalEnum.bezerro,
-            data_nascimento=data.data,
-            peso_entrada=bezerro_peso_kg,
-            lote_id=animal.lote_id,
-            origem=(f"Filho(a) de #{animal.brinco}" if animal.brinco else "Nascido na fazenda"),
+    # Cria automaticamente um animal "bezerro" quando o evento é um parto ou houve nascimento
+    if _houve_nascimento(data.tipo, data.resultado):
+        _criar_bezerro(
+            db, current_user.id, animal,
+            brinco=data.bezerro_brinco, sexo=bezerro_sexo,
+            peso=bezerro_peso_kg, data_nascimento=data.data,
         )
-        db.add(bezerro)
 
     db.commit()
     db.refresh(repro)
@@ -154,8 +163,29 @@ def atualizar_reproducao(repro_id: int, data: ReproducaoUpdate, db: Session = De
     repro = db.query(Reproducao).join(Animal).filter(Reproducao.id == repro_id, Animal.user_id == current_user.id).first()
     if not repro:
         raise HTTPException(status_code=404, detail="Registro não encontrado")
-    for field, value in data.model_dump(exclude_unset=True).items():
+
+    # Estado de nascimento ANTES da edição — pra criar o bezerro só na transição
+    # (evita duplicar o bezerro se o registro já era "nasceu bezerro" e você edita de novo).
+    nascido_antes = _houve_nascimento(repro.tipo, repro.resultado)
+
+    payload = data.model_dump(exclude_unset=True)
+    # Campos transientes do bezerro não pertencem ao model Reproducao
+    bezerro_sexo = payload.pop('bezerro_sexo', None)
+    bezerro_peso_kg = payload.pop('bezerro_peso_kg', None)
+    bezerro_data_nasc = payload.pop('bezerro_data_nascimento', None)
+
+    for field, value in payload.items():
         setattr(repro, field, value)
+
+    # Passou a representar um nascimento agora (e não era antes) → cria o bezerro
+    if _houve_nascimento(repro.tipo, repro.resultado) and not nascido_antes:
+        data_nasc = bezerro_data_nasc or repro.data_prevista_parto or repro.data
+        _criar_bezerro(
+            db, current_user.id, repro.animal,
+            brinco=repro.bezerro_brinco, sexo=bezerro_sexo,
+            peso=bezerro_peso_kg, data_nascimento=data_nasc,
+        )
+
     db.commit()
     db.refresh(repro)
     return repro

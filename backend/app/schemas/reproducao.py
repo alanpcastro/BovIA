@@ -82,7 +82,9 @@ class ReproducaoUpdate(BaseModel):
     resultado: Optional[str] = None
     data_prevista_parto: Optional[date] = None
     bezerro_brinco: Optional[str] = None
-    observacoes: Optional[str] = None
+    bezerro_sexo: Optional[str] = None                 # transiente: usado ao criar o bezerro no update
+    bezerro_peso_kg: Optional[float] = None            # transiente
+    bezerro_data_nascimento: Optional[date] = None     # transiente: data real do nascimento
 
 
 class ReproducaoOut(BaseModel):

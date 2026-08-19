@@ -61,6 +61,16 @@ export default function Reproducao() {
   const [showLoteModal, setShowLoteModal] = useState(false)
   const [loteForm, setLoteForm] = useState({ lote_id: '', tipo: 'inseminacao', data: todayLocal(), data_fim: '', touro_brinco: '', resultado: '', data_prevista_parto: '', observacoes: '' })
 
+  // Edição de um registro existente (atualizar resultado, marcar nascimento etc.)
+  const [showEdit, setShowEdit] = useState(false)
+  const [editId, setEditId] = useState<number | null>(null)
+  const [editForm, setEditForm] = useState({
+    animalLabel: '', tipo: 'inseminacao', data: '', data_fim: '',
+    touro_brinco: '', resultado: '', data_prevista_parto: '',
+    bezerro_brinco: '', bezerro_sexo: 'femea', bezerro_peso_kg: '', bezerro_data_nascimento: todayLocal(),
+    observacoes: '',
+  })
+
   useEffect(() => {
     api.get('/animais', { params: { status: 'ativo', sexo: 'femea', page_size: 200 } }).then(r => setAnimais(r.data.items))
     api.get('/lotes').then(r => setLotes(r.data))
@@ -104,6 +114,60 @@ export default function Reproducao() {
     } catch (err: any) {
       setErro(apiErrorMessage(err, 'Erro ao registrar em lote'))
       toastError('Erro ao registrar reprodução em lote')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  function abrirEdicao(r: ReproducaoType) {
+    const a = animaisMap[r.animal_id]
+    setEditId(r.id)
+    setEditForm({
+      animalLabel: `#${a?.brinco || r.animal_id}${a?.nome ? ` — ${a.nome}` : ''}`,
+      tipo: r.tipo,
+      data: r.data,
+      data_fim: r.data_fim || '',
+      touro_brinco: r.touro_brinco || '',
+      resultado: r.resultado || '',
+      data_prevista_parto: r.data_prevista_parto || '',
+      bezerro_brinco: r.bezerro_brinco || '',
+      bezerro_sexo: 'femea',
+      bezerro_peso_kg: '',
+      bezerro_data_nascimento: todayLocal(),
+      observacoes: r.observacoes || '',
+    })
+    setErro('')
+    setShowEdit(true)
+  }
+
+  async function handleEditSubmit(e: FormEvent) {
+    e.preventDefault()
+    setErro('')
+    setSaving(true)
+    try {
+      const isCobertura = editForm.tipo === 'cobertura_natural'
+      const nasceu = editForm.resultado === 'nasceu bezerro'
+        || (editForm.tipo === 'parto' && editForm.resultado !== 'aborto' && editForm.resultado !== '')
+      const previsao = editForm.data_prevista_parto
+        || (isCobertura && editForm.data ? addDaysISO(editForm.data, GESTACAO_DIAS) : '')
+      await api.put(`/reproducao/${editId}`, {
+        tipo: editForm.tipo,
+        data: editForm.data,
+        data_fim: isCobertura ? (editForm.data_fim || null) : null,
+        touro_brinco: editForm.touro_brinco || null,
+        resultado: editForm.resultado || null,
+        data_prevista_parto: previsao || null,
+        bezerro_brinco: editForm.bezerro_brinco || null,
+        bezerro_sexo: nasceu ? editForm.bezerro_sexo : undefined,
+        bezerro_peso_kg: nasceu && editForm.bezerro_peso_kg ? parseFloat(editForm.bezerro_peso_kg) : undefined,
+        bezerro_data_nascimento: nasceu ? (editForm.bezerro_data_nascimento || undefined) : undefined,
+      })
+      setShowEdit(false)
+      load()
+      success('Registro atualizado!')
+    } catch (err: any) {
+      setErro(apiErrorMessage(err, 'Erro ao atualizar registro'))
+      toastError('Erro ao atualizar registro')
     } finally {
       setSaving(false)
     }
@@ -312,8 +376,13 @@ export default function Reproducao() {
                     {r.data_prevista_parto ? new Date(r.data_prevista_parto + 'T00:00').toLocaleDateString('pt-BR') : '—'}
                   </td>
                   <td data-label="Bezerro" style={{ color: 'var(--gray-500)', fontSize: 13 }}>{r.bezerro_brinco ? `#${r.bezerro_brinco}` : '—'}</td>
-                  <td className="cell-actions">
-                    <button className="btn btn-danger btn-sm btn-icon" onClick={() => deletar(r.id)}>
+                  <td className="cell-actions" style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                    <button className="btn btn-outline btn-sm btn-icon" title="Editar (mudar resultado, marcar nascimento...)" onClick={() => abrirEdicao(r)}>
+                      <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                      </svg>
+                    </button>
+                    <button className="btn btn-danger btn-sm btn-icon" title="Excluir" onClick={() => deletar(r.id)}>
                       <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                       </svg>
@@ -563,6 +632,128 @@ export default function Reproducao() {
               <label className="form-label">Observações</label>
               <input className="form-input" value={loteForm.observacoes} onChange={e => setLoteForm(f => ({ ...f, observacoes: e.target.value }))} placeholder="Opcional..." />
             </div>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Modal — editar registro (mudar resultado, marcar nascimento/aborto) */}
+      <Modal
+        open={showEdit}
+        onClose={() => setShowEdit(false)}
+        title="Editar Registro Reprodutivo"
+        size="lg"
+        footer={
+          <>
+            <button className="btn btn-ghost" onClick={() => setShowEdit(false)}>Cancelar</button>
+            <button className="btn btn-primary" form="form-repro-edit" type="submit" disabled={saving}>
+              {saving ? <><span className="spinner" /> Salvando...</> : 'Salvar'}
+            </button>
+          </>
+        }
+      >
+        {erro && <div className="alert alert-error">{erro}</div>}
+        <div style={{ fontSize: 13, color: 'var(--gray-600)', marginBottom: 16, padding: '8px 12px', background: 'var(--gray-50)', borderRadius: 'var(--radius)' }}>
+          Animal: <strong style={{ color: 'var(--gray-800)' }}>{editForm.animalLabel}</strong>
+        </div>
+        <form id="form-repro-edit" onSubmit={handleEditSubmit}>
+          <div className="grid-3" style={{ marginBottom: 0 }}>
+            <div className="form-group">
+              <label className="form-label">Tipo *</label>
+              <select className="form-select" value={editForm.tipo} onChange={e => setEditForm(f => ({ ...f, tipo: e.target.value }))} required>
+                {tipos.map(t => <option key={t} value={t}>{tipoLabel[t]}</option>)}
+              </select>
+            </div>
+            {editForm.tipo === 'cobertura_natural' ? (
+              <>
+                <div className="form-group">
+                  <label className="form-label">Início *</label>
+                  <input className="form-input" type="date" max={todayLocal()} value={editForm.data} onChange={e => setEditForm(f => ({ ...f, data: e.target.value }))} required />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Fim</label>
+                  <input className="form-input" type="date" min={editForm.data} max={todayLocal()} value={editForm.data_fim} onChange={e => setEditForm(f => ({ ...f, data_fim: e.target.value }))} />
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="form-group">
+                  <label className="form-label">Data *</label>
+                  <input className="form-input" type="date" max={todayLocal()} value={editForm.data} onChange={e => setEditForm(f => ({ ...f, data: e.target.value }))} required />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Brinco do Touro</label>
+                  <input className="form-input" value={editForm.touro_brinco} onChange={e => setEditForm(f => ({ ...f, touro_brinco: e.target.value }))} placeholder="Ex: T-001" />
+                </div>
+              </>
+            )}
+          </div>
+          {editForm.tipo === 'cobertura_natural' && (
+            <div className="grid-2" style={{ marginBottom: 0 }}>
+              <div className="form-group">
+                <label className="form-label">Brinco do Touro</label>
+                <input className="form-input" value={editForm.touro_brinco} onChange={e => setEditForm(f => ({ ...f, touro_brinco: e.target.value }))} placeholder="Ex: T-001" />
+              </div>
+              {editForm.data && (
+                <div className="form-group" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+                  <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--green-800)', padding: '9px 12px', background: 'var(--green-50)', border: '1px solid var(--green-100)', borderRadius: 'var(--radius)' }}>
+                    🐄 Partos previstos: {janelaParto(editForm.data, editForm.data_fim)}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          <div className="grid-2" style={{ marginBottom: 0 }}>
+            <div className="form-group">
+              <label className="form-label">Resultado</label>
+              <select className="form-select" value={editForm.resultado} onChange={e => setEditForm(f => ({ ...f, resultado: e.target.value }))}>
+                <option value="">Pendente</option>
+                {resultados.map(r => <option key={r} value={r}>{resultadoLabel[r]}</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Previsão de Parto</label>
+              <input className="form-input" type="date" value={editForm.data_prevista_parto} onChange={e => setEditForm(f => ({ ...f, data_prevista_parto: e.target.value }))} />
+            </div>
+          </div>
+
+          {/* Bezerro nascido — cria o bezerro em Animais (só na 1ª vez que marca o nascimento) */}
+          {(editForm.resultado === 'nasceu bezerro' || (editForm.tipo === 'parto' && editForm.resultado !== 'aborto')) && (
+            <div style={{ borderTop: '1px solid var(--gray-200)', marginTop: 12, paddingTop: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, fontSize: 13, fontWeight: 600, color: 'var(--green-800)' }}>
+                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Bezerro nascido — será criado em Animais (só na 1ª vez que você marca o nascimento)
+              </div>
+              <div className="grid-3" style={{ marginBottom: 0 }}>
+                <div className="form-group">
+                  <label className="form-label">Brinco do Bezerro</label>
+                  <input className="form-input" value={editForm.bezerro_brinco} onChange={e => setEditForm(f => ({ ...f, bezerro_brinco: e.target.value }))} placeholder="Opcional" />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Sexo</label>
+                  <select className="form-select" value={editForm.bezerro_sexo} onChange={e => setEditForm(f => ({ ...f, bezerro_sexo: e.target.value }))}>
+                    <option value="femea">♀ Fêmea</option>
+                    <option value="macho">♂ Macho</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Data de Nascimento</label>
+                  <input className="form-input" type="date" max={todayLocal()} value={editForm.bezerro_data_nascimento} onChange={e => setEditForm(f => ({ ...f, bezerro_data_nascimento: e.target.value }))} />
+                </div>
+              </div>
+              <div className="grid-2" style={{ marginBottom: 0 }}>
+                <div className="form-group">
+                  <label className="form-label">Peso ao Nascer (kg)</label>
+                  <input className="form-input" type="number" inputMode="decimal" step="0.1" value={editForm.bezerro_peso_kg} onChange={e => setEditForm(f => ({ ...f, bezerro_peso_kg: e.target.value }))} placeholder="Opcional" />
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="form-group" style={{ marginTop: 12 }}>
+            <label className="form-label">Observações</label>
+            <input className="form-input" value={editForm.observacoes} onChange={e => setEditForm(f => ({ ...f, observacoes: e.target.value }))} placeholder="Opcional..." />
           </div>
         </form>
       </Modal>
