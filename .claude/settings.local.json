@@ -36,7 +36,9 @@
       "Bash(./venv/bin/python -c \"from app.routes import reproducao; from app.models.reproducao import Reproducao; print\\('data_fim' in Reproducao.__table__.columns and 'model+import OK'\\)\")",
       "Bash(./venv/bin/python -c \"import json;d=json.load\\(open\\('/tmp/uitok.json'\\)\\);print\\('TOKEN='+d['token']\\);print\\('USER='+json.dumps\\(d['user']\\)\\)\")",
       "Bash(./venv/bin/python -c \"import json;d=json.load\\(open\\('/tmp/uitok.json'\\)\\);print\\('TOKEN='+d['token']\\)\")",
-      "Bash(./venv/bin/python -c \"import json;print\\(json.load\\(open\\('/tmp/uitok.json'\\)\\)['token']\\)\")"
+      "Bash(./venv/bin/python -c \"import json;print\\(json.load\\(open\\('/tmp/uitok.json'\\)\\)['token']\\)\")",
+      "Bash(/usr/bin/git status *)",
+      "Bash(echo \"EXIT:$?\")"
     ]
   }
 }
