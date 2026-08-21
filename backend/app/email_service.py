@@ -1,12 +1,18 @@
+import logging
+
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
 from .config import settings
+
+logger = logging.getLogger(__name__)
 
 
 def get_mail_config() -> ConnectionConfig:
     return ConnectionConfig(
         MAIL_USERNAME=settings.MAIL_USERNAME,
         MAIL_PASSWORD=settings.MAIL_PASSWORD,
-        MAIL_FROM=settings.MAIL_FROM,
+        # Sem MAIL_FROM configurado, usa o próprio usuário (Gmail exige remetente = conta).
+        # Evita quebrar o envio quando só MAIL_USERNAME/MAIL_PASSWORD foram setados.
+        MAIL_FROM=settings.MAIL_FROM or settings.MAIL_USERNAME,
         MAIL_PORT=settings.MAIL_PORT,
         MAIL_SERVER=settings.MAIL_SERVER,
         MAIL_STARTTLS=True,
@@ -17,6 +23,11 @@ def get_mail_config() -> ConnectionConfig:
 
 async def enviar_reset_senha(email_destino: str, nome: str, link: str) -> None:
     if not settings.MAIL_USERNAME or not settings.MAIL_PASSWORD:
+        logger.warning(
+            "Reset de senha solicitado para %s, mas MAIL_USERNAME/MAIL_PASSWORD "
+            "não estão configurados — nenhum email foi enviado.",
+            email_destino,
+        )
         return
 
     body = f"""
@@ -42,8 +53,13 @@ Se voce nao solicitou essa alteracao, ignore este email.
         subtype=MessageType.plain,
     )
 
-    fm = FastMail(get_mail_config())
-    await fm.send_message(message)
+    try:
+        fm = FastMail(get_mail_config())
+        await fm.send_message(message)
+    except Exception:
+        # Roda em BackgroundTask: sem log, a falha (credencial errada, SMTP fora)
+        # sumiria silenciosamente e o usuário nunca receberia o link.
+        logger.exception("Falha ao enviar email de reset de senha para %s", email_destino)
 
 
 async def enviar_alerta_vacinacao(email_destino: str, fazenda: str, alertas: list[dict]) -> None:
