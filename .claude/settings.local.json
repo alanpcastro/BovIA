@@ -46,7 +46,8 @@
       "Bash(/bin/ls -la /Users/alan_castro/Documents/BovIA/frontend/.playwright-mcp/)",
       "Bash(/usr/bin/tail -5)",
       "Bash(/usr/bin/grep -v \"settings.local\")",
-      "Bash(/bin/rm -f dark-dashboard.png)"
+      "Bash(/bin/rm -f dark-dashboard.png)",
+      "Bash(/usr/bin/grep -n \"logger\\\\|MAIL_FROM or\\\\|except Exception\" backend/app/email_service.py)"
     ]
   }
 }
