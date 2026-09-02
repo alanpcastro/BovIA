@@ -47,7 +47,11 @@
       "Bash(/usr/bin/tail -5)",
       "Bash(/usr/bin/grep -v \"settings.local\")",
       "Bash(/bin/rm -f dark-dashboard.png)",
-      "Bash(/usr/bin/grep -n \"logger\\\\|MAIL_FROM or\\\\|except Exception\" backend/app/email_service.py)"
+      "Bash(/usr/bin/grep -n \"logger\\\\|MAIL_FROM or\\\\|except Exception\" backend/app/email_service.py)",
+      "Bash(/bin/cat requirements.txt)",
+      "Bash(/usr/bin/grep -iE \"httpx|requests|aiohttp|fastapi-mail|fastapi_mail\")",
+      "Bash(/usr/bin/grep -riE \"import httpx|import requests|from httpx|from requests\" app)",
+      "Bash(python3 -c \"import ast; ast.parse\\(open\\('app/email_service.py'\\).read\\(\\)\\); ast.parse\\(open\\('app/config.py'\\).read\\(\\)\\); print\\('OK sintaxe'\\)\")"
     ]
   }
 }
