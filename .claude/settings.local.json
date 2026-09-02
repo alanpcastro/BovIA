@@ -40,7 +40,13 @@
       "Bash(/usr/bin/git status *)",
       "Bash(echo \"EXIT:$?\")",
       "Bash(python -c \"import ast; ast.parse\\(open\\('app/email_service.py'\\).read\\(\\)\\); print\\('OK sintaxe'\\)\")",
-      "Bash(python3 -c \"import ast; ast.parse\\(open\\('app/email_service.py'\\).read\\(\\)\\); print\\('OK sintaxe'\\)\")"
+      "Bash(python3 -c \"import ast; ast.parse\\(open\\('app/email_service.py'\\).read\\(\\)\\); print\\('OK sintaxe'\\)\")",
+      "Bash(/usr/bin/find /Users/alan_castro/Documents/BovIA/frontend -name \"dark-dashboard.png\")",
+      "Bash(/usr/bin/find /Users/alan_castro/Documents/BovIA -name \"*.png\" -newermt \"-10 minutes\")",
+      "Bash(/bin/ls -la /Users/alan_castro/Documents/BovIA/frontend/.playwright-mcp/)",
+      "Bash(/usr/bin/tail -5)",
+      "Bash(/usr/bin/grep -v \"settings.local\")",
+      "Bash(/bin/rm -f dark-dashboard.png)"
     ]
   }
 }
