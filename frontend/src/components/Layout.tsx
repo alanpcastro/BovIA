@@ -71,6 +71,19 @@ const navItems = [
   },
 ]
 
+const navPorRota = Object.fromEntries(navItems.map(i => [i.to, i]))
+
+/** O menu tinha 16 itens numa lista corrida. Agrupar não reduz o número de telas,
+ *  mas devolve a hierarquia: nenhum bloco passa de 6 itens. Dashboard/Agenda ficam
+ *  soltos no topo (uso diário) e Configurações solto no fim. */
+const navGroups: Array<{ label: string | null; rotas: string[] }> = [
+  { label: null, rotas: ['/dashboard', '/agenda'] },
+  { label: 'Rebanho', rotas: ['/animais', '/lotes', '/pastagens', '/pesagens', '/saude', '/reproducao'] },
+  { label: 'Financeiro', rotas: ['/movimentacoes', '/financeiro', '/custos-nutricionais', '/despesas-fixas'] },
+  { label: 'Análise', rotas: ['/graficos', '/relatorios', '/simulador'] },
+  { label: null, rotas: ['/configuracoes'] },
+]
+
 // Atalhos da barra inferior (mobile). O 5º item ("Mais") abre a gaveta completa.
 const bottomNavItems = [
   {
@@ -155,16 +168,24 @@ export default function Layout() {
         </div>
 
         <nav className="sidebar-nav">
-          <div className="sidebar-section-label">Menu</div>
-          {navItems.map(item => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
-            >
-              {item.icon}
-              <span>{item.label}</span>
-            </NavLink>
+          {navGroups.map((grupo, i) => (
+            <div key={grupo.label ?? `grupo-${i}`}>
+              {grupo.label && <div className="sidebar-section-label">{grupo.label}</div>}
+              {grupo.rotas.map(rota => {
+                const item = navPorRota[rota]
+                if (!item) return null
+                return (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+                  >
+                    {item.icon}
+                    <span>{item.label}</span>
+                  </NavLink>
+                )
+              })}
+            </div>
           ))}
         </nav>
 

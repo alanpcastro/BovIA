@@ -24,6 +24,24 @@ const categoriaBadge: Record<string, string> = {
   vaca: 'badge-amber', boi_magro: 'badge-gray', boi_gordo: 'badge-green'
 }
 
+/** Ganho médio diário desde a entrada do animal (kg/dia).
+ *  A lista não traz GMD entre pesagens — este é o ganho do período de permanência,
+ *  que é o número que o produtor usa pra decidir. Só retorna quando é positivo e
+ *  calculável; perda de peso já aparece no badge vermelho ao lado do peso. */
+function ganhoDiario(a: Animal): string | null {
+  if (a.peso_atual == null || a.peso_entrada == null || !a.data_entrada) return null
+  const dias = Math.round((Date.now() - new Date(`${a.data_entrada}T12:00:00`).getTime()) / 86400000)
+  if (dias < 1) return null
+  const g = (a.peso_atual - a.peso_entrada) / dias
+  if (!isFinite(g) || g <= 0) return null
+  // "méd." distingue da tela de Pesagens, que mostra o GMD entre as duas
+  // últimas pesagens — outro número, também correto.
+  return `méd. ${g.toFixed(2).replace('.', ',')} kg/dia`
+}
+
+/** Visão padrão da lista: só os animais ativos. Usado no mount e no "Limpar filtros". */
+const FILTROS_PADRAO = { status: 'ativo', sexo: '', categoria: '', lote_id: '', busca: '' }
+
 const emptyForm = {
   brinco: '', nome: '', raca: '', sexo: 'femea', categoria: '',
   data_nascimento: '', peso_entrada: '', data_entrada: todayLocal(), origem: 'nascido', lote_id: '', observacoes: '',
@@ -44,7 +62,8 @@ export default function Animais() {
   const pageSize = 50
   const [lotes, setLotes] = useState<Lote[]>([])
   const [showModal, setShowModal] = useState(false)
-  const [filtros, setFiltros] = useState({ status: 'ativo', sexo: '', categoria: '', lote_id: '', busca: '' })
+  const [filtros, setFiltros] = useState(FILTROS_PADRAO)
+  const [filtrosAbertos, setFiltrosAbertos] = useState(false)
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
   const [erro, setErro] = useState('')
@@ -221,6 +240,15 @@ export default function Animais() {
 
   const lotesMap = Object.fromEntries(lotes.map(l => [l.id, l.nome]))
 
+  // Quantos filtros fogem da visão padrão. A busca não entra na conta porque
+  // o campo dela fica sempre visível — o contador é sobre o que está escondido.
+  const filtrosAtivos = [
+    filtros.status !== FILTROS_PADRAO.status,
+    !!filtros.sexo,
+    !!filtros.categoria,
+    !!filtros.lote_id,
+  ].filter(Boolean).length
+
   return (
     <div>
       <div className="page-header">
@@ -268,32 +296,50 @@ export default function Animais() {
           <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707l-6.414 6.414A1 1 0 0014 13.828V19a1 1 0 01-.553.894l-4 2A1 1 0 018 21v-7.172a1 1 0 00-.293-.707L1.293 6.707A1 1 0 011 6V4z"/>
         </svg>
         <input
-          className="form-input"
-          style={{ width: 200 }}
+          className="form-input filters-busca"
           placeholder="Buscar por brinco ou nome..."
           value={filtros.busca}
           onChange={e => setFiltros(f => ({ ...f, busca: e.target.value }))}
         />
-        <select className="form-select" style={{ width: 'auto' }} value={filtros.status} onChange={e => setFiltros(f => ({ ...f, status: e.target.value }))}>
-          <option value="">Todos os status</option>
-          <option value="ativo">Ativo</option>
-          <option value="vendido">Vendido</option>
-          <option value="morto">Morto</option>
-          <option value="transferido">Transferido</option>
-        </select>
-        <select className="form-select" style={{ width: 'auto' }} value={filtros.sexo} onChange={e => setFiltros(f => ({ ...f, sexo: e.target.value }))}>
-          <option value="">Todos os sexos</option>
-          <option value="macho">♂ Macho</option>
-          <option value="femea">♀ Fêmea</option>
-        </select>
-        <select className="form-select" style={{ width: 'auto' }} value={filtros.categoria} onChange={e => setFiltros(f => ({ ...f, categoria: e.target.value }))}>
-          <option value="">Todas as categorias</option>
-          {categorias.map(c => <option key={c} value={c}>{categoriaLabel[c]}</option>)}
-        </select>
-        <select className="form-select" style={{ width: 'auto' }} value={filtros.lote_id} onChange={e => setFiltros(f => ({ ...f, lote_id: e.target.value }))}>
-          <option value="">Todos os lotes</option>
-          {lotes.map(l => <option key={l.id} value={l.id}>{l.nome}</option>)}
-        </select>
+        {/* No celular os quatro selects ficavam sempre abertos e empurravam o
+            primeiro animal pra fora da tela. Aqui eles entram num painel que
+            só abre quando o produtor quer filtrar — e o contador avisa quando
+            a lista está filtrada. No desktop tudo continua visível. */}
+        <button
+          type="button"
+          className={`btn btn-sm filters-toggle ${filtrosAtivos > 0 ? 'btn-primary' : 'btn-outline'}`}
+          aria-expanded={filtrosAbertos}
+          onClick={() => setFiltrosAbertos(o => !o)}
+        >
+          Filtrar{filtrosAtivos > 0 ? ` · ${filtrosAtivos}` : ''}
+        </button>
+        <div className={`filters-avancados${filtrosAbertos ? ' aberto' : ''}`}>
+          <select className="form-select" style={{ width: 'auto' }} value={filtros.status} onChange={e => setFiltros(f => ({ ...f, status: e.target.value }))}>
+            <option value="">Todos os status</option>
+            <option value="ativo">Ativo</option>
+            <option value="vendido">Vendido</option>
+            <option value="morto">Morto</option>
+            <option value="transferido">Transferido</option>
+          </select>
+          <select className="form-select" style={{ width: 'auto' }} value={filtros.sexo} onChange={e => setFiltros(f => ({ ...f, sexo: e.target.value }))}>
+            <option value="">Todos os sexos</option>
+            <option value="macho">♂ Macho</option>
+            <option value="femea">♀ Fêmea</option>
+          </select>
+          <select className="form-select" style={{ width: 'auto' }} value={filtros.categoria} onChange={e => setFiltros(f => ({ ...f, categoria: e.target.value }))}>
+            <option value="">Todas as categorias</option>
+            {categorias.map(c => <option key={c} value={c}>{categoriaLabel[c]}</option>)}
+          </select>
+          <select className="form-select" style={{ width: 'auto' }} value={filtros.lote_id} onChange={e => setFiltros(f => ({ ...f, lote_id: e.target.value }))}>
+            <option value="">Todos os lotes</option>
+            {lotes.map(l => <option key={l.id} value={l.id}>{l.nome}</option>)}
+          </select>
+          {filtrosAtivos > 0 && (
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => setFiltros(FILTROS_PADRAO)}>
+              Limpar filtros
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Estado vazio: conta nova (nenhum filtro alterado + zero total) */}
@@ -326,7 +372,7 @@ export default function Animais() {
 
       {/* Tabela */}
       <div className="table-wrapper table-wrapper-cards" style={total === 0 && filtros.status === 'ativo' && !filtros.sexo && !filtros.categoria && !filtros.lote_id && !filtros.busca ? { display: 'none' } : undefined}>
-        <table className="data-table data-table-big table-cards">
+        <table className="data-table data-table-big table-cards table-cards-compact">
           <thead>
             <tr>
               <th style={{ width: 40, textAlign: 'center' }}>
@@ -395,13 +441,13 @@ export default function Animais() {
                     style={{ cursor: 'pointer', width: 16, height: 16 }}
                   />
                 </td>
-                <td data-label="Brinco" style={{ fontWeight: 800, color: 'var(--gray-900)' }}>{a.brinco ? `#${a.brinco}` : <span style={{ color: 'var(--gray-400)' }}>—</span>}</td>
-                <td data-label="Nome" style={{ fontWeight: 600 }}>{a.nome || <span style={{ color: 'var(--gray-400)' }}>—</span>}</td>
-                <td data-label="Raça" style={{ color: 'var(--gray-600)' }}>{a.raca || '—'}</td>
-                <td data-label="Sexo" style={{ fontWeight: 600 }}>{a.sexo === 'macho' ? 'Macho' : 'Fêmea'}</td>
-                <td data-label="Categoria">{a.categoria ? <span className={`badge ${categoriaBadge[a.categoria]}`}>{categoriaLabel[a.categoria]}</span> : <span style={{ color: 'var(--gray-400)' }}>—</span>}</td>
-                <td data-label="Lote" style={{ color: 'var(--gray-600)' }}>{a.lote_id ? (lotesMap[a.lote_id] || '—') : '—'}</td>
-                <td data-label="Peso Atual" style={{ fontWeight: 700, color: 'var(--gray-800)' }}>
+                <td className="cell-brinco" data-label="Brinco" style={{ fontWeight: 800, color: 'var(--gray-900)' }}>{a.brinco ? `#${a.brinco}` : <span style={{ color: 'var(--gray-400)' }}>—</span>}</td>
+                <td className="cell-secundaria" data-label="Nome" style={{ fontWeight: 600 }}>{a.nome || <span style={{ color: 'var(--gray-400)' }}>—</span>}</td>
+                <td className="cell-secundaria" data-label="Raça" style={{ color: 'var(--gray-600)' }}>{a.raca || '—'}</td>
+                <td className="cell-secundaria" data-label="Sexo" style={{ fontWeight: 600 }}>{a.sexo === 'macho' ? 'Macho' : 'Fêmea'}</td>
+                <td className="cell-secundaria" data-label="Categoria">{a.categoria ? <span className={`badge ${categoriaBadge[a.categoria]}`}>{categoriaLabel[a.categoria]}</span> : <span style={{ color: 'var(--gray-400)' }}>—</span>}</td>
+                <td className="cell-secundaria" data-label="Lote" style={{ color: 'var(--gray-600)' }}>{a.lote_id ? (lotesMap[a.lote_id] || '—') : '—'}</td>
+                <td className="cell-peso" data-label="Peso Atual" style={{ fontWeight: 700, color: 'var(--gray-800)' }}>
                   {a.peso_atual != null ? (
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                       {formatKg(a.peso_atual)}
@@ -427,7 +473,23 @@ export default function Animais() {
                       ? <span style={{ fontWeight: 400, color: 'var(--gray-400)' }}>{formatKg(a.peso_entrada)} <span style={{ fontSize: 11 }}>(entrada)</span></span>
                       : <span style={{ color: 'var(--gray-400)' }}>—</span>}
                 </td>
-                <td data-label="Status"><span className={`badge ${statusBadge[a.status]}`} style={{ fontSize: 13, padding: '5px 12px' }}>{statusLabel[a.status]}</span></td>
+                {/* Linha de contexto — só aparece no cartão do celular.
+                    Reúne o que saiu das células secundárias, em fonte menor. */}
+                <td className="cell-resumo" title="Lote · categoria · ganho médio diário desde a entrada">
+                  {[
+                    a.lote_id ? lotesMap[a.lote_id] : null,
+                    a.categoria ? categoriaLabel[a.categoria] : null,
+                    ganhoDiario(a),
+                  ].filter(Boolean).join(' · ')}
+                </td>
+                {/* "Ativo" é o padrão e não precisa ser dito no cartão;
+                    vendido/morto/transferido precisam se destacar. */}
+                <td
+                  className={`cell-status${a.status === 'ativo' ? ' cell-secundaria' : ''}`}
+                  data-label="Status"
+                >
+                  <span className={`badge ${statusBadge[a.status]}`} style={{ fontSize: 13, padding: '5px 12px' }}>{statusLabel[a.status]}</span>
+                </td>
                 <td className="cell-go" style={{ color: 'var(--green-700)', fontWeight: 700, fontSize: 14 }}>Ver →</td>
               </tr>
             ))}

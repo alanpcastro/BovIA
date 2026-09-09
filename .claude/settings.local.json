@@ -51,7 +51,19 @@
       "Bash(/bin/cat requirements.txt)",
       "Bash(/usr/bin/grep -iE \"httpx|requests|aiohttp|fastapi-mail|fastapi_mail\")",
       "Bash(/usr/bin/grep -riE \"import httpx|import requests|from httpx|from requests\" app)",
-      "Bash(python3 -c \"import ast; ast.parse\\(open\\('app/email_service.py'\\).read\\(\\)\\); ast.parse\\(open\\('app/config.py'\\).read\\(\\)\\); print\\('OK sintaxe'\\)\")"
+      "Bash(python3 -c \"import ast; ast.parse\\(open\\('app/email_service.py'\\).read\\(\\)\\); ast.parse\\(open\\('app/config.py'\\).read\\(\\)\\); print\\('OK sintaxe'\\)\")",
+      "Bash(/usr/bin/head -1)",
+      "Bash(/usr/bin/git show *)",
+      "Bash(/usr/bin/grep -c \"modern agritech\")",
+      "Bash(/usr/bin/git fetch *)",
+      "Bash(/usr/bin/tail -2)",
+      "Bash(/usr/bin/git rev-list *)",
+      "Bash(/usr/bin/grep -oE '/assets/[^\"]+\\\\.css')",
+      "Bash(/usr/bin/grep -c \"modern agritech\\\\|09090b\\\\|zinc\")",
+      "Bash(/usr/bin/grep -rnE \"registerType|VitePWA|autoUpdate|prompt\" vite.config.*)",
+      "Bash(/usr/bin/head)",
+      "Bash(/usr/bin/grep -oE \"sidebar-logo img\\\\{[^}]*\\\\}\")",
+      "Bash(/usr/bin/grep -nA6 \"sidebar-logo img\")"
     ]
   }
 }

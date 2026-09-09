@@ -104,27 +104,26 @@ export default function Dashboard() {
         </div>
         <div style={{ maxWidth: 720, margin: '0 auto' }}>
           {steps.map(s => (
-            <div key={s.num} className="card card-padded" style={{
-              display: 'flex', gap: 22, alignItems: 'center', marginBottom: 16,
-              borderLeft: '6px solid var(--green-700)',
-            }}>
-              <div style={{
-                width: 64, height: 64, borderRadius: 'var(--radius)',
-                background: 'var(--green-100)', color: 'var(--green-800)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                fontSize: 28, fontWeight: 800,
-              }}>{s.num}</div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 19, fontWeight: 800, color: 'var(--gray-900)' }}>{s.title}</div>
-                <div style={{ fontSize: 15, color: 'var(--gray-600)', marginTop: 4 }}>{s.desc}</div>
+            <div key={s.num} className="card card-padded onboard-step">
+              <div className="onboard-num">{s.num}</div>
+              <div className="onboard-body">
+                <div className="onboard-title">{s.title}</div>
+                <div className="onboard-desc">{s.desc}</div>
               </div>
-              <button className="btn btn-primary btn-xl" onClick={s.action}>{s.btn}</button>
+              <button className="btn btn-primary btn-xl onboard-btn" onClick={s.action}>{s.btn}</button>
             </div>
           ))}
         </div>
       </div>
     )
   }
+
+  // Sem nenhuma compra nem venda no período não há resultado a exibir: é ausência
+  // de dado, não prejuízo. Um prejuízo real (lucro negativo) continua em vermelho.
+  const semMovimento = fin != null && fin.receita_vendas === 0 && fin.custo_compras === 0
+  // Custo por arroba vem 0 (não null) quando não há custo lançado no período —
+  // "R$ 0,00 / @" seria tão enganoso quanto um traço vermelho.
+  const temCustoArroba = fin != null && fin.custo_por_arroba_produzida != null && fin.custo_por_arroba_produzida > 0
 
   // ── Dashboard normal ──────────────────────────────────────────────────────
   return (
@@ -139,14 +138,20 @@ export default function Dashboard() {
             <div className="field-hero-stat-num">{data.total_animais}</div>
             <div className="field-hero-stat-lbl">Animais</div>
           </div>
-          <div className="field-hero-stat">
-            <div className="field-hero-stat-num">{data.total_machos}</div>
-            <div className="field-hero-stat-lbl">Machos</div>
-          </div>
-          <div className="field-hero-stat">
-            <div className="field-hero-stat-num">{data.total_femeas}</div>
-            <div className="field-hero-stat-lbl">Fêmeas</div>
-          </div>
+          {/* Contagens zeradas não informam nada — num lote só de machos,
+              "0 Fêmeas" ocupava um quadrante inteiro do hero. */}
+          {data.total_machos > 0 && (
+            <div className="field-hero-stat">
+              <div className="field-hero-stat-num">{data.total_machos}</div>
+              <div className="field-hero-stat-lbl">Machos</div>
+            </div>
+          )}
+          {data.total_femeas > 0 && (
+            <div className="field-hero-stat">
+              <div className="field-hero-stat-num">{data.total_femeas}</div>
+              <div className="field-hero-stat-lbl">Fêmeas</div>
+            </div>
+          )}
           {data.peso_medio_kg && (
             <div className="field-hero-stat">
               <div className="field-hero-stat-num">{Math.round(data.peso_medio_kg)}<span style={{ fontSize: 20 }}>kg</span></div>
@@ -218,33 +223,48 @@ export default function Dashboard() {
           <div className="kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16, marginBottom: 28 }}>
             <div className="kpi-big">
               <div className="kpi-big-icon" style={{
-                background: fin.lucro_liquido >= 0 ? 'var(--green-100)' : 'var(--red-100)',
-                color: fin.lucro_liquido >= 0 ? 'var(--green-800)' : 'var(--red-600)',
+                background: semMovimento ? 'var(--gray-100)' : (fin.lucro_liquido >= 0 ? 'var(--green-100)' : 'var(--red-100)'),
+                color: semMovimento ? 'var(--gray-500)' : (fin.lucro_liquido >= 0 ? 'var(--green-800)' : 'var(--red-600)'),
               }}><IconCash /></div>
               <div>
                 <div className="kpi-big-label">Lucro do Mês</div>
-                <div className="kpi-big-value" style={{ color: fin.lucro_liquido >= 0 ? 'var(--green-800)' : 'var(--red-600)' }}>
-                  {fmtCompact(fin.lucro_liquido)}
-                </div>
-              </div>
-            </div>
-            <div className="kpi-big">
-              <div className="kpi-big-icon" style={{ background: 'var(--amber-100)', color: 'var(--amber-600)' }}><IconScale /></div>
-              <div>
-                <div className="kpi-big-label">Custo / @</div>
-                <div className="kpi-big-value">{fin.custo_por_arroba_produzida != null ? fmt(fin.custo_por_arroba_produzida) : '—'}</div>
+                {semMovimento ? (
+                  <div className="kpi-big-empty">Sem compras ou vendas no período</div>
+                ) : (
+                  <div className="kpi-big-value" style={{ color: fin.lucro_liquido >= 0 ? 'var(--green-800)' : 'var(--red-600)' }}>
+                    {fmtCompact(fin.lucro_liquido)}
+                  </div>
+                )}
               </div>
             </div>
             <div className="kpi-big">
               <div className="kpi-big-icon" style={{
-                background: fin.rentabilidade_pct != null && fin.rentabilidade_pct >= 0 ? 'var(--green-100)' : 'var(--red-100)',
-                color: fin.rentabilidade_pct != null && fin.rentabilidade_pct >= 0 ? 'var(--green-800)' : 'var(--red-600)',
+                background: temCustoArroba ? 'var(--amber-100)' : 'var(--gray-100)',
+                color: temCustoArroba ? 'var(--amber-600)' : 'var(--gray-500)',
+              }}><IconScale /></div>
+              <div>
+                <div className="kpi-big-label">Custo / @</div>
+                {temCustoArroba ? (
+                  <div className="kpi-big-value">{fmt(fin.custo_por_arroba_produzida)}</div>
+                ) : (
+                  <div className="kpi-big-empty">Lance custos e pesagens para calcular</div>
+                )}
+              </div>
+            </div>
+            <div className="kpi-big">
+              <div className="kpi-big-icon" style={{
+                background: fin.rentabilidade_pct == null ? 'var(--gray-100)' : (fin.rentabilidade_pct >= 0 ? 'var(--green-100)' : 'var(--red-100)'),
+                color: fin.rentabilidade_pct == null ? 'var(--gray-500)' : (fin.rentabilidade_pct >= 0 ? 'var(--green-800)' : 'var(--red-600)'),
               }}><IconChart /></div>
               <div>
                 <div className="kpi-big-label">Rentabilidade</div>
-                <div className="kpi-big-value" style={{ color: fin.rentabilidade_pct != null && fin.rentabilidade_pct >= 0 ? 'var(--green-800)' : 'var(--red-600)' }}>
-                  {fin.rentabilidade_pct != null ? `${fin.rentabilidade_pct}%` : '—'}
-                </div>
+                {fin.rentabilidade_pct != null ? (
+                  <div className="kpi-big-value" style={{ color: fin.rentabilidade_pct >= 0 ? 'var(--green-800)' : 'var(--red-600)' }}>
+                    {`${fin.rentabilidade_pct}%`}
+                  </div>
+                ) : (
+                  <div className="kpi-big-empty">Registre uma venda para ver</div>
+                )}
               </div>
             </div>
           </div>
