@@ -47,7 +47,7 @@ export default function Saude() {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
 
   useEffect(() => {
-    api.get('/animais', { params: { status: 'ativo', page_size: 200 } }).then(r => setAnimais(r.data.items))
+    api.get('/animais', { params: { page_size: 200 } }).then(r => setAnimais(r.data.items))
     api.get('/lotes').then(r => setLotes(r.data))
   }, [])
   function load() {
@@ -226,7 +226,7 @@ export default function Saude() {
       )}
 
       <div className="table-wrapper table-wrapper-cards">
-        <table className="data-table data-table-big table-cards">
+        <table className="data-table data-table-big table-cards table-cards-compact">
           <thead>
             <tr>
               <th style={{ width: 36 }}>
@@ -262,21 +262,34 @@ export default function Saude() {
                       onChange={() => toggleSelect(s.id)}
                     />
                   </td>
-                  <td data-label="Animal" style={{ fontWeight: 600 }}>#{a ? a.brinco : s.animal_id}</td>
-                  <td data-label="Data">{new Date(s.data + 'T00:00').toLocaleDateString('pt-BR')}</td>
-                  <td data-label="Tipo"><span className={`badge ${tipoBadge[s.tipo] || 'badge-gray'}`}>{tipoLabel[s.tipo] || s.tipo}</span></td>
-                  <td data-label="Descrição" style={{ maxWidth: 200 }}>{s.descricao}</td>
-                  <td data-label="Medicamento" style={{ color: 'var(--gray-500)', fontSize: 13 }}>{s.medicamento || '—'}</td>
-                  <td data-label="Custo" style={{ fontWeight: 600, color: s.custo ? 'var(--red-600)' : 'var(--gray-400)' }}>
+                  <td className="cell-id" data-label="Animal" style={{ fontWeight: 600 }}>#{a ? a.brinco : s.animal_id}</td>
+                  <td className="cell-secundaria" data-label="Data">{new Date(s.data + 'T00:00').toLocaleDateString('pt-BR')}</td>
+                  <td className="cell-secundaria" data-label="Tipo"><span className={`badge ${tipoBadge[s.tipo] || 'badge-gray'}`}>{tipoLabel[s.tipo] || s.tipo}</span></td>
+                  <td className="cell-secundaria" data-label="Descrição" style={{ maxWidth: 200 }}>{s.descricao}</td>
+                  <td className="cell-secundaria" data-label="Medicamento" style={{ color: 'var(--gray-500)', fontSize: 13 }}>{s.medicamento || '—'}</td>
+                  <td className="cell-secundaria" data-label="Custo" style={{ fontWeight: 600, color: s.custo ? 'var(--red-600)' : 'var(--gray-400)' }}>
                     {s.custo != null ? formatBRL(s.custo) : '—'}
                   </td>
-                  <td data-label="Próxima">
+                  {/* Herói do cartão de Saúde é a PRÓXIMA data, não o custo — o produtor
+                      abre essa tela pra saber o que está vencendo. */}
+                  <td className="cell-destaque" data-label="Próxima">
                     {s.proxima_data ? (
                       <span style={{ fontWeight: 600, color: vencendo ? 'var(--red-600)' : 'var(--amber-600)', fontSize: 13 }}>
                         {new Date(s.proxima_data + 'T00:00').toLocaleDateString('pt-BR')}
                         {vencendo && <span className="badge badge-red" style={{ marginLeft: 4, fontSize: 10 }}>!</span>}
                       </span>
                     ) : <span style={{ color: 'var(--gray-400)' }}>—</span>}
+                  </td>
+                  {/* Linha de contexto (celular): o "o quê" abre, seguido de tipo, data e custo. */}
+                  <td className="cell-resumo">
+                    <strong style={{ color: 'var(--gray-700)', fontWeight: 600 }}>{s.descricao}</strong>
+                    {' · '}
+                    {[
+                      tipoLabel[s.tipo] || s.tipo,
+                      new Date(s.data + 'T00:00').toLocaleDateString('pt-BR'),
+                      s.custo != null ? formatBRL(s.custo) : null,
+                      s.medicamento || null,
+                    ].filter(Boolean).join(' · ')}
                   </td>
                   <td className="cell-actions">
                     <button className="btn btn-danger btn-sm btn-icon" onClick={() => deletar(s.id)}>
@@ -314,7 +327,7 @@ export default function Saude() {
               <label className="form-label">Animal *</label>
               <select className="form-select" value={form.animal_id} onChange={e => setForm(f => ({ ...f, animal_id: e.target.value }))} required autoFocus>
                 <option value="">Selecione...</option>
-                {animais.map(a => <option key={a.id} value={a.id}>#{a.brinco}{a.nome ? ` — ${a.nome}` : ''}</option>)}
+                {animais.filter(a => a.status === 'ativo').map(a => <option key={a.id} value={a.id}>#{a.brinco}{a.nome ? ` — ${a.nome}` : ''}</option>)}
               </select>
             </div>
             <div className="form-group">

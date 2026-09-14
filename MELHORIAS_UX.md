@@ -16,18 +16,20 @@ do que ele já faz; depois entregamos o que ele ainda não tem.
 
 ---
 
+**Legenda:** ✅ feito · 🟡 parcial · ⬜ pendente · ⛔ descartado (com o motivo registrado)
+
 ## Visão geral das fases
 
 | Fase | O que entrega | Itens | Esforço | Backend? |
 |------|---------------|-------|---------|----------|
-| **1** | ✅ Acabamento — tira o "cheiro de inacabado" | 1–4 | feito | Não |
-| **2** | ✅ Atrito diário — a tela mais usada fica leve | 5–7 | feito | Não |
+| **1** | ✅ Acabamento — tira o "cheiro de inacabado" | 1–4 | **feito** | Não |
+| **2** | ✅ Atrito diário — a tela mais usada fica leve | 5–7, 5.0–5.4 | **feito** | Não |
 | **3** | **Modo Curral** — o app vira ferramenta de trabalho | 8 | ~2–3 dias | Sim |
 | **4** | "Quando vender?" — resposta de negócio | 9 | ~1 dia | Sim (leve) |
 | **5** | Offline-first — funciona sem sinal | 10 | ~1–2 semanas | Sim (grande) |
 
-Fases 1 e 2 são independentes e podem ir em qualquer ordem. A 3 é a que muda o produto.
-A 5 só depois de validar a demanda.
+Fases 1 e 2 estão fechadas — todo o frontend que dava pra melhorar sem backend já saiu.
+A 3 é a que muda o produto. A 5 só depois de validar a demanda.
 
 ---
 
@@ -40,7 +42,7 @@ por hora investida: some com a sensação de protótipo.
 (o nº 2) se revelou alarme falso na verificação e foi descartado sem alteração.
 `tsc --noEmit` limpo.
 
-## 1. Onboarding espremido no celular ✅
+## 1. Onboarding espremido no celular — ✅ FEITO (2026-09-09)
 
 **Problema.** Os três cards do "Vamos começar!" usam layout horizontal
 (número · texto · botão). Em 390 px sobra uma coluna de texto estreitíssima e o
@@ -62,7 +64,7 @@ e o botão ocupa a largura do card.
 
 ---
 
-## 2. ~~"Comprar / Vender" aparece cortado~~ — ALARME FALSO ✅
+## 2. ~~"Comprar / Vender" aparece cortado~~ — ⛔ ALARME FALSO, descartado
 
 **Não era bug.** Medido no DOM em 390 px: o rótulo renderiza em **uma linha, texto
 completo**, com `overflow: visible` e sem `white-space: nowrap`. O tile tem
@@ -78,7 +80,7 @@ capturar só o viewport.
 
 ---
 
-## 3. KPI zerado parece defeito ✅
+## 3. KPI zerado parece defeito — ✅ FEITO (2026-09-09)
 
 **Problema.** Com rebanho cadastrado mas **sem venda registrada**, o "Resultado do Mês"
 mostra `R$ 0`, `R$ 0,00` e uma **Rentabilidade com um traço vermelho**. Parece que a
@@ -103,7 +105,7 @@ explicativas, não `R$ 0` em vermelho.
 
 ---
 
-## 4. O cabeçalho mostra zeros que não informam ✅
+## 4. O cabeçalho mostra zeros que não informam — ✅ FEITO (2026-09-09)
 
 **Problema.** Em um lote só de machos, "Seu Rebanho" exibe **0 FÊMEAS** ocupando um
 quadrante inteiro do hero — espaço nobre gasto com ausência de informação.
@@ -119,17 +121,45 @@ sem quadrante vazio.
 
 ---
 
-# FASE 2 — Atrito diário ✅ CONCLUÍDA (2026-09-09)
+# FASE 2 — Atrito diário ✅ CONCLUÍDA
 
 A tela de Animais é a mais aberta do app. Hoje ela cobra rolagem e paciência todo dia.
 
-**Resultado medido em 390 px:** cartão de **250 px → 73 px** (−71%, como projetado);
-o primeiro animal agora aparece sem rolagem; menu com nenhum bloco acima de 6 itens.
-Desktop conferido intacto (10 `<th>` = 10 `<td>` visíveis, filtros todos na barra).
-As outras telas de cartões (Pesagens etc.) seguem no formato antigo — a variante
-compacta é opt-in via `.table-cards-compact`.
+**Itens 5, 6 e 7 — ✅ feitos em 2026-09-09.** Medido em 390 px: cartão de
+**250 px → 73 px** (−71%, como projetado); o primeiro animal agora aparece sem rolagem;
+menu com nenhum bloco acima de 6 itens. Desktop conferido intacto
+(10 `<th>` = 10 `<td>` visíveis, filtros todos na barra). As outras telas de cartões
+seguem no formato antigo — a variante compacta é opt-in via `.table-cards-compact`.
 
-## 5. Card do animal: 8 linhas com o mesmo peso visual ✅
+**Itens 5.0 a 5.4 — ✅ feitos em 2026-09-13.** Cartão compacto estendido às quatro
+telas que rendiam. Medido em 390 px:
+
+| Tela | Antes | Depois |
+|---|---|---|
+| Movimentações | 433 px | **73 px** |
+| Saúde | 372 px | **110 px** |
+| Pesagens | 291 px | **111 px** |
+| Reprodução | — | **132 px** |
+
+Desktop conferido nas quatro: `<th>` = `<td>` visíveis, linhas como `table-row`.
+
+### Bug encontrado e corrigido no caminho (não estava no plano)
+
+Ao verificar Pesagens, o cartão exibiu **`#725`** — o id cru — no lugar do brinco.
+Causa: Pesagens, Saúde e Reprodução carregavam a lista de animais com
+`status: 'ativo'`, então o mapa de exibição não continha animais **vendidos/mortos**
+e caía no `animal_id`. Movimentações já fazia certo (busca sem filtro de status).
+
+É um bug **pré-existente**, mas o cartão compacto promoveu o brinco a herói da linha 1 —
+um id cru ali é pior do que era na tabela antiga, então foi corrigido junto:
+
+- a busca que alimenta o **mapa de exibição** passou a trazer todos os animais;
+- o dropdown de **cadastro** (registrar pesagem/saúde/reprodução) passou a filtrar
+  `status === 'ativo'` no cliente — não faz sentido lançar em animal vendido;
+- o dropdown de **filtro** segue listando todos, de propósito: rever o histórico de
+  um animal vendido é caso de uso legítimo.
+
+## 5. Card do animal: 8 linhas com o mesmo peso visual — ✅ FEITO (2026-09-09)
 
 **Problema.** Cada animal ocupa 8 linhas — brinco, nome, raça, sexo, categoria, lote,
 peso, status — todas na mesma hierarquia visual. Em um lote homogêneo, **cinco delas
@@ -170,7 +200,7 @@ peso e ganho são legíveis sem esforço a um braço de distância.
 
 ---
 
-## 6. Filtros ocupam uma tela antes do primeiro animal ✅
+## 6. Filtros ocupam uma tela antes do primeiro animal — ✅ FEITO (2026-09-09)
 
 **Problema.** Busca + quatro selects empilhados (status, sexo, categoria, lote) ficam
 sempre abertos. No celular você rola quase uma tela inteira antes de ver **um único
@@ -192,7 +222,7 @@ animal** — e na maioria das vezes não vai filtrar nada.
 
 ---
 
-## 7. 16 itens no menu, sem agrupamento ✅
+## 7. 16 itens no menu, sem agrupamento — ✅ FEITO (2026-09-09)
 
 **Problema.** Dashboard, Agenda, Animais, Lotes, Pastagens, Pesagens, Saúde, Reprodução,
 Movimentações, Financeiro, Simulador, Custos Nutri, Despesas Fixas, Gráficos, Relatórios,
@@ -217,12 +247,137 @@ produtor pequeno menos usa.
 
 ---
 
+## 5.1 — 5.4 Estender o cartão compacto a outras telas — ✅ FEITO (2026-09-13)
+
+O cartão compacto do item 5 valeu tanto que a pergunta natural é: onde mais?
+Medi a altura real de cada tela de cartões em 390 px antes de decidir.
+
+| Tela | Colunas | Altura hoje | Células vazias na medição |
+|---|---|---|---|
+| **Movimentações** | 10 | **433 px** | 4 de 10 (`@`, Origem, Destino, Obs.) |
+| **Saúde** | 7 | **372 px** | Medicamento |
+| **Pesagens** | 5 | **291 px** | Obs. em **6 de 6** linhas |
+| Animais ✅ | 8 | 250 → **73 px** | — |
+| Pastagens | 4 | curta | pouca |
+
+**O critério.** Compactar rende onde se **varre** (achar um animal, conferir o rebanho),
+não onde se **lê** (abri esse bicho pra ver o histórico inteiro). E a forma **não
+transfere igual**: o cartão de Animais funcionou porque tem identidade + **um número
+dominante**. Cada tela tem um "herói" diferente, e é ele que vai pra direita da linha 1.
+
+### 5.0 Renomear as classes antes de espalhar — ✅ FEITO
+
+As classes nasceram pensando só em Animais: `cell-brinco`, `cell-peso`. Aplicadas a um
+lançamento financeiro, `cell-brinco` passa a mentir.
+
+**Como.** Renomear para nomes neutros antes de usar em outra tela:
+`cell-brinco → cell-id`, `cell-peso → cell-destaque`, `cell-resumo` fica como está.
+Mexe em `frontend/src/pages/Animais.tsx` e no bloco `.table-cards-compact`
+do `frontend/src/index.css`.
+
+**Por que primeiro.** Renomear depois de espalhar por quatro telas custa quatro vezes mais.
+
+---
+
+### 5.1 Pesagens — o herói já é número ✅
+
+Maior retorno por esforço: a forma é **idêntica** à de Animais, quase sem trabalho novo.
+"Obs." estava vazia em 6 de 6 linhas na medição.
+
+```
+┌──────────────────────────────────────────┐
+│  #A02            276,0 kg  [+0,442 kg/dia] │
+│  20/08/2026                                │
+└──────────────────────────────────────────┘
+```
+
+- Secundárias: Obs. (só aparece quando preenchida).
+- **Atenção:** o GMD aqui é entre as duas últimas pesagens. Na lista de Animais é a
+  média desde a entrada (prefixada com "méd." justamente pra não confundir). Manter
+  a distinção.
+
+**Onde.** `frontend/src/pages/Pesagens.tsx`.
+
+---
+
+### 5.2 Movimentações — o herói é o valor ✅
+
+**Maior ganho isolado:** o cartão mais alto do app (433 px) e 40% das células vazias.
+
+```
+┌──────────────────────────────────────────┐
+│  #A01  Compra              R$ 2.500,00   │
+│  01/09/2026 · 200 kg · R$ 12,50/kg       │
+└──────────────────────────────────────────┘
+```
+
+- Secundárias: `@`, Origem, Destino, Obs. (só quando preenchidas).
+- **Diferença em relação a Animais:** compra e venda precisam se distinguir de relance —
+  cor ou sinal no valor (venda entra, compra sai). Não basta a palavra.
+
+**Onde.** `frontend/src/pages/Movimentacoes.tsx`.
+
+---
+
+### 5.3 Saúde — o herói NÃO é número, é urgência ✅
+
+Aqui a forma muda de verdade. O produtor não abre Saúde pra ver custo — abre pra saber
+**o que está vencendo**. A tela já marca urgência (vi `Próxima: 10/09/2026!` na medição);
+é isso que merece a direita da linha 1.
+
+```
+┌──────────────────────────────────────────┐
+│  #A01  Aftosa           [Urgente · 10/09] │
+│  Vacinação · 01/08/2026 · R$ 12,50        │
+└──────────────────────────────────────────┘
+```
+
+- Herói: **próxima data** com badge de urgência (não o custo).
+- Secundárias: Medicamento, Custo (vão pra linha 2).
+
+**Onde.** `frontend/src/pages/Saude.tsx`.
+
+---
+
+### 5.4 Reprodução — o herói é status + data prevista ✅
+
+Mesma lógica do 5.3: o que importa é em que pé está a matriz e quando pare.
+
+```
+┌──────────────────────────────────────────┐
+│  #A01  Prenha          Parto ~ mai/2027  │
+│  Cobertura natural · 01/08/2026 · Touro 7 │
+└──────────────────────────────────────────┘
+```
+
+- Herói: **Resultado** (prenha / pendente / nasceu / aborto) + **Parto Previsto**.
+- Secundárias: Touro, Bezerro (só quando existirem).
+
+**Onde.** `frontend/src/pages/Reproducao.tsx`.
+
+---
+
+### Onde NÃO aplicar — decidido, não esquecido
+
+- **Pastagens** — 4 colunas (Lote, Entrada, Saída, Dias), cartão já curto e sem
+  redundância. Compactar não devolve nada.
+- **Lotes** — não usa `table-cards`; já tem layout de cartão próprio.
+- **Sub-tabelas do detalhe do animal** (`AnimalDetalhe.tsx`) — é tela de **leitura**:
+  você escolheu aquele animal justamente pra ver tudo. Já são mais enxutas porque não
+  repetem a coluna "Animal". Prioridade baixa.
+
+**Pronto quando.** Pesagens e Movimentações caem para ~2 linhas por cartão, e as outras
+telas de cartões seguem inalteradas (a variante continua opt-in via
+`.table-cards-compact`).
+
+---
+
 # FASE 3 — Modo Curral
 
 **É o item que muda o produto.** Os outros tiram atrito; este cria a razão de levar
 o celular pro serviço.
 
-## 8. O fluxo do tronco não existe
+## 8. O fluxo do tronco não existe ⬜
 
 **Problema.** Hoje há só dois jeitos de pesar, e nenhum é o que se faz na balança:
 
@@ -294,7 +449,7 @@ modal e sem tirar o foco do campo — e fechar o app no meio não perde nada.
 
 # FASE 4 — "Quando vender?"
 
-## 9. O app tem os dados, mas não responde a pergunta de negócio
+## 9. O app tem os dados, mas não responde a pergunta de negócio ⬜
 
 **Problema.** Peso, GMD e custo por arroba já estão calculados. Falta a **conclusão**.
 O produtor não quer ler três telas e fazer a conta de cabeça — quer a data e o número.
@@ -324,7 +479,7 @@ em uma frase, sem o usuário fazer conta.
 
 # FASE 5 — Offline-first
 
-## 10. Sem sinal, o app não trabalha
+## 10. Sem sinal, o app não trabalha ⬜
 
 **Problema.** O curral raramente tem 4G. Hoje a interface abre pelo cache do PWA,
 mas **não carrega dados nem aceita cadastro** offline — exatamente no momento e no
@@ -364,11 +519,14 @@ sem retorno:
 
 # Se for fazer só três coisas
 
-Na ordem. A primeira muda o produto; as outras duas custam pouco e aparecem no primeiro uso.
+*Atualizado em 2026-09-09: as duas recomendações anteriores — card compacto (item 5) e
+filtros colapsáveis (item 6) — já foram entregues. O que sobra, na ordem:*
 
 1. **Modo Curral** (item 8) — transforma o BovIA de cadastro em ferramenta de trabalho.
-2. **Card compacto do animal** (item 5) — corta 71% da rolagem da tela mais usada.
-3. **Colapsar os filtros** (item 6) — devolve a primeira tela ao conteúdo.
+   Segue sendo o item que muda o produto.
+2. **Cartão compacto em Movimentações** (item 5.2) — o cartão mais alto do app
+   (433 px) com 40% de células vazias. Maior ganho isolado que resta no frontend.
+3. **"Quando vender?"** (item 9) — o app já tem peso, GMD e custo; falta a conclusão.
 
 ---
 

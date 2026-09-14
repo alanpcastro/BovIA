@@ -1648,18 +1648,18 @@ button:focus:not(:focus-visible) {
   }
 
   /* Linha 1 — brinco à esquerda, peso à direita, sem rótulos */
-  .table-cards-compact td.cell-brinco,
-  .table-cards-compact td.cell-peso {
+  .table-cards-compact td.cell-id,
+  .table-cards-compact td.cell-destaque {
     display: block;
     padding: 0 !important;
     border-top: none !important;
     font-size: 19px;
     line-height: 1.25;
   }
-  .table-cards-compact td.cell-brinco::before,
-  .table-cards-compact td.cell-peso::before { content: none; }
-  .table-cards-compact td.cell-brinco { text-align: left; }
-  .table-cards-compact td.cell-peso { text-align: right; }
+  .table-cards-compact td.cell-id::before,
+  .table-cards-compact td.cell-destaque::before { content: none; }
+  .table-cards-compact td.cell-id { text-align: left; }
+  .table-cards-compact td.cell-destaque { text-align: right; }
 
   /* Linha 2 — contexto em fonte menor, largura toda */
   .table-cards-compact td.cell-resumo {
@@ -1673,6 +1673,15 @@ button:focus:not(:focus-visible) {
   }
   .table-cards-compact td.cell-resumo::before { content: none; }
   .table-cards-compact td.cell-resumo:empty { display: none; }
+
+  /* Botões de ação (excluir / editar) ganham a própria linha, à direita.
+     Colocá-los na linha 1, colados ao número em destaque, convidaria toque errado. */
+  .table-cards-compact td.cell-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+    padding: 6px 0 0 !important;
+    border-top: none !important;
+  }
 
   /* Status (só quando não é "ativo") ganha a própria linha */
   .table-cards-compact td.cell-status {

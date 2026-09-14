@@ -441,13 +441,13 @@ export default function Animais() {
                     style={{ cursor: 'pointer', width: 16, height: 16 }}
                   />
                 </td>
-                <td className="cell-brinco" data-label="Brinco" style={{ fontWeight: 800, color: 'var(--gray-900)' }}>{a.brinco ? `#${a.brinco}` : <span style={{ color: 'var(--gray-400)' }}>—</span>}</td>
+                <td className="cell-id" data-label="Brinco" style={{ fontWeight: 800, color: 'var(--gray-900)' }}>{a.brinco ? `#${a.brinco}` : <span style={{ color: 'var(--gray-400)' }}>—</span>}</td>
                 <td className="cell-secundaria" data-label="Nome" style={{ fontWeight: 600 }}>{a.nome || <span style={{ color: 'var(--gray-400)' }}>—</span>}</td>
                 <td className="cell-secundaria" data-label="Raça" style={{ color: 'var(--gray-600)' }}>{a.raca || '—'}</td>
                 <td className="cell-secundaria" data-label="Sexo" style={{ fontWeight: 600 }}>{a.sexo === 'macho' ? 'Macho' : 'Fêmea'}</td>
                 <td className="cell-secundaria" data-label="Categoria">{a.categoria ? <span className={`badge ${categoriaBadge[a.categoria]}`}>{categoriaLabel[a.categoria]}</span> : <span style={{ color: 'var(--gray-400)' }}>—</span>}</td>
                 <td className="cell-secundaria" data-label="Lote" style={{ color: 'var(--gray-600)' }}>{a.lote_id ? (lotesMap[a.lote_id] || '—') : '—'}</td>
-                <td className="cell-peso" data-label="Peso Atual" style={{ fontWeight: 700, color: 'var(--gray-800)' }}>
+                <td className="cell-destaque" data-label="Peso Atual" style={{ fontWeight: 700, color: 'var(--gray-800)' }}>
                   {a.peso_atual != null ? (
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                       {formatKg(a.peso_atual)}

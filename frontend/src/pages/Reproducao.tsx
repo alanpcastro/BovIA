@@ -72,7 +72,7 @@ export default function Reproducao() {
   })
 
   useEffect(() => {
-    api.get('/animais', { params: { status: 'ativo', sexo: 'femea', page_size: 200 } }).then(r => setAnimais(r.data.items))
+    api.get('/animais', { params: { sexo: 'femea', page_size: 200 } }).then(r => setAnimais(r.data.items))
     api.get('/lotes').then(r => setLotes(r.data))
   }, [])
   function load() {
@@ -324,7 +324,7 @@ export default function Reproducao() {
       )}
 
       <div className="table-wrapper table-wrapper-cards">
-        <table className="data-table table-cards">
+        <table className="data-table table-cards table-cards-compact">
           <thead>
             <tr>
               <th style={{ width: 36 }}>
@@ -359,23 +359,40 @@ export default function Reproducao() {
                       onChange={() => toggleSelect(r.id)}
                     />
                   </td>
-                  <td data-label="Animal" style={{ fontWeight: 600 }}>#{a ? a.brinco : r.animal_id}</td>
-                  <td data-label="Data">
+                  <td className="cell-id" data-label="Animal" style={{ fontWeight: 600 }}>#{a ? a.brinco : r.animal_id}</td>
+                  <td className="cell-secundaria" data-label="Data">
                     {formatBRISO(r.data)}
                     {r.data_fim && <span style={{ color: 'var(--gray-500)' }}> a {formatBRISO(r.data_fim)}</span>}
                   </td>
-                  <td data-label="Tipo"><span className="badge badge-teal">{tipoLabel[r.tipo] || r.tipo}</span></td>
-                  <td data-label="Resultado">
+                  <td className="cell-secundaria" data-label="Tipo"><span className="badge badge-teal">{tipoLabel[r.tipo] || r.tipo}</span></td>
+                  {/* Herói do cartão: em que pé está a matriz. A data prevista de parto
+                      vem logo abaixo, na linha de contexto. */}
+                  <td className="cell-destaque" data-label="Resultado">
                     {r.resultado
                       ? <span className={`badge ${resultadoBadge[r.resultado] || 'badge-gray'}`}>{resultadoLabel[r.resultado] || r.resultado}</span>
                       : <span style={{ color: 'var(--gray-400)', fontSize: 13 }}>Pendente</span>
                     }
                   </td>
-                  <td data-label="Touro" style={{ color: 'var(--gray-500)', fontSize: 13 }}>{r.touro_brinco ? `#${r.touro_brinco}` : '—'}</td>
-                  <td data-label="Parto previsto" style={{ fontWeight: 600, color: 'var(--green-700)', fontSize: 13 }}>
+                  <td className="cell-secundaria" data-label="Touro" style={{ color: 'var(--gray-500)', fontSize: 13 }}>{r.touro_brinco ? `#${r.touro_brinco}` : '—'}</td>
+                  <td className="cell-secundaria" data-label="Parto previsto" style={{ fontWeight: 600, color: 'var(--green-700)', fontSize: 13 }}>
                     {r.data_prevista_parto ? new Date(r.data_prevista_parto + 'T00:00').toLocaleDateString('pt-BR') : '—'}
                   </td>
-                  <td data-label="Bezerro" style={{ color: 'var(--gray-500)', fontSize: 13 }}>{r.bezerro_brinco ? `#${r.bezerro_brinco}` : '—'}</td>
+                  <td className="cell-secundaria" data-label="Bezerro" style={{ color: 'var(--gray-500)', fontSize: 13 }}>{r.bezerro_brinco ? `#${r.bezerro_brinco}` : '—'}</td>
+                  {/* Linha de contexto (celular): parto previsto na frente — é a data que
+                      manda o produtor separar a matriz. */}
+                  <td className="cell-resumo">
+                    {r.data_prevista_parto && (
+                      <span style={{ color: 'var(--green-700)', fontWeight: 600 }}>
+                        Parto ~ {new Date(r.data_prevista_parto + 'T00:00').toLocaleDateString('pt-BR')}{' · '}
+                      </span>
+                    )}
+                    {[
+                      tipoLabel[r.tipo] || r.tipo,
+                      formatBRISO(r.data) + (r.data_fim ? ` a ${formatBRISO(r.data_fim)}` : ''),
+                      r.touro_brinco ? `Touro #${r.touro_brinco}` : null,
+                      r.bezerro_brinco ? `Bezerro #${r.bezerro_brinco}` : null,
+                    ].filter(Boolean).join(' · ')}
+                  </td>
                   <td className="cell-actions" style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
                     <button className="btn btn-outline btn-sm btn-icon" title="Editar (mudar resultado, marcar nascimento...)" onClick={() => abrirEdicao(r)}>
                       <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -417,7 +434,7 @@ export default function Reproducao() {
               <label className="form-label">Fêmea *</label>
               <select className="form-select" value={form.animal_id} onChange={e => selecionarFemea(e.target.value)} required autoFocus>
                 <option value="">Selecione...</option>
-                {animais.map(a => <option key={a.id} value={a.id}>#{a.brinco || '(sem brinco)'}{a.nome ? ` — ${a.nome}` : ''}</option>)}
+                {animais.filter(a => a.status === 'ativo').map(a => <option key={a.id} value={a.id}>#{a.brinco || '(sem brinco)'}{a.nome ? ` — ${a.nome}` : ''}</option>)}
               </select>
             </div>
             <div className="form-group">

@@ -31,7 +31,7 @@ export default function Pesagens() {
   const [selectedPesagemIds, setSelectedPesagemIds] = useState<Set<number>>(new Set())
 
   useEffect(() => {
-    api.get('/animais', { params: { status: 'ativo', page_size: 200 } }).then(r => {
+    api.get('/animais', { params: { page_size: 200 } }).then(r => {
       const sorted = [...r.data.items].sort((a, b) => {
         const aNum = parseInt(a.brinco ?? '')
         const bNum = parseInt(b.brinco ?? '')
@@ -238,7 +238,7 @@ export default function Pesagens() {
       )}
 
       <div className="table-wrapper table-wrapper-cards" style={pesagens.length === 0 && !filtroAnimal ? { display: 'none' } : undefined}>
-        <table className="data-table data-table-big table-cards">
+        <table className="data-table data-table-big table-cards table-cards-compact">
           <thead>
             <tr>
               <th style={{ width: 36 }}>
@@ -283,6 +283,7 @@ export default function Pesagens() {
                     />
                   </td>
                   <td
+                    className="cell-id"
                     data-label="Animal"
                     style={{ fontWeight: 600, cursor: 'pointer' }}
                     onClick={() => navigate(`/animais/${p.animal_id}`)}
@@ -290,9 +291,9 @@ export default function Pesagens() {
                     #{animal?.brinco || p.animal_id}
                     {animal?.nome && <span style={{ color: 'var(--gray-400)', fontWeight: 400 }}> — {animal.nome}</span>}
                   </td>
-                  <td data-label="Data">{new Date(p.data + 'T00:00').toLocaleDateString('pt-BR')}</td>
-                  <td data-label="Peso" style={{ fontWeight: 700, color: 'var(--green-700)' }}>{formatKg(p.peso_kg, 1)}</td>
-                  <td data-label="GMD">
+                  <td className="cell-secundaria" data-label="Data">{new Date(p.data + 'T00:00').toLocaleDateString('pt-BR')}</td>
+                  <td className="cell-destaque" data-label="Peso" style={{ fontWeight: 700, color: 'var(--green-700)' }}>{formatKg(p.peso_kg, 1)}</td>
+                  <td className="cell-secundaria" data-label="GMD">
                     {p.gmd != null ? (
                       <span style={{
                         fontWeight: 700,
@@ -302,8 +303,22 @@ export default function Pesagens() {
                       </span>
                     ) : <span style={{ color: 'var(--gray-400)' }}>—</span>}
                   </td>
-                  <td data-label="Obs." style={{ color: 'var(--gray-600)', fontSize: 13, maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <td className="cell-secundaria" data-label="Obs." style={{ color: 'var(--gray-600)', fontSize: 13, maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {p.observacoes || '—'}
+                  </td>
+                  {/* Linha de contexto do cartão (só no celular): data, GMD e obs.
+                      O GMD mantém a cor — é o número que diz se o bicho está rendendo. */}
+                  <td className="cell-resumo">
+                    {new Date(p.data + 'T00:00').toLocaleDateString('pt-BR')}
+                    {p.gmd != null && (
+                      <>
+                        {' · '}
+                        <span style={{ fontWeight: 700, color: gmdPositivo ? 'var(--green-700)' : gmdNegativo ? 'var(--red-600)' : 'var(--gray-500)' }}>
+                          {gmdPositivo ? '+' : ''}{formatNumber(p.gmd, 3)} kg/dia
+                        </span>
+                      </>
+                    )}
+                    {p.observacoes && ` · ${p.observacoes}`}
                   </td>
                   <td className="cell-actions">
                     <button
@@ -346,7 +361,7 @@ export default function Pesagens() {
             <label className="form-label">Animal *</label>
             <select className="form-select" value={form.animal_id} onChange={e => setForm(f => ({ ...f, animal_id: e.target.value }))} required autoFocus>
               <option value="">Selecione um animal...</option>
-              {animais.map(a => <option key={a.id} value={a.id}>#{a.brinco}{a.nome ? ` — ${a.nome}` : ''}</option>)}
+              {animais.filter(a => a.status === 'ativo').map(a => <option key={a.id} value={a.id}>#{a.brinco}{a.nome ? ` — ${a.nome}` : ''}</option>)}
             </select>
           </div>
           <div className="grid-2" style={{ marginBottom: 0 }}>

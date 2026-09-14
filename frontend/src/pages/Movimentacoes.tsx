@@ -222,7 +222,7 @@ export default function Movimentacoes() {
       )}
 
       <div className="table-wrapper table-wrapper-cards">
-        <table className="data-table table-cards">
+        <table className="data-table table-cards table-cards-compact">
           <thead>
             <tr>
               <th style={{ width: 36 }}>
@@ -259,18 +259,31 @@ export default function Movimentacoes() {
                       onChange={() => toggleSelect(m.id)}
                     />
                   </td>
-                  <td data-label="Animal" style={{ fontWeight: 600 }}>#{a ? a.brinco : m.animal_id}</td>
-                  <td data-label="Data">{new Date(m.data + 'T00:00').toLocaleDateString('pt-BR')}</td>
-                  <td data-label="Tipo"><span className={`badge ${tipoBadge[m.tipo] || 'badge-gray'}`}>{tipoLabel[m.tipo] || m.tipo}</span></td>
-                  <td data-label="Valor" style={{ fontWeight: 700, color: m.tipo === 'venda' ? 'var(--green-700)' : m.tipo === 'compra' ? 'var(--blue-600)' : 'var(--gray-700)' }}>
+                  <td className="cell-id" data-label="Animal" style={{ fontWeight: 600 }}>#{a ? a.brinco : m.animal_id}</td>
+                  <td className="cell-secundaria" data-label="Data">{new Date(m.data + 'T00:00').toLocaleDateString('pt-BR')}</td>
+                  <td className="cell-secundaria" data-label="Tipo"><span className={`badge ${tipoBadge[m.tipo] || 'badge-gray'}`}>{tipoLabel[m.tipo] || m.tipo}</span></td>
+                  <td className="cell-destaque" data-label="Valor" style={{ fontWeight: 700, color: m.tipo === 'venda' ? 'var(--green-700)' : m.tipo === 'compra' ? 'var(--blue-600)' : 'var(--gray-700)' }}>
                     {m.valor != null ? formatBRL(m.valor) : '—'}
                   </td>
-                  <td data-label="Peso" style={{ color: 'var(--gray-500)', fontSize: 13 }}>{m.peso_kg ? formatKg(m.peso_kg) : '—'}</td>
-                  <td data-label="@" style={{ color: 'var(--amber-600)', fontSize: 13, fontWeight: 600 }}>{m.preco_arroba ? formatBRL(m.preco_arroba) : '—'}</td>
-                  <td data-label="R$/kg" style={{ color: 'var(--gray-500)', fontSize: 13 }}>{m.custo_kg != null ? formatBRL(m.custo_kg) : '—'}</td>
-                  <td data-label="Origem" style={{ color: 'var(--gray-500)', fontSize: 13 }}>{m.origem || '—'}</td>
-                  <td data-label="Destino" style={{ color: 'var(--gray-500)', fontSize: 13 }}>{m.destino || '—'}</td>
-                  <td data-label="Obs." style={{ color: 'var(--gray-400)', fontSize: 13 }}>{m.observacoes || '—'}</td>
+                  <td className="cell-secundaria" data-label="Peso" style={{ color: 'var(--gray-500)', fontSize: 13 }}>{m.peso_kg ? formatKg(m.peso_kg) : '—'}</td>
+                  <td className="cell-secundaria" data-label="@" style={{ color: 'var(--amber-600)', fontSize: 13, fontWeight: 600 }}>{m.preco_arroba ? formatBRL(m.preco_arroba) : '—'}</td>
+                  <td className="cell-secundaria" data-label="R$/kg" style={{ color: 'var(--gray-500)', fontSize: 13 }}>{m.custo_kg != null ? formatBRL(m.custo_kg) : '—'}</td>
+                  <td className="cell-secundaria" data-label="Origem" style={{ color: 'var(--gray-500)', fontSize: 13 }}>{m.origem || '—'}</td>
+                  <td className="cell-secundaria" data-label="Destino" style={{ color: 'var(--gray-500)', fontSize: 13 }}>{m.destino || '—'}</td>
+                  <td className="cell-secundaria" data-label="Obs." style={{ color: 'var(--gray-400)', fontSize: 13 }}>{m.observacoes || '—'}</td>
+                  {/* Linha de contexto do cartão (celular). O badge de tipo abre a linha:
+                      cor do valor sozinha não basta pra distinguir compra de venda. */}
+                  <td className="cell-resumo">
+                    <span className={`badge ${tipoBadge[m.tipo] || 'badge-gray'}`} style={{ fontSize: 11, padding: '1px 7px', marginRight: 6 }}>
+                      {tipoLabel[m.tipo] || m.tipo}
+                    </span>
+                    {[
+                      new Date(m.data + 'T00:00').toLocaleDateString('pt-BR'),
+                      m.peso_kg ? formatKg(m.peso_kg) : null,
+                      m.custo_kg != null ? `${formatBRL(m.custo_kg)}/kg` : null,
+                      m.origem || m.destino || null,
+                    ].filter(Boolean).join(' · ')}
+                  </td>
                 </tr>
               )
             })}
