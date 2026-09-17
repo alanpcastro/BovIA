@@ -1742,3 +1742,184 @@ button:focus:not(:focus-visible) {
   scrollbar-width: none;
 }
 .detail-tabs::-webkit-scrollbar { display: none; }
+
+/* ═══════════════════════════════════════
+   MODO CURRAL — pesagem sequencial no tronco
+   Tela de trabalho, não de consulta: alvos grandes (luva),
+   alto contraste (sol) e a ação principal na zona do polegar.
+═══════════════════════════════════════ */
+.curral {
+  max-width: 560px;
+  margin: 0 auto;
+  /* Espaço pra barra de ações fixa não cobrir a lista */
+  padding-bottom: calc(150px + env(safe-area-inset-bottom, 0px));
+}
+
+.curral-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.curral-titulo {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--gray-900);
+  letter-spacing: -0.5px;
+}
+.curral-sub {
+  font-size: 14px;
+  color: var(--gray-600);
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.curral-entrada {
+  background: var(--surface);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Campos grandes: digitar com luva, ler no sol */
+.curral-campo {
+  font-size: 26px !important;
+  font-weight: 700;
+  min-height: 62px !important;
+  text-align: center;
+  letter-spacing: 0.5px;
+}
+.curral-campo-peso {
+  font-size: 38px !important;
+  min-height: 74px !important;
+}
+
+.curral-achado {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  background: var(--green-50);
+  border: 1px solid var(--green-100);
+  font-size: 15px;
+  color: var(--gray-800);
+}
+.curral-achado-repetido {
+  background: var(--amber-100);
+  border-color: var(--amber-600);
+}
+.curral-achado-info {
+  font-size: 13px;
+  color: var(--gray-600);
+  margin-top: 2px;
+}
+
+.curral-sugestoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.curral-novo {
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  border: 1px dashed var(--gray-300);
+  font-size: 14px;
+  color: var(--gray-700);
+}
+.curral-novo-acoes {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.curral-novo-acoes .form-select { flex: 1; }
+
+.curral-erro { margin-top: 12px; }
+.curral-ganho {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  background: var(--green-100);
+  color: var(--green-800);
+  font-weight: 700;
+  font-size: 15px;
+  text-align: center;
+}
+
+.curral-lista {
+  margin-top: 18px;
+  background: var(--surface);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+.curral-lista-topo {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--surface-2);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--gray-500);
+}
+.curral-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--gray-100);
+}
+.curral-item-brinco {
+  font-weight: 700;
+  color: var(--gray-900);
+  font-size: 16px;
+}
+.curral-item-peso {
+  flex: 1;
+  text-align: right;
+  font-weight: 700;
+  color: var(--gray-700);
+  font-size: 16px;
+}
+
+/* Ação principal fixa na base — alcance do polegar, sem rolar */
+.curral-acoes {
+  position: fixed;
+  /* Começa depois da sidebar fixa (240px) — com left:0 a barra passava por baixo
+     dela e escondia parte do botão principal no desktop. */
+  left: 240px;
+  right: 0;
+  bottom: 0;
+  z-index: 96;
+  display: flex;
+  gap: 10px;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+  background: var(--surface);
+  border-top: 1px solid var(--gray-200);
+  box-shadow: 0 -4px 16px rgba(0,0,0,0.08);
+}
+.curral-salvar {
+  flex: 2;
+  min-height: 60px;
+  font-size: 18px;
+}
+.curral-concluir {
+  flex: 1;
+  min-height: 60px;
+  font-size: 15px;
+}
+
+/* No celular a barra inferior de navegação sai de cena: a tela é de trabalho,
+   e um toque errado no meio da pesagem custa caro. */
+@media (max-width: 768px) {
+  /* No celular a sidebar vira gaveta: a barra volta a ocupar a largura toda */
+  .curral-acoes { left: 0; bottom: 0; }
+  body:has(.curral) .bottom-nav { display: none !important; }
+  body:has(.curral) .app-main { padding-bottom: 16px; }
+}

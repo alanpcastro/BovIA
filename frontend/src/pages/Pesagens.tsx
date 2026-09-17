@@ -155,6 +155,13 @@ export default function Pesagens() {
           <div className="page-subtitle">Controle de peso e GMD do rebanho</div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
+          {/* Fluxo do tronco: pesagem individual em sequência, sem modal */}
+          <button className="btn btn-primary btn-xl" onClick={() => navigate('/curral')}>
+            <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
+            Modo Curral
+          </button>
           <button className="btn btn-ghost btn-xl" onClick={() => { setLoteForm({ lote_id: '', data: todayLocal(), peso_medio_kg: '', observacoes: '' }); setErro(''); setLoteConfirm(false); setShowLoteModal(true) }}>
             Pesar Lote Inteiro
           </button>

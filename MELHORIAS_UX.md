@@ -24,7 +24,7 @@ do que ele já faz; depois entregamos o que ele ainda não tem.
 |------|---------------|-------|---------|----------|
 | **1** | ✅ Acabamento — tira o "cheiro de inacabado" | 1–4 | **feito** | Não |
 | **2** | ✅ Atrito diário — a tela mais usada fica leve | 5–7, 5.0–5.4 | **feito** | Não |
-| **3** | **Modo Curral** — o app vira ferramenta de trabalho | 8 | ~2–3 dias | Sim |
+| **3** | ✅ **Modo Curral** — o app vira ferramenta de trabalho | 8 | **feito** | Sim |
 | **4** | "Quando vender?" — resposta de negócio | 9 | ~1 dia | Sim (leve) |
 | **5** | Offline-first — funciona sem sinal | 10 | ~1–2 semanas | Sim (grande) |
 
@@ -372,12 +372,40 @@ telas de cartões seguem inalteradas (a variante continua opt-in via
 
 ---
 
-# FASE 3 — Modo Curral
+# FASE 3 — Modo Curral ✅ CONCLUÍDA (2026-09-16)
 
 **É o item que muda o produto.** Os outros tiram atrito; este cria a razão de levar
 o celular pro serviço.
 
-## 8. O fluxo do tronco não existe ⬜
+**O que foi entregue**
+
+- `POST /pesagens/lote` — grava a sessão inteira numa transação
+  (`backend/app/routes/pesagens.py`, schemas em `backend/app/schemas/pesagem.py`).
+- Tela `/curral` (`frontend/src/pages/ModoCurral.tsx`) + estilos `.curral-*`
+  no `index.css`. Atalho "Modo Curral" no topo da tela de Pesagens.
+
+**Decisão de projeto: gravação idempotente por (animal, data).** No curral o sinal cai
+e o app reenvia. Em vez de duplicar, o reenvio **atualiza** o peso. Isso também cobre o
+caso legítimo de recorrigir um animal no mesmo dia. Verificado: reenviar a mesma sessão
+deu `criados: 0, atualizados: 3`, com **um único** registro no banco.
+
+**Verificado no navegador em 390×844**
+
+| Comportamento | Resultado |
+|---|---|
+| brinco → Enter → peso → Enter → salva | foco volta sozinho pro brinco |
+| feedback no ato | "#A01: +13 kg desde a última pesagem" |
+| fechar o app no meio | sessão sobreviveu ao reload, com média corrente |
+| envio | 3 pesagens no banco, GMD recalculado, sem duplicata |
+| brinco novo | "Cadastrar e pesar" criou o animal sem sair da tela |
+| corrigir | leitura volta pros campos pra ser regravada |
+| alvo de toque | botão principal com 60 px (mínimo de 48 px) |
+
+**Bug pego na verificação.** No desktop a barra fixa de ações usava `left: 0` e passava
+**por baixo da sidebar**, escondendo parte do "Salvar e próximo". Corrigido com
+`left: 240px` no desktop e `left: 0` no mobile (onde a sidebar é gaveta).
+
+## 8. O fluxo do tronco não existe — ✅ FEITO (2026-09-16)
 
 **Problema.** Hoje há só dois jeitos de pesar, e nenhum é o que se faz na balança:
 
