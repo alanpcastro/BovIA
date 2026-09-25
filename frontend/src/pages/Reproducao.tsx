@@ -1,6 +1,6 @@
 import { useEffect, useState, FormEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import api, { Reproducao as ReproducaoType, Animal, Lote } from '../services/api'
+import api, { Reproducao as ReproducaoType, AnimalLookup, Lote } from '../services/api'
 import Modal from '../components/Modal'
 import { useToast } from '../components/Toast'
 import { todayLocal, addDaysISO, formatBRISO } from '../utils/date'
@@ -47,7 +47,7 @@ export default function Reproducao() {
   const { success, error: toastError } = useToast()
 
   const [registros, setRegistros] = useState<ReproducaoType[]>([])
-  const [animais, setAnimais] = useState<Animal[]>([])
+  const [animais, setAnimais] = useState<AnimalLookup[]>([])
   const [lotes, setLotes] = useState<Lote[]>([])
   const [showModal, setShowModal] = useState(!!animalIdParam)
   const [filtroAnimal, setFiltroAnimal] = useState(animalIdParam || '')
@@ -71,8 +71,15 @@ export default function Reproducao() {
     observacoes: '',
   })
 
+  // Todas as fêmeas, inclusive vendidas: o histórico precisa delas para mostrar o brinco.
+  // O seletor do formulário filtra só as ativas.
+  function carregarFemeas() {
+    return api.get<AnimalLookup[]>('/animais/lookup')
+      .then(r => setAnimais(r.data.filter(a => a.sexo === 'femea')))
+  }
+
   useEffect(() => {
-    api.get('/animais', { params: { sexo: 'femea', page_size: 200 } }).then(r => setAnimais(r.data.items))
+    carregarFemeas()
     api.get('/lotes').then(r => setLotes(r.data))
   }, [])
   function load() {
@@ -202,8 +209,7 @@ export default function Reproducao() {
       setShowModal(false)
       setForm(emptyForm)
       // Recarrega lista de animais para refletir brinco atualizado
-      const r = await api.get('/animais', { params: { status: 'ativo', sexo: 'femea', page_size: 200 } })
-      setAnimais(r.data.items)
+      await carregarFemeas()
       load()
       success('Registro reprodutivo salvo!')
     } catch (err: any) {

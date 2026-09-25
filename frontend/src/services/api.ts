@@ -96,6 +96,8 @@ export interface AlertaPasto {
   tipo: 'superlotacao' | 'sem_rotacao' | 'descanso_excedido'
   mensagem: string
   severidade: 'alta' | 'media' | 'baixa'
+  /** Mesma chave de /alertas — dispensar aqui tira o alerta da Agenda também. */
+  chave: string
 }
 
 export type AlertaTipo =
@@ -113,10 +115,12 @@ export interface Alerta {
   mensagem: string
   data?: string | null
   dias?: number | null
-  entidade_tipo: 'animal' | 'pasto' | 'lote'
+  entidade_tipo: 'animal' | 'pasto' | 'lote' | 'grupo'
   entidade_id: number
   entidade_nome?: string | null
   link: string
+  /** Ocorrências que o alerta representa — enviadas a /alertas/dispensar e /alertas/restaurar. */
+  chaves: string[]
 }
 
 export type CategoriaAnimal = 'bezerro' | 'garrote' | 'novilha' | 'vaca' | 'boi_magro' | 'boi_gordo'
@@ -139,6 +143,13 @@ export interface Animal {
   foto_url?: string | null
   created_at: string
 }
+
+/**
+ * Animal enxuto de GET /animais/lookup — rebanho inteiro, sem paginação, já em ordem
+ * natural de brinco. Inclui vendidos e mortos (o histórico precisa deles para mostrar o
+ * brinco); filtrar ativos é trabalho de cada seletor de formulário.
+ */
+export type AnimalLookup = Pick<Animal, 'id' | 'brinco' | 'nome' | 'sexo' | 'status' | 'lote_id'>
 
 export interface ImpactoDelete {
   pesagens: number
@@ -170,6 +181,8 @@ export interface Saude {
   responsavel?: string
   proxima_data?: string
   observacoes?: string
+  /** Só na listagem: a próxima dose deste registro ainda está em aberto. False = já reforçada. */
+  pendente?: boolean | null
 }
 
 export interface Reproducao {
@@ -231,6 +244,8 @@ export interface AnaliseFinanceira {
   periodo_fim: string
   lote_id?: number
   qtd_cabecas: number
+  /** Rebanho médio no período — divisor de todos os custos "por cabeça". */
+  cabecas_medias_periodo?: number | null
   dias_periodo: number
   peso_medio_inicial?: number
   peso_medio_final?: number
@@ -275,6 +290,8 @@ export interface Dashboard {
     descricao: string
     tipo: string
     proxima_data: string
+    /** Animais com esta mesma dose e vencimento (vacinação de lote = 1 linha). */
+    qtd_animais: number
   }>
   partos_previstos: Array<{
     id: number

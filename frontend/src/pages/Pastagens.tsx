@@ -38,6 +38,18 @@ export default function Pastagens() {
   }
   useEffect(() => { load() }, [])
 
+  // Mesma dispensa da Agenda: tirar o alerta aqui tira de lá também
+  async function dispensarAlerta(a: AlertaPasto) {
+    setAlertas(prev => prev.filter(x => x !== a))
+    try {
+      await api.post('/alertas/dispensar', { chaves: [a.chave] })
+      success('Alerta dispensado. Para trazer de volta, use "Ver alertas dispensados" na Agenda.')
+    } catch (err: any) {
+      toastError(apiErrorMessage(err, 'Erro ao dispensar alerta'))
+      load()
+    }
+  }
+
   function openNew() {
     setEditing(null)
     setForm(emptyForm)
@@ -175,18 +187,33 @@ export default function Pastagens() {
             ⚠️ Alertas de Pastagem
           </div>
           {alertas.map((a, i) => (
-            <div key={i} style={{
+            <div key={a.chave || i} style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
               padding: '8px 0',
               borderTop: i > 0 ? '1px solid var(--border)' : 'none',
               fontSize: 14,
               color: 'var(--gray-800)',
             }}>
-              <strong style={{
-                color: a.severidade === 'alta' ? 'var(--red-600)' : a.severidade === 'media' ? 'var(--amber-600)' : 'var(--gray-600)',
-              }}>
-                [{a.severidade.toUpperCase()}]
-              </strong>{' '}
-              {a.mensagem}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <strong style={{
+                  color: a.severidade === 'alta' ? 'var(--red-600)' : a.severidade === 'media' ? 'var(--amber-600)' : 'var(--gray-600)',
+                }}>
+                  [{a.severidade.toUpperCase()}]
+                </strong>{' '}
+                {a.mensagem}
+              </div>
+              <button
+                className="btn btn-ghost btn-sm btn-icon"
+                onClick={() => dispensarAlerta(a)}
+                aria-label={`Dispensar alerta: ${a.mensagem}`}
+                title="Dispensar alerta"
+              >
+                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
           ))}
         </div>
@@ -284,7 +311,7 @@ export default function Pastagens() {
                 {p.lotes_no_pasto.map(l => (
                   <div key={l.id} style={{
                     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                    padding: '6px 8px', background: 'var(--surface-subtle)', borderRadius: 6, marginBottom: 4,
+                    padding: '6px 8px', background: 'var(--gray-50)', borderRadius: 6, marginBottom: 4,
                   }}>
                     <span style={{ fontSize: 14, fontWeight: 600 }}>
                       {l.nome} <span style={{ color: 'var(--gray-500)', fontWeight: 500 }}>({l.total_animais} animais)</span>

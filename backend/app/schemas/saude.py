@@ -63,6 +63,9 @@ class SaudeOut(BaseModel):
     proxima_data: Optional[date]
     observacoes: Optional[str]
     created_at: datetime
+    # So preenchido na listagem: a proxima dose deste registro ainda esta em aberto (e o
+    # registro mais recente dessa vacina e o animal esta ativo). False = ja reforcada.
+    pendente: Optional[bool] = None
 
     class Config:
         from_attributes = True

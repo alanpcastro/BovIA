@@ -171,7 +171,7 @@ export default function Financeiro() {
           {/* Info do periodo */}
           <div style={{ display: 'flex', gap: 16, marginBottom: 24, flexWrap: 'wrap' }}>
             <div style={{ fontSize: 13, color: 'var(--gray-500)', background: 'var(--gray-50)', padding: '6px 14px', borderRadius: 'var(--radius)' }}>
-              <strong>{data.qtd_cabecas}</strong> cabecas | <strong>{data.dias_periodo}</strong> dias | Rendimento carcaca: <strong>{data.rendimento_carcaca_pct}%</strong>
+              <strong>{data.qtd_cabecas}</strong> cabeças hoje | <strong>{fmtNum(data.cabecas_medias_periodo, '', 1)}</strong> em média no período (base dos custos por cabeça) | <strong>{data.dias_periodo}</strong> dias | Rendimento carcaca: <strong>{data.rendimento_carcaca_pct}%</strong>
             </div>
           </div>
 
@@ -209,9 +209,9 @@ export default function Financeiro() {
               <MetricRow label="Custo Compras" value={fmt(data.custo_compras)} color="var(--red-600)" />
               <MetricRow label="Lucro Bruto" value={fmt(data.lucro_bruto)} color={data.lucro_bruto >= 0 ? 'var(--green-700)' : 'var(--red-600)'} />
               <MetricRow label="Impostos" value={fmt(data.impostos)} color="var(--red-600)" />
-              <MetricRow label="Lucro Liquido" value={fmt(data.lucro_liquido)} color={data.lucro_liquido >= 0 ? 'var(--green-700)' : 'var(--red-600)'} />
-              <MetricRow label="Lucro Liq. s/ Agil (total)" value={fmt(data.lucro_liquido_sem_agil)} color={data.lucro_liquido_sem_agil != null && data.lucro_liquido_sem_agil >= 0 ? 'var(--green-700)' : 'var(--red-600)'} />
-              <MetricRow label="Lucro Liq. s/ Agil (R$/cab)" value={fmt(data.lucro_liquido_sem_agil_por_cab)} color={data.lucro_liquido_sem_agil_por_cab != null && data.lucro_liquido_sem_agil_por_cab >= 0 ? 'var(--green-700)' : 'var(--red-600)'} />
+              <MetricRow label="Lucro Líquido" value={fmt(data.lucro_liquido)} color={data.lucro_liquido >= 0 ? 'var(--green-700)' : 'var(--red-600)'} />
+              <MetricRow label="Lucro Líquido sem Ágio" value={fmt(data.lucro_liquido_sem_agil)} color={data.lucro_liquido_sem_agil != null && data.lucro_liquido_sem_agil >= 0 ? 'var(--green-700)' : 'var(--red-600)'} />
+              <MetricRow label="  por cabeça" value={fmt(data.lucro_liquido_sem_agil_por_cab)} color={data.lucro_liquido_sem_agil_por_cab != null && data.lucro_liquido_sem_agil_por_cab >= 0 ? 'var(--green-700)' : 'var(--red-600)'} />
               <div style={{ marginTop: 12, padding: '10px 14px', borderRadius: 'var(--radius)', background: data.rentabilidade_pct != null && data.rentabilidade_pct >= 0 ? 'var(--green-100)' : 'var(--red-100)', textAlign: 'center' }}>
                 <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: 'var(--gray-500)', marginBottom: 2 }}>Rentabilidade</div>
                 <div style={{ fontSize: 22, fontWeight: 800, color: data.rentabilidade_pct != null && data.rentabilidade_pct >= 0 ? 'var(--green-700)' : 'var(--red-600)' }}>

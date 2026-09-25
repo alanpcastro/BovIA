@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
 from fastapi.responses import FileResponse
 from pathlib import Path
+import re
 import uuid
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -11,9 +12,9 @@ from ..models.pesagem import Pesagem
 from ..models.saude import Saude
 from ..models.reproducao import Reproducao
 from ..models.movimentacao import Movimentacao, TipoMovEnum
-from ..schemas.animal import AnimalCreate, AnimalUpdate, AnimalOut
+from ..schemas.animal import AnimalCreate, AnimalUpdate, AnimalOut, AnimalLookup
 from ..schemas.pesagem import PesagemOut
-from .pesagens import _calcular_gmd
+from ..zootecnia import calcular_gmd
 from ..schemas.saude import SaudeOut
 from ..schemas.reproducao import ReproducaoOut
 from ..schemas.movimentacao import MovimentacaoCreate, MovimentacaoOut
@@ -109,6 +110,35 @@ def listar_animais(
         out_items.append(ao)
 
     return AnimaisPage(total=total, page=page, page_size=page_size, items=out_items)
+
+
+def _chave_natural_brinco(brinco: Optional[str]):
+    """Ordem natural: 'A9' antes de 'A10', '99' antes de '100'. Sem brinco vai para o fim."""
+    if not brinco:
+        return (1, ())
+    return (0, tuple(
+        (0, int(p), "") if p.isdigit() else (1, 0, p.lower())
+        for p in re.split(r"(\d+)", brinco) if p
+    ))
+
+
+# Precisa ficar ANTES de /{animal_id}, senao a rota dinamica captura "lookup".
+@router.get("/lookup", response_model=List[AnimalLookup])
+def lookup_animais(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """Rebanho inteiro, so o necessario para montar seletor e mapa de brinco.
+
+    Sem paginacao de proposito: toda tela que monta lookup precisa de TODOS os animais,
+    inclusive vendidos e mortos — senao o historico exibe o id interno em vez do brinco.
+    Filtrar ativos e responsabilidade de cada seletor de formulario, nunca deste endpoint.
+    """
+    linhas = db.query(
+        Animal.id, Animal.brinco, Animal.nome, Animal.sexo, Animal.status, Animal.lote_id,
+    ).filter(
+        Animal.user_id == current_user.id,
+        Animal.deletado_em == None,  # noqa: E711
+    ).all()
+    linhas.sort(key=lambda a: (_chave_natural_brinco(a.brinco), a.id))
+    return [AnimalLookup.model_validate(a) for a in linhas]
 
 
 @router.post("", response_model=AnimalOut, status_code=201)
@@ -415,7 +445,7 @@ def historico_animal(animal_id: int, db: Session = Depends(get_db), current_user
     pesagens_out = []
     for p in pesagens:
         out = PesagemOut.model_validate(p)
-        out.gmd = _calcular_gmd(db, p.animal_id, p, current_user.id)
+        out.gmd = calcular_gmd(db, p.animal_id, p, current_user.id)
         pesagens_out.append(out)
 
     return {

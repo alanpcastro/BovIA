@@ -11,6 +11,7 @@ from ..schemas.pesagem import (
 )
 from ..auth import get_current_user, check_assinatura_ativa
 from ..models.user import User
+from ..zootecnia import calcular_gmd
 
 router = APIRouter()
 
@@ -22,45 +23,6 @@ class BulkDeleteIn(BaseModel):
 class BulkResult(BaseModel):
     total: int
     afetados: int
-
-
-def _calcular_gmd(db: Session, animal_id: int, pesagem_atual: Pesagem, user_id: int) -> float | None:
-    # Busca a pesagem imediatamente anterior deste animal
-    anterior = (
-        db.query(Pesagem)
-        .join(Animal)
-        .filter(
-            Animal.id == animal_id,
-            Animal.user_id == user_id,
-            Pesagem.data < pesagem_atual.data
-        )
-        .order_by(Pesagem.data.desc())
-        .first()
-    )
-
-    if not anterior:
-        # Sem pesagem anterior: usar peso_entrada e a data do cadastro (created_at).
-        # NAO usar data_nascimento — peso_entrada e o peso quando o animal foi cadastrado,
-        # nao o peso ao nascer (animal pode ter sido comprado adulto ou cadastrado tardiamente).
-        animal = db.query(Animal).filter(Animal.id == animal_id).first()
-        if animal and animal.peso_entrada:
-            # Prioriza a data de entrada informada; se vazia, usa a data de cadastro
-            data_ant = animal.data_entrada or (animal.created_at.date() if animal.created_at else None)
-            if data_ant is None:
-                return None
-            peso_ant = animal.peso_entrada
-        else:
-            return None
-    else:
-        peso_ant = anterior.peso_kg
-        data_ant = anterior.data
-
-    dias = (pesagem_atual.data - data_ant).days
-    if dias <= 0:
-        return None
-
-    ganho = pesagem_atual.peso_kg - peso_ant
-    return round(ganho / dias, 3)
 
 
 @router.get("", response_model=List[PesagemOut])
@@ -82,7 +44,7 @@ def listar_pesagens(
     result = []
     for p in pesagens:
         out = PesagemOut.model_validate(p)
-        out.gmd = _calcular_gmd(db, p.animal_id, p, current_user.id)
+        out.gmd = calcular_gmd(db, p.animal_id, p, current_user.id)
         result.append(out)
     return result
 
@@ -99,7 +61,7 @@ def criar_pesagem(data: PesagemCreate, db: Session = Depends(get_db), current_us
     db.refresh(pesagem)
 
     out = PesagemOut.model_validate(pesagem)
-    out.gmd = _calcular_gmd(db, pesagem.animal_id, pesagem, current_user.id)
+    out.gmd = calcular_gmd(db, pesagem.animal_id, pesagem, current_user.id)
     return out
 
 
@@ -170,7 +132,7 @@ def criar_pesagens_lote(
         for p in gravadas:
             db.refresh(p)
         peso_medio = round(sum(p.peso_kg for p in gravadas) / len(gravadas), 1)
-        gmds = [g for g in (_calcular_gmd(db, p.animal_id, p, current_user.id) for p in gravadas) if g is not None]
+        gmds = [g for g in (calcular_gmd(db, p.animal_id, p, current_user.id) for p in gravadas) if g is not None]
         if gmds:
             gmd_medio = round(sum(gmds) / len(gmds), 3)
 

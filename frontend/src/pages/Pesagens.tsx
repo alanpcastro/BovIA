@@ -1,6 +1,6 @@
 import { useEffect, useState, FormEvent } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import api, { Pesagem, Animal } from '../services/api'
+import api, { Pesagem, AnimalLookup } from '../services/api'
 import Modal from '../components/Modal'
 import { useToast } from '../components/Toast'
 import { formatKg, formatNumber } from '../utils/format'
@@ -14,7 +14,7 @@ export default function Pesagens() {
   const { success, error: toastError } = useToast()
 
   const [pesagens, setPesagens] = useState<Pesagem[]>([])
-  const [animais, setAnimais] = useState<Animal[]>([])
+  const [animais, setAnimais] = useState<AnimalLookup[]>([])
   const [showModal, setShowModal] = useState(!!animalIdParam)
   const [filtroAnimal, setFiltroAnimal] = useState(animalIdParam || '')
   const [form, setForm] = useState({
@@ -31,15 +31,8 @@ export default function Pesagens() {
   const [selectedPesagemIds, setSelectedPesagemIds] = useState<Set<number>>(new Set())
 
   useEffect(() => {
-    api.get('/animais', { params: { page_size: 200 } }).then(r => {
-      const sorted = [...r.data.items].sort((a, b) => {
-        const aNum = parseInt(a.brinco ?? '')
-        const bNum = parseInt(b.brinco ?? '')
-        if (!isNaN(aNum) && !isNaN(bNum)) return aNum - bNum
-        return (a.brinco ?? '').localeCompare(b.brinco ?? '')
-      })
-      setAnimais(sorted)
-    })
+    // Já vem em ordem natural de brinco do servidor
+    api.get<AnimalLookup[]>('/animais/lookup').then(r => setAnimais(r.data))
     api.get('/lotes').then(r => setLotes(r.data))
   }, [])
 

@@ -102,13 +102,14 @@ Se voce nao solicitou essa alteracao, ignore este email.
 
 async def enviar_alerta_vacinacao(email_destino: str, fazenda: str, alertas: list[dict]) -> None:
     linhas = "\n".join(
-        f"- Animal #{a['brinco']} ({a.get('nome') or 'sem nome'}): {a['descricao']} em {a['proxima_data']}"
+        f"- Animal #{a['brinco']} ({a.get('nome') or 'sem nome'}): {a['descricao']} "
+        f"{'ATRASADA desde' if a.get('atrasada') else 'em'} {a['proxima_data']}"
         for a in alertas
     )
     corpo = f"""
 Olá, {fazenda}!
 
-Você tem {len(alertas)} vacinação(ões) prevista(s) nos próximos 7 dias:
+Você tem {len(alertas)} vacinação(ões) atrasada(s) ou prevista(s) para os próximos 7 dias:
 
 {linhas}
 
@@ -118,5 +119,5 @@ Acesse o BovIA para mais detalhes: {settings.FRONTEND_URL}
 """
     await _enviar_email(
         email_destino, fazenda,
-        f"BovIA — {len(alertas)} vacinação(ões) próxima(s)", corpo,
+        f"BovIA — {len(alertas)} vacinação(ões) pendente(s)", corpo,
     )

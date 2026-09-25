@@ -15,6 +15,7 @@ from ..schemas.pasto import (
 )
 from ..auth import get_current_user, check_assinatura_ativa
 from ..models.user import User
+from ..dispensas import chave_pasto, chaves_dispensadas
 
 router = APIRouter()
 
@@ -128,6 +129,7 @@ def _build_pasto_out(pasto: Pasto, db: Session) -> PastoOut:
         superlotado=superlotado,
         dias_ocupacao=dias_ocupacao,
         dias_descanso=dias_descanso,
+        ocupacao_id=ultimo.id if ultimo else None,
         lotes_no_pasto=lotes_out,
     )
     return out
@@ -152,8 +154,9 @@ def criar_pasto(data: PastoCreate, db: Session = Depends(get_db), current_user: 
 
 @router.get("/alertas", response_model=List[AlertaPasto])
 def alertas_pastos(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    """Retorna alertas de superlotação e rotação."""
+    """Retorna alertas de superlotação e rotação (sem os que o produtor dispensou)."""
     pastos = db.query(Pasto).filter(Pasto.user_id == current_user.id).all()
+    ja = chaves_dispensadas(db, current_user.id)
     alertas: List[AlertaPasto] = []
     for p in pastos:
         out = _build_pasto_out(p, db)
@@ -162,20 +165,23 @@ def alertas_pastos(db: Session = Depends(get_db), current_user: User = Depends(g
                 pasto_id=p.id, pasto_nome=p.nome, tipo="superlotacao",
                 mensagem=f"{p.nome} está com {out.taxa_lotacao_ua_ha} UA/ha (capacidade {p.capacidade_ua_ha} UA/ha)",
                 severidade="alta",
+                chave=chave_pasto("superlotacao", p.id, out.ocupacao_id),
             ))
         if out.dias_ocupacao is not None and out.dias_ocupacao > LIMITE_DIAS_OCUPACAO:
             alertas.append(AlertaPasto(
                 pasto_id=p.id, pasto_nome=p.nome, tipo="sem_rotacao",
                 mensagem=f"{p.nome} está ocupado há {out.dias_ocupacao} dias — considere rotacionar",
                 severidade="media",
+                chave=chave_pasto("sem_rotacao", p.id, out.ocupacao_id),
             ))
         if out.dias_descanso is not None and out.dias_descanso > LIMITE_DIAS_DESCANSO:
             alertas.append(AlertaPasto(
                 pasto_id=p.id, pasto_nome=p.nome, tipo="descanso_excedido",
                 mensagem=f"{p.nome} em descanso há {out.dias_descanso} dias — pronto para ocupação",
                 severidade="baixa",
+                chave=chave_pasto("descanso_excedido", p.id, out.ocupacao_id),
             ))
-    return alertas
+    return [a for a in alertas if a.chave not in ja]
 
 
 @router.get("/{pasto_id}", response_model=PastoOut)

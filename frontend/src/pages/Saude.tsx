@@ -1,6 +1,6 @@
 import { useEffect, useState, FormEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import api, { Saude as SaudeType, Animal } from '../services/api'
+import api, { Saude as SaudeType, AnimalLookup } from '../services/api'
 import Modal from '../components/Modal'
 import { useToast } from '../components/Toast'
 import { formatBRL } from '../utils/format'
@@ -32,7 +32,7 @@ export default function Saude() {
   const { success, error: toastError } = useToast()
 
   const [registros, setRegistros] = useState<SaudeType[]>([])
-  const [animais, setAnimais] = useState<Animal[]>([])
+  const [animais, setAnimais] = useState<AnimalLookup[]>([])
   const [showModal, setShowModal] = useState(!!animalIdParam)
   const [filtroAnimal, setFiltroAnimal] = useState(animalIdParam || '')
   const [filtroTipo, setFiltroTipo] = useState('')
@@ -47,7 +47,7 @@ export default function Saude() {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
 
   useEffect(() => {
-    api.get('/animais', { params: { page_size: 200 } }).then(r => setAnimais(r.data.items))
+    api.get<AnimalLookup[]>('/animais/lookup').then(r => setAnimais(r.data))
     api.get('/lotes').then(r => setLotes(r.data))
   }, [])
   function load() {
@@ -252,7 +252,9 @@ export default function Saude() {
             )}
             {registrosFiltrados.map(s => {
               const a = animaisMap[s.animal_id]
-              const vencendo = s.proxima_data && Math.ceil((new Date(s.proxima_data + 'T00:00').getTime() - Date.now()) / 86400000) <= 7
+              // Só a dose em aberto (registro mais recente da vacina) pode estar vencendo —
+              // a de um registro antigo já foi reforçada e não é mais pendência.
+              const vencendo = s.pendente && s.proxima_data && Math.ceil((new Date(s.proxima_data + 'T00:00').getTime() - Date.now()) / 86400000) <= 7
               return (
                 <tr key={s.id} style={{ background: selectedIds.has(s.id) ? 'var(--green-50)' : undefined }}>
                   <td className="cell-check">
@@ -274,7 +276,10 @@ export default function Saude() {
                       abre essa tela pra saber o que está vencendo. */}
                   <td className="cell-destaque" data-label="Próxima">
                     {s.proxima_data ? (
-                      <span style={{ fontWeight: 600, color: vencendo ? 'var(--red-600)' : 'var(--amber-600)', fontSize: 13 }}>
+                      <span
+                        style={{ fontWeight: 600, color: !s.pendente ? 'var(--gray-400)' : vencendo ? 'var(--red-600)' : 'var(--amber-600)', fontSize: 13 }}
+                        title={s.pendente ? undefined : 'Sem pendência: dose já reforçada, animal fora do rebanho ou alerta dispensado'}
+                      >
                         {new Date(s.proxima_data + 'T00:00').toLocaleDateString('pt-BR')}
                         {vencendo && <span className="badge badge-red" style={{ marginLeft: 4, fontSize: 10 }}>!</span>}
                       </span>

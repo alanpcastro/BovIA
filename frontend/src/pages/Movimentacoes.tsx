@@ -1,5 +1,5 @@
 import { useEffect, useState, FormEvent } from 'react'
-import api, { Movimentacao, Animal } from '../services/api'
+import api, { Movimentacao, AnimalLookup } from '../services/api'
 import Modal from '../components/Modal'
 import { useToast } from '../components/Toast'
 import { formatBRL, formatKg } from '../utils/format'
@@ -25,7 +25,7 @@ const emptyForm = {
 export default function Movimentacoes() {
   const { success, error: toastError } = useToast()
   const [movs, setMovs] = useState<Movimentacao[]>([])
-  const [animais, setAnimais] = useState<Animal[]>([])
+  const [animais, setAnimais] = useState<AnimalLookup[]>([])
   const [showModal, setShowModal] = useState(false)
   const [filtroTipo, setFiltroTipo] = useState('')
   const [form, setForm] = useState(emptyForm)
@@ -39,7 +39,7 @@ export default function Movimentacoes() {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
 
   useEffect(() => {
-    api.get('/animais', { params: { page_size: 200 } }).then(r => setAnimais(r.data.items))
+    api.get<AnimalLookup[]>('/animais/lookup').then(r => setAnimais(r.data))
     api.get('/lotes').then(r => setLotes(r.data))
   }, [])
 
@@ -344,8 +344,8 @@ export default function Movimentacoes() {
             )}
             {form.tipo === 'compra' && (
               <div className="form-group">
-                <label className="form-label">Agil / Comissao (R$)</label>
-                <input className="form-input" type="number" inputMode="decimal" step="0.01" value={form.agio_compra} onChange={e => setForm(f => ({ ...f, agio_compra: e.target.value }))} placeholder="Comissao do intermediario" />
+                <label className="form-label">Ágio / comissão (R$)</label>
+                <input className="form-input" type="number" inputMode="decimal" step="0.01" value={form.agio_compra} onChange={e => setForm(f => ({ ...f, agio_compra: e.target.value }))} placeholder="Já incluído no valor" />
               </div>
             )}
             {form.tipo === 'compra' && (

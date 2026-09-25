@@ -10,10 +10,12 @@ from ..models.lote import Lote
 from ..models.pesagem import Pesagem
 from ..models.movimentacao import Movimentacao
 from ..models.saude import Saude
-from ..models.custo_nutricional import CustoNutricional
 from ..models.despesa_fixa import DespesaFixa, CategoriaDespEnum
 from ..auth import get_current_user
 from ..models.user import User
+from ..zootecnia import (
+    referencia_de_ganho, presencas, rebanho_medio, custos_nutricionais_no_periodo,
+)
 
 router = APIRouter()
 
@@ -22,7 +24,8 @@ class AnaliseFinanceira(BaseModel):
     periodo_inicio: date
     periodo_fim: date
     lote_id: Optional[int] = None
-    qtd_cabecas: int
+    qtd_cabecas: int                                   # plantel atual (base do desempenho zootecnico)
+    cabecas_medias_periodo: Optional[float] = None     # rebanho medio no periodo (divisor dos custos por cabeca)
     dias_periodo: int
 
     # Peso
@@ -67,7 +70,8 @@ class AnaliseFinanceira(BaseModel):
     preco_medio_compra_animal: Optional[float] = None
     preco_medio_venda_animal: Optional[float] = None
 
-    # Lucro sem ágil
+    # Lucro sem ágio (comissão do intermediário). O nome do campo mantém a grafia antiga
+    # para não quebrar frontends já publicados.
     lucro_liquido_sem_agil: Optional[float] = None
     lucro_liquido_sem_agil_por_cab: Optional[float] = None
 
@@ -140,6 +144,22 @@ def analise_financeira(
         for p in todas_pesagens:
             pesagens_por_animal.setdefault(p.animal_id, []).append(p)
 
+    # Quem tem só 1 pesagem no período mede o ganho a partir da pesagem ANTERIOR ao período
+    # (a mesma regra da tela de Pesagens). Uma query para todos, sem N+1.
+    anteriores: dict[int, Pesagem] = {}
+    ids_uma_pesagem = [aid for aid, lista in pesagens_por_animal.items() if len(lista) == 1]
+    if ids_uma_pesagem:
+        sub_ant = (
+            db.query(Pesagem.animal_id, sqlfunc.max(Pesagem.data).label("ultima"))
+            .filter(Pesagem.animal_id.in_(ids_uma_pesagem), Pesagem.data < data_inicio)
+            .group_by(Pesagem.animal_id)
+            .subquery()
+        )
+        for p in db.query(Pesagem).join(
+            sub_ant, (Pesagem.animal_id == sub_ant.c.animal_id) & (Pesagem.data == sub_ant.c.ultima)
+        ).all():
+            anteriores[p.animal_id] = p
+
     for animal in animais:
         lista = pesagens_por_animal.get(animal.id, [])
         primeira = lista[0] if lista else None
@@ -147,7 +167,9 @@ def analise_financeira(
 
         # Define pi/pf e suas datas
         # Caso 1: 2+ pesagens no período — usa as pesagens como pontas
-        # Caso 2: 1 pesagem no período — usa peso_entrada como inicial (referência do cadastro)
+        # Caso 2: 1 pesagem no período — ponto de partida = pesagem anterior ao período ou,
+        #         sem ela, a entrada do animal (zootecnia.referencia_de_ganho — mesma regra
+        #         do GMD da tela de Pesagens; NUNCA data_nascimento)
         # Caso 3: 0 pesagens — fallback pra peso_entrada como inicial, sem final
         pi = None
         pf = None
@@ -159,17 +181,15 @@ def analise_financeira(
             data_pi = primeira.data
             pf = ultima.peso_kg
             data_pf = ultima.data
-        elif primeira and animal.peso_entrada is not None:
-            # Só 1 pesagem no período: usa peso_entrada como inicial
-            pi = animal.peso_entrada
-            data_pi = animal.data_nascimento or (animal.created_at.date() if animal.created_at else None)
+        elif primeira:
+            ref = referencia_de_ganho(animal, anteriores.get(animal.id))
+            if ref:
+                pi, data_pi = ref
+            else:
+                # Sem nenhuma referência anterior: não dá pra medir ganho
+                pi, data_pi = primeira.peso_kg, primeira.data
             pf = primeira.peso_kg
             data_pf = primeira.data
-        elif primeira:
-            # Só 1 pesagem e sem peso_entrada: nao da pra comparar
-            pi = primeira.peso_kg
-            pf = primeira.peso_kg
-            data_pi = data_pf = primeira.data
         elif animal.peso_entrada is not None:
             # Sem pesagem no período: só temos o peso de cadastro
             pi = animal.peso_entrada
@@ -207,29 +227,21 @@ def analise_financeira(
 
     peso_carcaca_medio_final = round(peso_medio_final * rend_frac, 1) if peso_medio_final else None
 
+    # ── Rebanho médio no período ─────────────────────────────────────────────
+    # Custos "por cabeça" dividem pelas cabeças que estavam na fazenda em cada dia do
+    # período, não pelo plantel de hoje: quem foi vendido em março comeu até março.
+    pres = presencas(db, uid)
+    cabecas_medias = rebanho_medio(pres, data_inicio, data_fim, lote_id or None)
+
+    def _por_cabeca(valor: float) -> Optional[float]:
+        return round(valor / cabecas_medias, 2) if cabecas_medias > 0 else None
+
     # ── Custo Nutricional ────────────────────────────────────────────────────
-    q_nutri = db.query(CustoNutricional).filter(CustoNutricional.user_id == uid)
-    if lote_id:
-        q_nutri = q_nutri.filter(
-            (CustoNutricional.lote_id == lote_id) | (CustoNutricional.lote_id == None)
-        )
-    custos_nutri = q_nutri.all()
-
-    custo_nutri_total = 0.0
-    for c in custos_nutri:
-        dias = _overlap_days(c.data_inicio, c.data_fim, data_inicio, data_fim)
-        if dias > 0:
-            # Se o custo é de um lote específico, contar só animais desse lote
-            if c.lote_id:
-                n = db.query(sqlfunc.count(Animal.id)).filter(
-                    Animal.lote_id == c.lote_id, Animal.user_id == uid, Animal.deletado_em == None
-                ).scalar() or 0
-            else:
-                n = qtd_cabecas
-            custo_nutri_total += c.preco_kg * c.consumo_kg_dia * dias * n
-
-    custo_nutri_total = round(custo_nutri_total, 2)
-    custo_nutri_por_cab = round(custo_nutri_total / qtd_cabecas, 2) if qtd_cabecas > 0 else None
+    # Mesma função do resumo do contador e do livro caixa (zootecnia.py).
+    custo_nutri_total = round(sum(
+        i.valor for i in custos_nutricionais_no_periodo(db, uid, data_inicio, data_fim, lote_id or None, pres)
+    ), 2)
+    custo_nutri_por_cab = _por_cabeca(custo_nutri_total)
 
     # ── Custo Operacional (despesas fixas exceto impostos) ────────────────────
     despesas = db.query(DespesaFixa).filter(DespesaFixa.user_id == uid).all()
@@ -247,7 +259,7 @@ def analise_financeira(
 
     custo_oper_total = round(custo_oper_total, 2)
     impostos_total = round(impostos_total, 2)
-    custo_oper_por_cab = round(custo_oper_total / qtd_cabecas, 2) if qtd_cabecas > 0 else None
+    custo_oper_por_cab = _por_cabeca(custo_oper_total)
 
     # ── Custo Saúde ──────────────────────────────────────────────────────────
     q_saude = db.query(sqlfunc.coalesce(sqlfunc.sum(Saude.custo), 0)).join(Animal).filter(
@@ -261,7 +273,7 @@ def analise_financeira(
 
     # ── Custos totais ────────────────────────────────────────────────────────
     custo_total = custo_nutri_total + custo_oper_total + custo_saude
-    custo_total_por_cab = round(custo_total / qtd_cabecas, 2) if qtd_cabecas > 0 else None
+    custo_total_por_cab = _por_cabeca(custo_total)
 
     custo_por_arroba = None
     if arrobas_produzidas and arrobas_produzidas > 0:
@@ -314,7 +326,7 @@ def analise_financeira(
         sum(m.valor for m in compras_com_valor) / len(compras_com_valor), 2
     ) if compras_com_valor else None
 
-    # ── Ágil (comissão de intermediário) ────────────────────────────────────
+    # ── Ágio (comissão de intermediário) ─────────────────────────────────────
     total_agio = sum(m.agio_compra or 0 for m in movs if m.tipo == "compra")
     total_agio = round(total_agio, 2)
 
@@ -322,11 +334,12 @@ def analise_financeira(
     lucro_bruto = round(receita_vendas - custo_compras - custo_total, 2)
     lucro_liquido = round(lucro_bruto - impostos_total, 2)
 
-    # Lucro líquido sem ágil: desconsidera comissão do intermediário
-    # = valor_venda - (valor_compra - agio) - custo_operacional
-    custo_compras_sem_agil = custo_compras - total_agio
-    lucro_liq_sem_agil = round(receita_vendas - custo_compras_sem_agil - custo_oper_total, 2)
-    lucro_liq_sem_agil_por_cab = round(lucro_liq_sem_agil / qtd_cabecas, 2) if qtd_cabecas > 0 else None
+    # Lucro líquido sem ágio: o que teria sobrado sem pagar a comissão do intermediário.
+    # O ágio já está dentro do valor da compra (o formulário diz isso), então a ÚNICA
+    # diferença para o lucro líquido é devolvê-lo — ração, saúde e impostos continuam.
+    # (Antes subtraía só o custo operacional e esquecia nutrição, saúde e impostos.)
+    lucro_liq_sem_agil = round(lucro_liquido + total_agio, 2)
+    lucro_liq_sem_agil_por_cab = _por_cabeca(lucro_liq_sem_agil)
 
     rentabilidade = None
     investimento = custo_compras + custo_total
@@ -338,6 +351,7 @@ def analise_financeira(
         periodo_fim=data_fim,
         lote_id=lote_id,
         qtd_cabecas=qtd_cabecas,
+        cabecas_medias_periodo=round(cabecas_medias, 2),
         dias_periodo=dias_periodo,
         peso_medio_inicial=peso_medio_inicial,
         peso_medio_final=peso_medio_final,

@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api, { Alerta, AlertaTipo } from '../services/api'
+import { useToast } from '../components/Toast'
+import { apiErrorMessage } from '../utils/apiError'
 
 const tipoLabel: Record<AlertaTipo, string> = {
   vacina: 'Vacina',
@@ -36,17 +38,69 @@ const tiposDisponiveis: AlertaTipo[] = ['vacina', 'superlotacao', 'sem_rotacao',
 
 export default function Agenda() {
   const navigate = useNavigate()
+  const { success, error: toastError } = useToast()
   const [alertas, setAlertas] = useState<Alerta[]>([])
   const [loading, setLoading] = useState(true)
   const [filtroTipo, setFiltroTipo] = useState<'' | AlertaTipo>('')
   const [filtroSev, setFiltroSev] = useState<'' | 'alta' | 'media' | 'baixa'>('')
+  // Alertas que o produtor tirou da lista — carregados só quando ele pede pra ver
+  const [mostrarDispensados, setMostrarDispensados] = useState(false)
+  const [dispensados, setDispensados] = useState<Alerta[] | null>(null)
+  const [processando, setProcessando] = useState<string | null>(null)
+
+  function carregar() {
+    return api.get<Alerta[]>('/alertas').then(r => setAlertas(r.data))
+  }
+
+  function carregarDispensados() {
+    return api.get<Alerta[]>('/alertas', { params: { dispensados: true } }).then(r => setDispensados(r.data))
+  }
 
   useEffect(() => {
     setLoading(true)
-    api.get('/alertas')
-      .then(r => setAlertas(r.data))
-      .finally(() => setLoading(false))
+    carregar().finally(() => setLoading(false))
   }, [])
+
+  // `?? []`: backend e frontend sobem em deploys separados; um backend antigo ainda não manda chaves
+  const chaveDe = (a: Alerta) => (a.chaves ?? []).join('|') || `${a.tipo}-${a.entidade_id}-${a.titulo}`
+
+  async function dispensar(a: Alerta) {
+    setProcessando(chaveDe(a))
+    setAlertas(prev => prev.filter(x => x !== a))  // some na hora; o servidor confirma em seguida
+    try {
+      await api.post('/alertas/dispensar', { chaves: a.chaves })
+      success('Alerta dispensado. Para trazer de volta, use "Ver alertas dispensados".')
+      if (mostrarDispensados) carregarDispensados()
+    } catch (err: any) {
+      toastError(apiErrorMessage(err, 'Erro ao dispensar alerta'))
+      carregar()
+    } finally {
+      setProcessando(null)
+    }
+  }
+
+  async function restaurar(a: Alerta) {
+    setProcessando(chaveDe(a))
+    try {
+      await api.post('/alertas/restaurar', { chaves: a.chaves })
+      setDispensados(prev => (prev ?? []).filter(x => x !== a))
+      await carregar()
+      success('Alerta de volta na lista')
+    } catch (err: any) {
+      toastError(apiErrorMessage(err, 'Erro ao restaurar alerta'))
+    } finally {
+      setProcessando(null)
+    }
+  }
+
+  function alternarDispensados() {
+    const abrir = !mostrarDispensados
+    setMostrarDispensados(abrir)
+    if (abrir) {
+      setDispensados(null)
+      carregarDispensados()
+    }
+  }
 
   const filtrados = alertas.filter(a =>
     (!filtroTipo || a.tipo === filtroTipo) &&
@@ -117,21 +171,9 @@ export default function Agenda() {
       )}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {filtrados.map((a, i) => (
-          <button
-            key={`${a.tipo}-${a.entidade_id}-${i}`}
-            className="card card-padded"
-            onClick={() => navigate(a.link)}
-            style={{
-              border: 'none',
-              textAlign: 'left',
-              cursor: 'pointer',
-              borderLeft: `4px solid ${sevColor[a.severidade]}`,
-              transition: 'transform var(--transition), box-shadow var(--transition)',
-              fontFamily: 'inherit',
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+        {filtrados.map(a => (
+          <div key={chaveDe(a)} className="card alerta-card" style={{ borderLeftColor: sevColor[a.severidade] }}>
+            <button className="alerta-card-main" onClick={() => navigate(a.link)}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 6, flexWrap: 'wrap' }}>
                   <span className={`badge ${tipoBadge[a.tipo]}`}>{tipoLabel[a.tipo]}</span>
@@ -159,9 +201,50 @@ export default function Agenda() {
               <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="var(--gray-400)" strokeWidth={2} style={{ flexShrink: 0, marginTop: 4 }}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
               </svg>
-            </div>
-          </button>
+            </button>
+            <button
+              className="alerta-card-dispensar"
+              onClick={() => dispensar(a)}
+              disabled={processando === chaveDe(a)}
+              aria-label={`Dispensar alerta: ${a.titulo}`}
+              title="Dispensar alerta"
+            >
+              <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
         ))}
+      </div>
+
+      {/* Dispensados: o produtor pode tirar qualquer alerta da lista — e trazer de volta */}
+      <div className="alertas-dispensados">
+        <button className="btn btn-ghost btn-sm" onClick={alternarDispensados}>
+          {mostrarDispensados ? 'Ocultar alertas dispensados' : 'Ver alertas dispensados'}
+        </button>
+        {mostrarDispensados && (
+          dispensados === null ? (
+            <div className="alerta-dispensado-msg" style={{ marginTop: 12 }}>
+              <span className="spinner spinner-dark" /> Carregando...
+            </div>
+          ) : dispensados.length === 0 ? (
+            <div className="alerta-dispensado-msg" style={{ marginTop: 12 }}>Nenhum alerta dispensado.</div>
+          ) : (
+            <div className="alertas-dispensados-lista">
+              {dispensados.map(a => (
+                <div key={chaveDe(a)} className="card alerta-dispensado">
+                  <div style={{ minWidth: 0 }}>
+                    <div className="alerta-dispensado-titulo">{a.titulo}</div>
+                    <div className="alerta-dispensado-msg">{a.mensagem}</div>
+                  </div>
+                  <button className="btn btn-ghost btn-sm" onClick={() => restaurar(a)} disabled={processando === chaveDe(a)}>
+                    Restaurar
+                  </button>
+                </div>
+              ))}
+            </div>
+          )
+        )}
       </div>
     </div>
   )

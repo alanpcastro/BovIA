@@ -1923,3 +1923,68 @@ button:focus:not(:focus-visible) {
   body:has(.curral) .bottom-nav { display: none !important; }
   body:has(.curral) .app-main { padding-bottom: 16px; }
 }
+
+/* ═══════════════════════════════════════
+   ALERTAS — cartão com "dispensar"
+   O cartão tem duas áreas: a principal abre o alerta; o × ao lado tira ele da lista.
+   (Antes o cartão inteiro era um <button>, e botão dentro de botão é HTML inválido.)
+═══════════════════════════════════════ */
+.alerta-card {
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+  border-left-width: 4px;
+  border-left-style: solid;
+}
+.alerta-card-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 20px 8px 20px 20px;
+  background: none;
+  border: none;
+  text-align: left;
+  font-family: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+.alerta-card-main:hover { background: var(--gray-50); }
+.alerta-card-dispensar {
+  flex-shrink: 0;
+  width: 44px;               /* área de toque mínima no celular */
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 20px;
+  background: none;
+  border: none;
+  border-left: 1px solid var(--gray-200);
+  color: var(--gray-400);
+  cursor: pointer;
+}
+.alerta-card-dispensar:hover:not(:disabled) { color: var(--red-600); background: var(--gray-50); }
+.alerta-card-dispensar:disabled { opacity: .4; cursor: default; }
+.alerta-card-main:focus-visible,
+.alerta-card-dispensar:focus-visible { outline: 2px solid var(--green-600); outline-offset: -2px; }
+
+.alertas-dispensados { margin-top: 24px; }
+.alertas-dispensados-lista { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.alerta-dispensado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  opacity: .75;
+}
+.alerta-dispensado-titulo { font-weight: 600; color: var(--gray-700); }
+.alerta-dispensado-msg { font-size: 13px; color: var(--gray-500); }
+
+@media (max-width: 768px) {
+  .alerta-card-main { padding: 16px 6px 16px 16px; }
+  .alerta-card-dispensar { padding-top: 16px; }
+  .alerta-dispensado { flex-direction: column; align-items: stretch; }
+}

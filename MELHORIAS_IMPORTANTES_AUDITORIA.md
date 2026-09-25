@@ -193,8 +193,10 @@ Um periodo de 1 a 31 vale 30 dias num lugar e 31 no outro.
 `animais.py:85` usa `q.order_by(Animal.brinco)`, que coloca "A10" antes de "A9" e "100" antes
 de "99". Para quem numera o rebanho em sequencia, a lista parece embaralhada.
 
-> Nota: `Pesagens.tsx:36-39` ja faz ordenacao natural no cliente (`parseInt` + `localeCompare`).
-> Vale subir essa mesma logica para o backend em vez de repetir em cada pagina.
+> Atualizado no Bloco 1 dos criticos: a ordenacao natural ja existe no backend
+> (`_chave_natural_brinco` em `animais.py`, usada por `/animais/lookup`). Falta aplica-la a lista
+> paginada `/animais` — que ordena no SQL, entao precisa de chave natural no banco ou ordenar
+> em Python antes de paginar.
 
 **3. Custo de saude nao filtra apagados**
 
@@ -211,6 +213,29 @@ e passa a duvidar do resto.
 - `dias_periodo = _overlap_days(data_inicio, data_fim, data_inicio, data_fim)`.
 - Ordenacao natural de brinco no backend, com `NULLS LAST`.
 - Acrescentar o filtro de apagados faltante.
+
+---
+
+## M9 — Livro caixa do ano corrente lanca meses futuros ⬜
+
+**Categoria**: logica financeira · **Complexidade**: baixa · **Descoberto no Bloco 2 dos criticos**
+
+### Problema
+
+`exportar_livro_caixa` (`relatorios.py`) usa o ano inteiro (01/01 a 31/12) como periodo. Despesa
+fixa e custo nutricional **sem data de fim** vao ate 31/12 — inclusive os meses que ainda nao
+aconteceram. Exportado em setembro, o livro de 2026 ja traz linhas de outubro, novembro e
+dezembro, com data futura.
+
+### Impacto
+
+O livro caixa e documento para o contador (base do LCDPR/IRPF Rural). Exportado no meio do ano,
+mostra despesa que nao existiu e saldo mais negativo do que o real. Quem exporta so em janeiro
+do ano seguinte nao ve o problema.
+
+### Como corrigir
+
+Limitar o fim do periodo a `min(31/12, hoje)` para o ano corrente. Anos passados ficam iguais.
 
 ---
 
@@ -304,6 +329,7 @@ inline em 348 linhas.
 | M8 | Off-by-one, ordenacao, filtro faltante | baixa | nao | ⬜ |
 | M4 | Categoria do animal nunca envelhece | media | nao | ⬜ |
 | M1 | 621 estilos inline, 16 tamanhos de fonte | alta | nao | ⬜ |
+| M9 | Livro caixa lanca meses futuros | baixa | nao | ⬜ |
 
 **Nenhum precisa de migration.**
 

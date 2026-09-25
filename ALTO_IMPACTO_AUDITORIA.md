@@ -180,9 +180,65 @@ depois, com a conta de 250 animais. Meta: de centenas para menos de 10.
 
 ---
 
-## BLOCO D — A2: alerta nao pode ser dispensado ⬜
+## BLOCO D — A2: alerta nao pode ser dispensado ✅ (concluido 24/09/2026)
 
 **Categoria**: UX / produto · **Complexidade**: media · **Prazo**: 1 dia
+
+### Resultado
+
+Decisao do produto: **o usuario deve ter a opcao de apagar qualquer alerta.** Feito para todos os
+tipos (vacina, pasto, abate, parto), em todas as telas que mostram alerta, com recuperacao.
+
+**Identidade do alerta — o ponto que define se a dispensa funciona.** Cada alerta carrega chaves
+que identificam a *ocorrencia*, nao o tipo (`app/dispensas.py`):
+
+| Alerta | Chave | Consequencia |
+|---|---|---|
+| Vacina | `vacina:{id do registro}` | o reforco cria outro registro — a proxima dose volta a alertar |
+| Parto | `parto:{id da cobertura}` | a proxima gestacao volta a alertar |
+| Abate | `abate:{animal}` | a decisao e sobre aquele animal |
+| Pasto | `{tipo}:{pasto}:{ocupacao}` | nova ocupacao do pasto volta a alertar |
+
+Assim, dispensar tira **aquele** alerta sem silenciar os proximos do mesmo tipo. Alerta agrupado
+de vacina carrega uma chave por dose: dispensar o grupo dispensa cada dose, e se um animal ganhar
+uma dose nova ela aparece sozinha.
+
+**Backend**
+- Tabela `alertas_dispensados` (`user_id`, `chave`, unica por usuario) — migration
+  `d3e4f5a6b7c8`, testada em ida e volta; `alembic check` sem diferencas.
+- `POST /alertas/dispensar` e `POST /alertas/restaurar` (`{chaves: [...]}`, idempotente, ate 2000
+  chaves de ate 100 caracteres). `GET /alertas?dispensados=true` devolve so os dispensados.
+- A dispensa vale em **todo lugar**: Agenda e faixa da Dashboard (`/alertas`), lista da Pastagens
+  (`/pastos/alertas`, mesma chave), quadro de vacinas da Dashboard, e-mail, filtro `vencendo` e
+  marcacao da Saude (via `zootecnia.sanidade_pendente`).
+- **Limite de 1 ano de atraso do C2 removido** — nao e mais necessario.
+- `PastoOut.ocupacao_id` (novo) identifica o episodio de ocupacao.
+
+**Frontend**
+- Agenda: o cartao virou duas areas — abrir (a principal) e **dispensar (×, 44px de toque)**. Antes
+  o cartao inteiro era um `<button>`, e botao dentro de botao e HTML invalido. Classes novas no
+  `index.css` (`.alerta-card*`), sem estilo inline.
+- Agenda: "Ver alertas dispensados" lista o que saiu, com **Restaurar**.
+- Pastagens: × em cada alerta de pasto.
+- Sem dialogo de confirmacao: a acao e reversivel, e o aviso diz onde recuperar.
+
+**Verificacao**
+- Cenario pelos endpoints (criado e apagado): um alerta de cada tipo dispensado; lista normal
+  vazia; `?dispensados=true` com os 5; repetir e idempotente; Pastagens, quadro da Dashboard,
+  `vencendo` e Saude respeitam; **dose nova do mesmo animal e nova ocupacao do pasto voltam a
+  alertar**; restaurar devolve; lista vazia/chave longa -> 422; sem token -> 401.
+- Navegador (celular 390px, conta com 50 vacinas atrasadas): × tira o cartao, aviso aparece,
+  "Ver dispensados" mostra, Restaurar devolve. Cartao nao transborda. 0 erros. Dados restaurados.
+
+**Nao feito (continua pendente neste item)**
+- **Agrupar alertas de abate** ("12 animais prontos para abate") — hoje ainda e um por animal.
+  Com a dispensa, o produtor ja consegue limpar a lista, mas um a um.
+- "Adiar 30 dias" — a dispensa e definitiva ate restaurar. Nao foi pedido.
+
+**Achado de carona**: `--surface-subtle` nao existe no design system. A Pastagens usava essa
+variavel nas linhas de "Lotes no pasto", entao o fundo nunca aparecia. Trocada por `--gray-50`.
+
+---
 
 > Fecha o par com o **C2**. Sem isso, corrigir o alerta atrasado troca um problema por outro.
 
@@ -317,7 +373,7 @@ previstos. Conferir que valor invalido e recusado pelo Pydantic.
 | A1 | Sem trocar senha / editar perfil | baixa | sim | ⬜ |
 | A3 | Meta de abate fixa em 480 kg | baixa | sim | ⬜ |
 | A4 | N+1 em alertas e pastos | media | nao | ⬜ |
-| A2 | Alerta nao pode ser dispensado | media | sim | ⬜ |
+| A2 | Alerta nao pode ser dispensado | media | sim | ✅ |
 | A6 | Bezerro sem data_entrada nem movimentacao | baixa | nao | ⬜ |
 | A7 | Sem genealogia (mae_id) | media | sim | ⬜ |
 | A8 | Resultado reprodutivo em texto livre | baixa | sim | ⬜ |

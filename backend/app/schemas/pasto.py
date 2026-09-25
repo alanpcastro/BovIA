@@ -59,6 +59,7 @@ class PastoOut(BaseModel):
     superlotado: bool = False
     dias_ocupacao: Optional[int] = None
     dias_descanso: Optional[int] = None
+    ocupacao_id: Optional[int] = None  # ultima ocupacao (HistoricoOcupacao) — identifica o episodio nos alertas
     lotes_no_pasto: List[LoteNoPasto] = []
 
     class Config:
@@ -98,3 +99,4 @@ class AlertaPasto(BaseModel):
     tipo: str  # "superlotacao" | "descanso_excedido" | "sem_rotacao"
     mensagem: str
     severidade: str  # "alta" | "media" | "baixa"
+    chave: str = ""  # identifica a ocorrencia, para dispensar (app/dispensas.py)

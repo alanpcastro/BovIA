@@ -7,12 +7,13 @@ Para pedir: "Faca o Bloco 1" ou "Faca o C5".
 
 **Legenda**: ⬜ pendente · 🟡 em andamento · ✅ concluido · ⛔ descartado
 
-> **Propriedade importante**: nenhum dos seis precisa de migration. Sao todos mudanca de
-> query, calculo ou rota nova. Cada bloco e um commit proprio e um deploy proprio;
-> rollback e `git revert`.
+> **Propriedade importante**: nenhum dos seis originais precisa de migration. Sao todos mudanca
+> de query, calculo ou rota nova. Cada bloco e um commit proprio e um deploy proprio;
+> rollback e `git revert`. O **C7**, descoberto no Bloco 2, e a excecao.
 
-> **Risco transversal**: o projeto **nao tem nenhum teste**. Por isso o Bloco 2 (financeiro)
-> tem um procedimento de verificacao por snapshot descrito no proprio bloco.
+> **Testes**: o projeto nao tinha nenhum. O Bloco 2 criou os primeiros (`backend/tests/`,
+> rodar com `venv/bin/python -m pytest` de `backend/`) e usou verificacao por snapshot
+> antes/depois para o financeiro.
 
 ---
 
@@ -30,9 +31,54 @@ risco. O Bloco 2 e o que mais rende em credibilidade e o que mais exige cuidado.
 
 ---
 
-## BLOCO 1 — C1: paginacao silenciosa ⬜
+## BLOCO 1 — C1: paginacao silenciosa ✅ (concluido 24/09/2026)
 
 **Categoria**: bug de dados · **Complexidade**: baixa · **Prazo**: meio dia
+
+### Resultado
+
+**Backend**
+- `schemas/animal.py` — novo `AnimalLookup` (`id`, `brinco`, `nome`, `sexo`, `status`, `lote_id`).
+- `routes/animais.py` — novo `GET /animais/lookup`, declarado antes de `/{animal_id}`. Consulta
+  so as 6 colunas, sem paginacao, sem `count()`, excluindo apagados.
+- Ordem **natural** de brinco no servidor (`_chave_natural_brinco`): `7, 99, 100, A1, A02, A9,
+  A10`, sem brinco no fim. A rota `/animais` paginada continua alfabetica — isso e o M8.
+
+**Frontend**
+- `services/api.ts` — tipo `AnimalLookup = Pick<Animal, ...>`. Trocar o tipo do estado fez o `tsc`
+  provar que nenhuma tela usa campo fora do lookup.
+- Seis chamadas trocadas. Cada tela manteve o filtro que ja aplicava, agora no cliente:
+  Graficos filtra ativos, Reproducao filtra femeas.
+- `Pesagens.tsx` — removida a ordenacao manual no cliente (o servidor ja entrega ordenado).
+- `Reproducao.tsx` — **segundo bug corrigido de carona**: a recarga apos salvar (linha 205)
+  pedia so femeas *ativas*, enquanto a carga inicial (linha 75) pedia todas. Depois do primeiro
+  registro, o mapa de brincos perdia as vendidas. As duas agora usam `carregarFemeas()`.
+- `ModoCurral.tsx` **nao mudou**: ja paginava corretamente e usa `peso_atual`, que o lookup nao tem.
+
+**Verificacao** (conta `apcameloc@gmail.com`: 250 femeas, 100 ativas, 150 vendidas)
+
+| Tela | Seletor | Antes | Depois |
+|---|---|---|---|
+| Saude | filtro / formulario | 200 / 52 | **250 / 100** |
+| Pesagens | filtro / formulario | 200 / 52 | **250 / 100** |
+| Reproducao | filtro / formulario | 200 / 52 | **250 / 100** |
+| Movimentacoes | formulario | 200 | **250** |
+| Graficos | por animal | ≤200 | **100** |
+
+- Endpoint: 250 itens = `COUNT(*)` do banco; so os 6 campos; sem token -> 401; conta de outro
+  usuario nao ve nenhum id em comum; `/animais?page_size=201` continua 422.
+- Navegador (Playwright): unica chamada restante e `/api/animais/lookup`; 0 erros no console.
+- `tsc --noEmit` e `npm run build` limpos.
+
+**Observado e nao corrigido** (fora do escopo):
+- Animal sem brinco aparece como `#` vazio nos seletores de Saude, Pesagens, Movimentacoes e
+  Reproducao. Graficos usa `#{brinco || id}` e `alertas.py` usa `brinco or nome or #id` — o
+  rotulo de fallback e inconsistente entre telas. A conta de teste tem 248 de 250 animais sem
+  brinco, o que deixa isso muito visivel nela.
+- O seletor de formulario de Movimentacoes lista vendidos (250). E por ali que se vende um
+  animal ja vendido — tratado no Bloco 4 (C6).
+
+---
 
 ### Problema
 
@@ -130,7 +176,95 @@ Pesagens. O filtro de ativos fica **so nos seletores de formulario**, nunca no l
 
 ---
 
-## BLOCO 2 — financeiro: C5 -> C3 -> C4 ⬜
+## BLOCO 2 — financeiro: C5 -> C3 -> C4 ✅ (concluido 24/09/2026)
+
+### Resultado
+
+**Tres correcoes no plano que o codigo obrigou**
+
+1. **C5 era maior que trocar um campo.** O Financeiro nao usava `_calcular_gmd`; tinha calculo
+   proprio e, com 1 pesagem no periodo, ignorava a pesagem *anterior ao periodo* e voltava direto
+   ao peso de entrada. Trocar so `data_nascimento` por `data_entrada` deixaria as telas ainda
+   discordando. A regra compartilhada certa e o **ponto de partida do ganho**: pesagem anterior,
+   senao entrada do animal (`referencia_de_ganho`).
+2. **C3 precisava mudar o divisor junto.** Incluir a racao dos vendidos mas continuar dividindo
+   pelos ativos de hoje inflaria o custo por cabeca. O divisor passou a ser o **rebanho medio do
+   periodo** (cabeca-dias / dias), exposto como `cabecas_medias_periodo`.
+3. **C3 estava em tres lugares, nao um.** `relatorios.py` reimplementava o custo nutricional no
+   PDF do contador e no livro caixa com a mesma regra errada. Corrigir so a tela faria o
+   Financeiro discordar do documento que vai pro contador. Os tres usam a mesma funcao agora.
+
+**Arquivos**
+- `app/zootecnia.py` (novo) — unica fonte de: `ponto_de_entrada`, `referencia_de_ganho`,
+  `gmd_entre`, `calcular_gmd`, `presencas`, `cabeca_dias`, `rebanho_medio`,
+  `custos_nutricionais_no_periodo`. Segue a convencao plana do projeto (`app/auth.py`,
+  `app/email_service.py`), e nao `app/services/` como o plano dizia.
+- `routes/pesagens.py` — `_calcular_gmd` saiu daqui; `animais.py` e `relatorios.py` importam
+  `calcular_gmd` de `zootecnia`.
+- `routes/financeiro.py` — C5 (1 query extra para as pesagens anteriores ao periodo, sem N+1),
+  C3 (funcao compartilhada + divisor por rebanho medio), C4 (`lucro_liquido + total_agio`).
+- `routes/relatorios.py` — resumo do contador e livro caixa na funcao compartilhada; 2 imports
+  sem uso removidos.
+- Frontend: `Financeiro.tsx` (cabecalho com rebanho medio; "Lucro Liquido sem Agio"),
+  `Movimentacoes.tsx` ("Agio / comissao", placeholder "Ja incluido no valor"), tipo em `api.ts`.
+- `tests/test_zootecnia.py` (8 testes), `pytest.ini`, `requirements-dev.txt` (pytest fora do
+  `requirements.txt`, para o Render nao instalar).
+
+**Regra de presenca (C3) — so usa datas que o sistema conhece**
+- entrada: `data_entrada`, senao `data_nascimento`; sem nenhuma, sem limite inicial. A data de
+  cadastro **nao** e usada: o produtor costuma cadastrar o rebanho que ja estava na fazenda.
+- saida: data da ultima venda/morte/transferencia. Animal ativo nao tem saida.
+- inativo **sem** movimentacao de saida fica de fora (como antes): nao ha como saber quando saiu.
+
+**Decisao sobre o agio (C4)** — o codigo sempre tratou o agio como *parte* do valor da compra
+(nenhum dos tres calculos o soma como custo). O formulario nao dizia isso. Agora diz ("Ja
+incluido no valor"), alinhando o que o produtor digita com o que o sistema calcula. Se a
+intencao for o contrario (agio pago a parte), a mudanca e somar `agio_compra` ao custo de compra
+nos tres lugares.
+
+Os nomes de campo da API (`lucro_liquido_sem_agil*`) **nao** mudaram: backend e frontend sobem
+em deploys separados no Render, e renomear quebraria o frontend publicado na janela entre os dois.
+
+### Verificacao
+
+Os dados de teste nao tinham custo nutricional nem despesa fixa — um antes/depois neles mostraria
+o C3 "sem mudanca". Por isso: cenario montado com resposta calculavel a mao, medido com o codigo
+antigo e com o novo, e **apagado no fim** (script em scratchpad, nao versionado).
+
+Cenario: lote L1 com 10 animais (entrada 01/01, 300 kg; A3 nascido em 2024). A7-A10 vendidos em
+31/03. Racao R$ 2/kg x 5 kg/dia; sal do lote R$ 4/kg x 0,1 kg/dia; mao de obra R$ 3.000/mes;
+vacina R$ 20/cab.
+
+| Jan-jun | Antes | Depois | Calculo a mao |
+|---|---|---|---|
+| Custo nutricional | 11.073,60 | **14.673,60** | racao (6x181 + 4x90) x 10 + sal 6x89x0,4 |
+| Rebanho medio | — | **7,99** | 1.446 cab-dia / 181 |
+| Custo total / cabeca | 4.895,60 (/6) | **4.127,40** (/7,99) | 32.973,60 / 7,99 |
+| GPD medio | 0,466 | **0,587** | A3: 0,069 -> 0,432 (entrada, nao nascimento) |
+| Lucro liquido | -41.683,60 | **-45.283,60** | -3.600 da racao dos vendidos |
+| Lucro sem agio | -26.600,00 | **-43.283,60** | liquido + 2.000 de agio |
+| PDF do contador — nutricao | 11.073,60 | **14.673,60** | = Financeiro |
+| Livro caixa — nutricao | 11.073,60 | **14.673,60** | = Financeiro |
+
+- **GMD da tela de Pesagens: identico antes e depois** (prova que mover `calcular_gmd` nao mudou
+  nada la). E agora o GPD do Financeiro e a media exata dos GMDs que a tela de Pesagens mostra.
+- **Periodo de controle (abr-jun, ninguem saiu): custo nutricional inalterado** — a mudanca so
+  aparece quando ha saida no periodo, como deveria.
+- **Contas reais**: `apcameloc` so ganhou o campo novo (sem custos, nada a mudar).
+  `pedroazm66`: "sem agio" 206.000 -> 205.700 — os R$ 300 de vacina que a formula antiga
+  ignorava; sem agio no periodo, agora e igual ao lucro liquido, como deve.
+- Todo campo que mudou foi conferido contra o calculo a mao. Nenhuma mudanca sem explicacao.
+- `pytest`: 8 passando. `tsc` e `npm run build` limpos. Tela do Financeiro renderizada sem erros.
+
+### Descobertos no caminho (nao corrigidos)
+
+- **Analise por lote perde tudo de quem saiu** — virou o **C7** abaixo.
+- **Livro caixa do ano corrente lanca meses futuros**: custo sem data de fim vai ate 31/12. Em
+  setembro, o livro de 2026 ja traz racao e despesas de outubro a dezembro. Pre-existente — virou
+  o **M9** em `MELHORIAS_IMPORTANTES_AUDITORIA.md`.
+- **Status x movimentacao inconsistentes nos dois sentidos** — anotado na pendencia do C6.
+
+---
 
 **Nesta ordem obrigatoriamente.** Os tres mexem em `analise_financeira`; fazer junto evita
 tocar duas vezes no mesmo arquivo. C3 depende de um GMD confiavel, que e o C5.
@@ -151,7 +285,7 @@ Aproveitar para deixar **2 testes pytest** no `calcular_gmd` extraido — e func
 
 ---
 
-### C5 — GMD calculado de duas formas diferentes ⬜
+### C5 — GMD calculado de duas formas diferentes ✅
 
 **Categoria**: inconsistencia · **Complexidade**: baixa
 
@@ -186,7 +320,7 @@ o defeito que mais rapido faz um produtor abandonar o sistema.
 
 ---
 
-### C3 — custo nutricional usa o rebanho de hoje ⬜
+### C3 — custo nutricional usa o rebanho de hoje ✅
 
 **Categoria**: logica financeira · **Complexidade**: media
 
@@ -223,7 +357,7 @@ A data de saida ja existe: e a `data` da movimentacao de venda/morte. A de entra
 
 ---
 
-### C4 — "Lucro Liq. s/ Agil" ⬜
+### C4 — "Lucro Liq. s/ Agil" ✅
 
 **Categoria**: logica financeira · **Complexidade**: baixa
 
@@ -269,7 +403,91 @@ tela sempre confunde.
 
 ---
 
-## BLOCO 3 — C2: vacina atrasada desaparece ⬜
+## BLOCO 3 — C2: vacina atrasada desaparece ✅ (concluido 24/09/2026)
+
+### Resultado
+
+**A pergunta que o plano nao respondeu**: como o sistema sabe que uma dose atrasada ja foi
+aplicada? Resposta do codigo: nao sabe. Aplicar o reforco cria um registro **novo** — o antigo
+continua com `proxima_data` no passado. O piso de 7 dias escondia isso por acidente (o registro
+antigo "sumia" sozinho). So remover o piso faria **toda vacina ja reforcada virar atraso para
+sempre**. Por isso a correcao tem tres pecas que so funcionam juntas:
+
+1. **Regra de dose pendente** (`zootecnia.doses_pendentes`): vale so o registro mais recente de
+   cada (animal, tipo, descricao) — descricao comparada sem caixa e sem espacos nas pontas. Reforco
+   sem proxima data encerra a pendencia.
+2. **Sem o piso de 7 dias** — com limite de 1 ano (`ATRASO_MAXIMO_DIAS`), ver decisao abaixo.
+3. **Agrupamento** (`zootecnia.agrupar_por_dose`): mesma dose e mesmo vencimento = 1 alerta.
+   A vacinacao de um lote de 50 animais e 1 cartao "(50 animais)", com link para a Saude.
+
+**Eram quatro lugares com a regra errada, nao dois** — todos usam `zootecnia.sanidade_pendente`
+agora:
+
+| Lugar | Antes |
+|---|---|
+| `alertas.py` — Agenda e faixa da Dashboard | piso de 7 dias |
+| `saude.py` — filtro `vencendo` | excluia todo atrasado |
+| `dashboard.py` — quadro "Proximas vacinas" | excluia todo atrasado: dizia **"Nenhuma vacina agendada"** logo abaixo do alerta de atraso |
+| `dashboard.py` — e-mail de alerta | excluia todo atrasado: o e-mail nao avisava justamente das atrasadas |
+
+E um quinto, com o problema oposto: a coluna "Proxima" da tela de Saude pintava de vermelho a data
+de registros ja reforcados. A listagem agora devolve `pendente` por registro; dose sem pendencia
+fica em cinza.
+
+**Frontend**: selo do quadro da Dashboard dizia "Urgente — -88d" para dose atrasada; agora
+"Atrasada — 88d" / "Hoje" / "Urgente — Nd", com a contagem de animais do grupo. Tipos em `api.ts`
+(`entidade_tipo: 'grupo'`, `pendente`, `qtd_animais`).
+
+**Decisao: limite de 1 ano de atraso.** O plano dizia "atrasado nunca sai da lista ate ser
+resolvido". Com a regra do registro mais recente, o que sobra atrasado e dose que ninguem aplicou —
+mas um protocolo abandonado (ex.: aftosa, cuja vacinacao foi suspensa no pais) ficaria atrasado
+para sempre, e **a tela de Saude nao tem edicao de registro nem existe dispensar alerta (A2)** — o
+produtor nao teria como tirar o alerta. Um ano cobre qualquer reforco semestral ou anual perdido.
+A constante tem comentario para ser removida quando o A2 existir.
+
+> **Revertida no mesmo dia (24/09/2026)**: decisao do produto — "o usuario deve ter a opcao de
+> apagar qualquer alerta". O A2 foi implementado em seguida e o limite de 1 ano **foi removido**:
+> dose atrasada fica ate o reforco ser registrado ou o produtor dispensar o alerta. Ver
+> `ALTO_IMPACTO_AUDITORIA.md`, Bloco D.
+
+### Verificacao
+
+**Dados reais** (hoje invisiveis por passarem de 7 dias):
+
+| Conta | Antes | Depois |
+|---|---|---|
+| `pedroazm66` — febre aftosa, 50 animais, 88 dias | 0 alertas de vacina | **1 alerta critico agrupado** |
+| `uidemo2` — Aftosa, 1 animal, 14 dias | 0 | **1 alerta**, link para o animal |
+| `apcameloc` (sem vacina pendente) | — | inalterada |
+
+No navegador (conta `pedroazm66`): faixa da Dashboard "1 alerta critico — Vacina atrasada: febre
+aftosa (50 animais)"; quadro de vacinas "febre aftosa · 50 animais — Atrasada — 88d"; Agenda com
+2 alertas; Saude com as 50 doses em vermelho. 0 erros.
+
+**Cenario montado** (criado, medido e apagado) — os dados reais nao tinham nenhum reforco:
+
+| Caso | Resultado |
+|---|---|
+| Vacina reforcada | registro antigo **nao** pendente — sem falso atraso |
+| 2 animais, mesma dose e data, atrasados | 1 alerta "Aftosa (2 animais)", critico |
+| Reforco sem proxima data, descricao " aftosa " x "AFTOSA" | pendencia encerrada |
+| Vermifugo em 7 dias | alerta medio, link para o animal |
+| Animal vendido | fora |
+| Atraso de mais de 1 ano | fora |
+
+`pytest`: 12 passando (4 novos para a regra de dose e o agrupamento). `tsc` e build limpos.
+
+### Observado e nao corrigido
+
+- **Parto previsto tem o mesmo piso de 7 dias** (`alertas.py`, bloco 4). Semantica diferente: a
+  previsao de parto da cobertura natural e a data *mais cedo possivel*, nao um vencimento. Decidir
+  junto com o A8 (resultado reprodutivo em enum).
+- Alerta de vermifugacao diz "**Vacina** em 7 dia(s): Ivermectina" — o titulo usa "Vacina" para
+  qualquer tipo de sanidade. Pre-existente.
+- O endpoint de e-mail de vacinacao (`POST /dashboard/alertas/email`) **nao e chamado por nenhuma
+  tela**. Foi corrigido mesmo assim, para nao ficar uma regra diferente escondida.
+
+---
 
 **Categoria**: logica de negocio · **Complexidade**: baixa · **Prazo**: meio dia
 
@@ -354,6 +572,10 @@ Tres mudancas em `movimentacoes.py`:
 2. `criar_movimentacao` — recusar venda de animal que ja nao esta ativo, com mensagem clara.
 3. `transferencia` passa a marcar `status = transferido`.
 
+> Nota do Bloco 1: o seletor do formulario de Movimentacoes lista **todos** os animais, inclusive
+> vendidos. Alem da validacao no backend (item 2), filtrar ativos nesse seletor quando o tipo for
+> venda/morte/transferencia.
+
 ### Pendencia a decidir
 
 Pode ja existir animal preso em "vendido" por lancamento apagado antes da correcao. Duas
@@ -362,7 +584,28 @@ opcoes:
 - rodar query de diagnostico no banco local para ver se ha algum, e corrigir na mao; ou
 - deixar so a correcao para frente.
 
-**Nao decidido.** Perguntar antes de executar o bloco.
+**Decidido em 24/09/2026: opcao 2**, a ser feita junto com o Bloco 4:
+- corrigir o codigo para frente (itens 1-3 acima e o item 4 abaixo);
+- **mais uma consulta somente leitura** que lista os animais cujo status nao bate com as
+  movimentacoes, nos dois sentidos (vendido/morto sem movimentacao de saida; venda/morte
+  registrada com animal ativo). Nao altera nada. Rodar uma vez na **producao**: vazia encerra o
+  assunto; com resultado, decidir caso a caso. Nao ha correcao automatica — o sistema nao tem como
+  saber qual lado esta certo.
+
+**Item 4 (descoberto em 24/09/2026)**: editar o animal de "vendido" para "ativo"
+(`atualizar_animal` em `animais.py`) deixa a venda registrada. Editar para "vendido" cria a venda,
+mas voltar nao desfaz. E o provavel caminho dos 50 animais da conta `pedroazm66` — R$ 206 mil
+de receita no Financeiro para animais que continuam no rebanho. Aplicar a mesma regra do item 1.
+
+> **Nota do Bloco 2** — o diagnostico precisa olhar os **dois sentidos**, e os dois ja existem
+> no banco local:
+> - `apcameloc@gmail.com`: **150 animais "vendidos" sem nenhuma movimentacao de venda**;
+> - `pedroazm66@gmail.com`: **50 animais com venda lancada que continuam "ativos"**.
+>
+> A venda em lote (`lotes.py:267`) sincroniza o status corretamente, entao a origem e outra:
+> alteracao em massa de status, edicao manual ou importacao de backup. Isso afeta o C3: animal
+> inativo sem data de saida fica fora do rebanho medio, e animal ativo com venda conta como
+> presente.
 
 ### Verificacao
 
@@ -373,16 +616,62 @@ opcoes:
 
 ---
 
+## C7 — Analise por lote perde tudo de quem saiu do lote ⬜
+
+**Categoria**: logica financeira · **Complexidade**: media · **Descoberto no Bloco 2**
+
+> **Unico critico que precisa de migration.**
+
+### Problema
+
+A venda e a morte fazem `animal.lote_id = None` — em `criar_movimentacao`
+(`movimentacoes.py`) e em `movimentacao_em_lote` (`lotes.py:296`). Toda consulta "do lote" filtra
+por `Animal.lote_id == X`, entao **quem saiu deixa de pertencer ao lote para sempre**.
+
+No Financeiro com `lote_id`:
+
+- a **receita da venda do lote some** — o comentario em `financeiro.py` diz "mesmo os ja
+  vendidos", mas o filtro por `Animal.lote_id` exclui exatamente eles;
+- a **compra** dos animais vendidos some;
+- a racao e a vacina deles somem;
+- e as **despesas fixas da fazenda inteira** entram cheias na conta do lote.
+
+### Prova (cenario do Bloco 2, lote L1)
+
+4 dos 10 animais do L1 vendidos por R$ 20.000. Analise do lote jan-jun:
+`receita_vendas = 0`, compras de 6 animais em vez de 10, custo operacional R$ 18.100 (a fazenda
+toda). Resultado: -R$ 49.403,60 — um lote que vendeu R$ 20 mil aparece so com prejuizo.
+
+### Impacto para o produtor
+
+Analisar o lote do inicio ao fim do ciclo (compra -> engorda -> venda) e **o** uso principal da
+analise por lote para quem faz engorda. Depois da venda, e justamente o resultado que ele quer
+ver — e o app mostra receita zero.
+
+### Como corrigir (precisa decidir)
+
+- **(a) Recomendado**: gravar `lote_id` na `Movimentacao` no momento do lancamento (migration
+  em `movimentacoes`). As consultas financeiras por lote passam a usar o lote *da movimentacao*.
+  Mantem a regra de "venda tira do lote" que o resto do app assume. Vendas antigas nao tem o
+  lote gravado — so vale daqui para frente.
+- (b) Parar de zerar `lote_id` na venda. Raio de impacto grande: toda consulta de "animais do
+  lote" passaria a precisar filtrar status.
+- Despesas fixas: ratear pela participacao do lote no rebanho medio (`cabeca_dias` do lote /
+  `cabeca_dias` total) — as funcoes ja existem em `zootecnia.py`.
+
+---
+
 ## Resumo
 
 | ID | Titulo | Complex. | Migration | Status |
 |----|--------|----------|-----------|--------|
-| C1 | Paginacao silenciosa em 200 animais | baixa | nao | ⬜ |
-| C5 | GMD divergente entre modulos | baixa | nao | ⬜ |
-| C3 | Custo nutricional com rebanho de hoje | media | nao | ⬜ |
-| C4 | "Lucro Liq. s/ Agil" errado | baixa | nao | ⬜ |
-| C2 | Vacina atrasada desaparece | baixa | nao | ⬜ |
+| C1 | Paginacao silenciosa em 200 animais | baixa | nao | ✅ |
+| C5 | GMD divergente entre modulos | media | nao | ✅ |
+| C3 | Custo nutricional com rebanho de hoje | media | nao | ✅ |
+| C4 | "Lucro Liq. s/ Agil" errado | baixa | nao | ✅ |
+| C2 | Vacina atrasada desaparece | media | nao | ✅ |
 | C6 | Apagar venda nao reverte status | media | nao | ⬜ |
+| C7 | Analise por lote perde quem saiu do lote | media | **sim** | ⬜ |
 
 **Total estimado**: 3 a 4 dias. Nenhum depende de decidir publico-alvo — por isso vem antes
 do mapa de pastos e da Fase 4.

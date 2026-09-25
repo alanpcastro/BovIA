@@ -135,3 +135,16 @@ class AnimalOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class AnimalLookup(BaseModel):
+    """Versao enxuta do animal para seletores e mapas de brinco (GET /animais/lookup)."""
+    id: int
+    brinco: Optional[str]
+    nome: Optional[str]
+    sexo: SexoEnum
+    status: StatusEnum
+    lote_id: Optional[int]
+
+    class Config:
+        from_attributes = True

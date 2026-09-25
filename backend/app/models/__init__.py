@@ -8,3 +8,4 @@ from .movimentacao import Movimentacao
 from .custo_nutricional import CustoNutricional
 from .despesa_fixa import DespesaFixa
 from .pasto import Pasto, HistoricoOcupacao
+from .alerta_dispensado import AlertaDispensado

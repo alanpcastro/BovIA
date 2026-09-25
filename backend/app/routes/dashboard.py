@@ -16,6 +16,7 @@ import random
 from ..auth import get_current_user, check_assinatura_ativa
 from ..models.user import User
 from ..email_service import enviar_alerta_vacinacao
+from ..zootecnia import sanidade_pendente, agrupar_por_dose
 
 router = APIRouter()
 
@@ -140,15 +141,10 @@ def dashboard(db: Session = Depends(get_db), current_user: User = Depends(get_cu
     if ultimas:
         peso_medio = round(sum(p.peso_kg for p in ultimas) / len(ultimas), 1)
 
-    # Próximas vacinas (proxima_data nos próximos 30 dias) — só animais ativos
-    proximas_vacinas = db.query(Saude).join(Animal).filter(
-        Animal.user_id == uid,
-        Animal.status == StatusEnum.ativo,
-        Animal.deletado_em == None,  # noqa: E711
-        Saude.proxima_data != None,
-        Saude.proxima_data >= hoje,
-        Saude.proxima_data <= proximos_30,
-    ).order_by(Saude.proxima_data).limit(10).all()
+    # Próximas vacinas: dose pendente que vence em 30 dias OU já venceu — mesma regra da
+    # Agenda (zootecnia.py). Antes excluía as atrasadas: a Dashboard dizia "Nenhuma vacina
+    # agendada" logo abaixo do alerta de vacina atrasada. Agrupadas: um lote é uma linha.
+    grupos_vacina = agrupar_por_dose(sanidade_pendente(db, uid, ate=proximos_30))[:10]
 
     # Partos previstos nos próximos 60 dias — só fêmeas ativas
     proximos_60 = hoje + timedelta(days=60)
@@ -163,15 +159,16 @@ def dashboard(db: Session = Depends(get_db), current_user: User = Depends(get_cu
 
     proximas_vacinas_data = [
         {
-            "id": s.id,
-            "animal_id": s.animal_id,
-            "brinco": s.animal.brinco if hasattr(s, 'animal') and s.animal else "",
-            "nome": s.animal.nome if hasattr(s, 'animal') and s.animal else None,
-            "descricao": s.descricao,
-            "tipo": s.tipo,
-            "proxima_data": str(s.proxima_data),
+            "id": g[0].id,
+            "animal_id": g[0].animal_id,
+            "brinco": g[0].animal.brinco or "",
+            "nome": g[0].animal.nome,
+            "descricao": g[0].descricao,
+            "tipo": g[0].tipo,
+            "proxima_data": str(g[0].proxima_data),
+            "qtd_animais": len(g),
         }
-        for s in proximas_vacinas
+        for g in grupos_vacina
     ]
 
     return {
@@ -202,24 +199,19 @@ async def enviar_alertas_email(
     hoje = date.today()
     proximos_7 = hoje + timedelta(days=7)
 
-    vacinas = db.query(Saude).join(Animal).filter(
-        Animal.user_id == uid,
-        Animal.status == StatusEnum.ativo,
-        Animal.deletado_em == None,  # noqa: E711
-        Saude.proxima_data != None,
-        Saude.proxima_data >= hoje,
-        Saude.proxima_data <= proximos_7,
-    ).order_by(Saude.proxima_data).all()
+    # Atrasadas entram: são justamente as que o e-mail mais precisa avisar (mesma regra da Agenda)
+    vacinas = sanidade_pendente(db, uid, ate=proximos_7)
 
     if not vacinas:
-        return {"message": "Nenhuma vacinação prevista nos próximos 7 dias"}
+        return {"message": "Nenhuma vacinação atrasada ou prevista para os próximos 7 dias"}
 
     alertas = [
         {
-            "brinco": s.animal.brinco if s.animal else "",
-            "nome": s.animal.nome if s.animal else None,
+            "brinco": s.animal.brinco or "",
+            "nome": s.animal.nome,
             "descricao": s.descricao,
-            "proxima_data": str(s.proxima_data),
+            "proxima_data": s.proxima_data.strftime("%d/%m/%Y"),
+            "atrasada": s.proxima_data < hoje,
         }
         for s in vacinas
     ]

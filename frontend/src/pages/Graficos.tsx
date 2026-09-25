@@ -3,7 +3,7 @@ import {
   ResponsiveContainer, LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
 } from 'recharts'
-import api, { AnaliseFinanceira, Pesagem, Lote, Animal } from '../services/api'
+import api, { AnaliseFinanceira, Pesagem, Lote, AnimalLookup } from '../services/api'
 import { formatBRL, formatKg, formatPct, formatNumber } from '../utils/format'
 import { toLocalDate } from '../utils/date'
 
@@ -32,7 +32,7 @@ const toISO = toLocalDate
 export default function Graficos() {
   const [pesagens, setPesagens] = useState<Pesagem[]>([])
   const [lotes, setLotes] = useState<Lote[]>([])
-  const [animais, setAnimais] = useState<Animal[]>([])
+  const [animais, setAnimais] = useState<AnimalLookup[]>([])
   const [fin, setFin] = useState<AnaliseFinanceira | null>(null)
   const [serieMensal, setSerieMensal] = useState<MesData[]>([])
   const [loading, setLoading] = useState(true)
@@ -61,7 +61,7 @@ export default function Graficos() {
     Promise.all([
       api.get('/pesagens'),
       api.get('/lotes'),
-      api.get('/animais', { params: { status: 'ativo', page_size: 200 } }),
+      api.get<AnimalLookup[]>('/animais/lookup'),
       api.get('/financeiro/analise', {
         params: { data_inicio: toISO(seisAtras), data_fim: toISO(hoje) }
       }).catch(() => ({ data: null })),
@@ -74,7 +74,7 @@ export default function Graficos() {
     ]).then(([pRes, lRes, aRes, fRes, mensalRes]) => {
       setPesagens(pRes.data)
       setLotes(lRes.data)
-      setAnimais(aRes.data.items ?? aRes.data)
+      setAnimais(aRes.data.filter(a => a.status === 'ativo'))
       setFin(fRes.data)
       setSerieMensal(mensalRes.map(({ label, data }) => ({
         mes: label,
@@ -129,7 +129,7 @@ export default function Graficos() {
   }, [pesagens, animais, filtroTipo, filtroAnimalId, filtroLoteId])
 
   const gmdPorLote = useMemo(() => {
-    const map = Object.fromEntries(animais.map(a => [a.id, a])) as Record<number, Animal>
+    const map = Object.fromEntries(animais.map(a => [a.id, a])) as Record<number, AnimalLookup>
     const acc = new Map<number, { soma: number; qtd: number }>()
     for (const p of pesagens) {
       if (p.gmd == null) continue

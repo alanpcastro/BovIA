@@ -3,7 +3,6 @@ import io
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
-from sqlalchemy import func as sqlfunc
 from typing import Optional
 from datetime import date
 
@@ -22,11 +21,10 @@ from ..models.pesagem import Pesagem
 from ..models.saude import Saude
 from ..models.movimentacao import Movimentacao, TipoMovEnum
 from ..models.despesa_fixa import DespesaFixa
-from ..models.custo_nutricional import CustoNutricional
 from ..models.lote import Lote
 from ..auth import get_current_user, check_assinatura_ativa
 from ..models.user import User
-from .pesagens import _calcular_gmd
+from ..zootecnia import calcular_gmd, custos_nutricionais_no_periodo
 from calendar import monthrange
 
 router = APIRouter()
@@ -134,7 +132,7 @@ def exportar_pesagens(
     writer = csv.writer(output)
     writer.writerow(["Brinco Animal", "Data", "Peso (kg)", "GMD", "Observações"])
     for p in pesagens:
-        gmd = _calcular_gmd(db, p.animal_id, p, current_user.id)
+        gmd = calcular_gmd(db, p.animal_id, p, current_user.id)
         writer.writerow([
             p.animal.brinco if p.animal else p.animal_id,
             p.data, p.peso_kg, gmd if gmd is not None else "", p.observacoes or "",
@@ -248,7 +246,7 @@ def exportar_pesagens_xlsx(
     ws.title = "Pesagens"
     ws.append(["Brinco", "Data", "Peso (kg)", "GMD (kg/dia)", "Observações"])
     for p in pesagens:
-        gmd = _calcular_gmd(db, p.animal_id, p, current_user.id)
+        gmd = calcular_gmd(db, p.animal_id, p, current_user.id)
         ws.append([
             p.animal.brinco if p.animal else str(p.animal_id),
             p.data.isoformat() if p.data else "",
@@ -452,23 +450,11 @@ def resumo_contador_pdf(
         else:
             custo_despesas_op += rateio
 
-    # Custos nutricionais (rateio: preco_kg * consumo_kg_dia * dias * cabeças)
-    custos_nutri = db.query(CustoNutricional).filter(CustoNutricional.user_id == uid).all()
-    custo_nutricao = 0.0
-    for c in custos_nutri:
-        dias = _overlap_days(c.data_inicio, c.data_fim, data_inicio, data_fim)
-        if dias <= 0:
-            continue
-        if c.lote_id:
-            n = db.query(sqlfunc.count(Animal.id)).filter(
-                Animal.lote_id == c.lote_id, Animal.user_id == uid, Animal.deletado_em == None,  # noqa: E711
-            ).scalar() or 0
-        else:
-            n = db.query(sqlfunc.count(Animal.id)).filter(
-                Animal.user_id == uid, Animal.deletado_em == None, Animal.status == StatusEnum.ativo,  # noqa: E711
-            ).scalar() or 0
-        custo_nutricao += (c.preco_kg or 0) * (c.consumo_kg_dia or 0) * dias * n
-    custo_nutricao = round(custo_nutricao, 2)
+    # Custos nutricionais: mesma conta do Financeiro (zootecnia.py) — cabeças presentes em
+    # cada dia do período, inclusive as vendidas depois.
+    custo_nutricao = round(sum(
+        i.valor for i in custos_nutricionais_no_periodo(db, uid, data_inicio, data_fim)
+    ), 2)
 
     custo_total = custo_compras + fretes + custo_saude + custo_nutricao + custo_despesas_op
     lucro_bruto = receita_liquida - custo_total
@@ -770,31 +756,16 @@ def exportar_livro_caixa(
             else:
                 cur = date(cur.year, cur.month + 1, 1)
 
-    # 4) Custos nutricionais (rateio: preco_kg * consumo_kg_dia * dias * cabecas)
-    custos_nutri = db.query(CustoNutricional).filter(CustoNutricional.user_id == uid).all()
-    for c in custos_nutri:
-        ovl = _overlap(c.data_inicio, c.data_fim, per_inicio, per_fim)
-        if not ovl:
-            continue
-        ini, fim = ovl
-        # Numero de cabecas: do lote se especifico, senao rebanho ativo total
+    # 4) Custos nutricionais: mesma conta do Financeiro (zootecnia.py) — cabeças presentes
+    #    em cada dia, inclusive as vendidas depois.
+    for item in custos_nutricionais_no_periodo(db, uid, per_inicio, per_fim):
+        c, ini, fim = item.custo, item.inicio, item.fim
         if c.lote_id:
-            n_cabecas = db.query(sqlfunc.count(Animal.id)).filter(
-                Animal.lote_id == c.lote_id,
-                Animal.user_id == uid,
-                Animal.deletado_em == None,  # noqa: E711
-            ).scalar() or 0
             lote = db.query(Lote).filter(Lote.id == c.lote_id, Lote.user_id == uid).first()
             ref = f"Lote {lote.nome}" if lote else "Lote"
         else:
-            n_cabecas = db.query(sqlfunc.count(Animal.id)).filter(
-                Animal.user_id == uid,
-                Animal.deletado_em == None,  # noqa: E711
-                Animal.status == StatusEnum.ativo,
-            ).scalar() or 0
             ref = "Rebanho"
-        dias = (fim - ini).days + 1
-        valor = round((c.preco_kg or 0) * (c.consumo_kg_dia or 0) * dias * n_cabecas, 2)
+        valor = round(item.valor, 2)
         if valor > 0:
             linhas.append({
                 "data": fim, "tipo": "Despesa", "categoria": "Nutrição",

@@ -295,11 +295,16 @@ export default function Dashboard() {
                   {data.proximas_vacinas.map(v => {
                     const dias = Math.ceil((new Date(v.proxima_data + 'T00:00').getTime() - Date.now()) / 86400000)
                     const urgente = dias <= 7
+                    const selo = dias < 0 ? `Atrasada — ${-dias}d` : dias === 0 ? 'Hoje' : `Urgente — ${dias}d`
+                    const grupo = v.qtd_animais > 1
                     return (
-                      <tr key={v.id} className="clickable" onClick={() => navigate(`/animais/${v.animal_id}`)}>
+                      <tr key={v.id} className="clickable" onClick={() => navigate(grupo ? '/saude' : `/animais/${v.animal_id}`)}>
                         <td>
-                          <div style={{ fontWeight: 700 }}>{v.descricao}</div>
-                          {urgente && <span className="badge badge-red" style={{ marginTop: 4, fontSize: 12, padding: '4px 10px' }}>Urgente — {dias}d</span>}
+                          <div style={{ fontWeight: 700 }}>
+                            {v.descricao}
+                            {grupo && <span style={{ fontWeight: 500, color: 'var(--gray-500)' }}> · {v.qtd_animais} animais</span>}
+                          </div>
+                          {urgente && <span className="badge badge-red" style={{ marginTop: 4, fontSize: 12, padding: '4px 10px' }}>{selo}</span>}
                         </td>
                         <td style={{ textAlign: 'right', fontWeight: 700, color: urgente ? 'var(--red-600)' : 'var(--amber-600)', fontSize: 16 }}>
                           {new Date(v.proxima_data + 'T00:00').toLocaleDateString('pt-BR')}
