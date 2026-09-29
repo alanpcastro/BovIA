@@ -8,13 +8,13 @@ animal, e o custo de racao ignorava os animais vendidos no meio do periodo.
 from datetime import date
 from typing import NamedTuple, Optional
 
-from sqlalchemy import func
 from sqlalchemy.orm import Session, contains_eager
 
 from .dispensas import chave_dose, chaves_dispensadas
+from .rebanho import SAIDA_PARA_STATUS
 from .models.animal import Animal, StatusEnum
 from .models.custo_nutricional import CustoNutricional
-from .models.movimentacao import Movimentacao, TipoMovEnum
+from .models.movimentacao import Movimentacao
 from .models.pesagem import Pesagem
 from .models.saude import Saude
 
@@ -84,9 +84,10 @@ class Presenca(NamedTuple):
     lote_id: Optional[int]
     entrada: Optional[date]  # None = sem data conhecida: presente desde sempre
     saida: Optional[date]    # None = ainda no rebanho
+    animal_id: Optional[int] = None
 
 
-SAIDAS_DO_REBANHO = (TipoMovEnum.venda, TipoMovEnum.morte, TipoMovEnum.transferencia)
+SAIDAS_DO_REBANHO = tuple(SAIDA_PARA_STATUS)  # venda, morte, transferencia (app/rebanho.py)
 
 
 def presencas(db: Session, user_id: int) -> list[Presenca]:
@@ -98,27 +99,32 @@ def presencas(db: Session, user_id: int) -> list[Presenca]:
     - saida: data da ultima venda/morte/transferencia. Animal ativo nao tem saida.
     - animal inativo SEM movimentacao de saida fica de fora: nao ha como saber quando saiu.
 
-    Limitacao conhecida: a venda tira o animal do lote (lote_id = None), entao animais que ja
-    sairam nao contam na analise por lote.
+    Lote: o atual para quem esta no rebanho; para quem saiu, o lote gravado na movimentacao de
+    saida (a venda tira o animal do lote). Saida antiga, sem lote gravado, fica sem lote.
+    Limitacao: troca de lote no meio do periodo nao tem historico — vale o lote atual/de saida.
     """
     animais = db.query(
         Animal.id, Animal.lote_id, Animal.status, Animal.data_entrada, Animal.data_nascimento,
     ).filter(Animal.user_id == user_id, Animal.deletado_em.is_(None)).all()
 
-    saidas = dict(
-        db.query(Movimentacao.animal_id, func.max(Movimentacao.data))
+    # Ultima saida de cada animal: data e lote de onde saiu
+    saidas: dict[int, tuple[date, Optional[int]]] = {}
+    for animal_id, data_saida, lote_saida in (
+        db.query(Movimentacao.animal_id, Movimentacao.data, Movimentacao.lote_id)
         .filter(Movimentacao.user_id == user_id, Movimentacao.tipo.in_(SAIDAS_DO_REBANHO))
-        .group_by(Movimentacao.animal_id)
+        .order_by(Movimentacao.data, Movimentacao.id)
         .all()
-    )
+    ):
+        saidas[animal_id] = (data_saida, lote_saida)
 
     out: list[Presenca] = []
     for a in animais:
         entrada = a.data_entrada or a.data_nascimento
         if a.status == StatusEnum.ativo:
-            out.append(Presenca(a.lote_id, entrada, None))
+            out.append(Presenca(a.lote_id, entrada, None, a.id))
         elif a.id in saidas:
-            out.append(Presenca(a.lote_id, entrada, saidas[a.id]))
+            data_saida, lote_saida = saidas[a.id]
+            out.append(Presenca(lote_saida or a.lote_id, entrada, data_saida, a.id))
     return out
 
 

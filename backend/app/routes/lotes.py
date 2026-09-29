@@ -13,6 +13,7 @@ from ..models.custo_nutricional import CustoNutricional
 from ..schemas.lote import LoteCreate, LoteUpdate, LoteOut
 from ..auth import get_current_user, check_assinatura_ativa
 from ..models.user import User
+from ..rebanho import aplicar_saida, e_saida
 
 router = APIRouter()
 
@@ -38,6 +39,7 @@ def _animais_ativos(lote_id: int, db: Session, user_id: int):
 def _lote_out(lote: Lote, db: Session) -> LoteOut:
     total = db.query(Animal).filter(
         Animal.lote_id == lote.id,
+        Animal.user_id == lote.user_id,  # so animais do dono do lote (defesa: backup adulterado)
         Animal.status == "ativo",
         Animal.deletado_em == None,  # noqa: E711
     ).count()
@@ -129,6 +131,8 @@ def deletar_lote(lote_id: int, db: Session = Depends(get_db), current_user: User
 
     # Desvincular animais (eles ficam sem lote, mas continuam cadastrados)
     db.query(Animal).filter(Animal.lote_id == lote.id).update({Animal.lote_id: None})
+    # Movimentacoes guardam o lote do lancamento (C7): com o lote apagado, perdem a atribuicao
+    db.query(Movimentacao).filter(Movimentacao.lote_id == lote.id).update({Movimentacao.lote_id: None})
     # Deletar custos nutricionais vinculados: se desvincularmos (lote_id=NULL),
     # passam a ser interpretados como "rebanho inteiro" e inflam analises retroativas
     db.query(CustoNutricional).filter(CustoNutricional.lote_id == lote.id).delete()
@@ -283,7 +287,7 @@ def movimentacao_em_lote(
 
     for animal in animais:
         m = Movimentacao(
-            animal_id=animal.id, user_id=current_user.id,
+            animal_id=animal.id, user_id=current_user.id, lote_id=lote_id,
             tipo=data.tipo, data=data.data,
             valor=valor_por_animal, peso_kg=data.peso_medio_kg,
             origem=data.origem, destino=data.destino,
@@ -291,13 +295,9 @@ def movimentacao_em_lote(
         )
         db.add(m)
 
-        # Sincronizar status do animal com a movimentação em lote
-        if data.tipo == TipoMovEnum.venda:
-            animal.status = "vendido"
-            animal.lote_id = None
-        elif data.tipo == TipoMovEnum.morte:
-            animal.status = "morto"
-            animal.lote_id = None
+        # Venda, morte e transferencia tiram do rebanho (app/rebanho.py). Todos aqui sao ativos.
+        if e_saida(data.tipo):
+            aplicar_saida(animal, data.tipo)
 
     db.commit()
     return {"registrados": len(animais)}

@@ -59,10 +59,17 @@ export default function AnimalDetalhe() {
 
   async function salvarStatus() {
     setSaving(true)
-    await api.put(`/animais/${id}`, { status: novoStatus })
-    setSaving(false)
-    setEditStatus(false)
-    load()
+    try {
+      await api.put(`/animais/${id}`, { status: novoStatus })
+      setEditStatus(false)
+      load()
+      success('Status atualizado')
+    } catch (err: any) {
+      // Ex.: animal com venda registrada — o backend explica que é preciso excluir a venda
+      toastError(apiErrorMessage(err, 'Erro ao atualizar status'))
+    } finally {
+      setSaving(false)
+    }
   }
 
   function openEdit() {

@@ -172,6 +172,9 @@ export default function Financeiro() {
           <div style={{ display: 'flex', gap: 16, marginBottom: 24, flexWrap: 'wrap' }}>
             <div style={{ fontSize: 13, color: 'var(--gray-500)', background: 'var(--gray-50)', padding: '6px 14px', borderRadius: 'var(--radius)' }}>
               <strong>{data.qtd_cabecas}</strong> cabeças hoje | <strong>{fmtNum(data.cabecas_medias_periodo, '', 1)}</strong> em média no período (base dos custos por cabeça) | <strong>{data.dias_periodo}</strong> dias | Rendimento carcaca: <strong>{data.rendimento_carcaca_pct}%</strong>
+              {data.rateio_despesas_pct != null && (
+                <> | Lote = <strong>{fmtNum(data.rateio_despesas_pct, '%', 1)}</strong> do rebanho no período (parte das despesas fixas que ele leva)</>
+              )}
             </div>
           </div>
 

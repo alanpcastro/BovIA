@@ -55,7 +55,7 @@ const emptyForm = {
 
 export default function Animais() {
   const navigate = useNavigate()
-  const { success, error: toastError } = useToast()
+  const { success, error: toastError, warning } = useToast()
   const [animais, setAnimais] = useState<Animal[]>([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
@@ -118,6 +118,8 @@ export default function Animais() {
         if (bulkAction === 'categoria') payload.categoria = bulkCategoria
         const r = await api.post('/animais/bulk-update', payload)
         success(`${r.data.afetados} animal(is) atualizado(s)`)
+        // Alguns não mudaram de status (têm venda/morte registrada): o backend explica o porquê
+        if (r.data.mensagem) warning(r.data.mensagem)
       }
       setBulkAction('')
       setBulkLoteId(''); setBulkStatus(''); setBulkCategoria('')

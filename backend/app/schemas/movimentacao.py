@@ -82,6 +82,7 @@ class MovimentacaoCreate(BaseModel):
 class MovimentacaoOut(BaseModel):
     id: int
     animal_id: int
+    lote_id: Optional[int] = None  # lote do animal no momento do lancamento
     tipo: TipoMovEnum
     data: date
     valor: Optional[float]

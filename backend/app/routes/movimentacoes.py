@@ -3,11 +3,12 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from pydantic import BaseModel
 from ..database import get_db
-from ..models.movimentacao import Movimentacao, TipoMovEnum
+from ..models.movimentacao import Movimentacao
 from ..models.animal import Animal
 from ..schemas.movimentacao import MovimentacaoCreate, MovimentacaoOut
 from ..auth import get_current_user, check_assinatura_ativa
 from ..models.user import User
+from ..rebanho import aplicar_saida, e_saida, exigir_no_rebanho, reativar_se_sem_saida
 
 router = APIRouter()
 
@@ -19,6 +20,15 @@ class BulkDeleteIn(BaseModel):
 class BulkResult(BaseModel):
     total: int
     afetados: int
+    reativados: int = 0  # animais que voltaram ao rebanho porque a venda/morte foi apagada
+
+
+def _reativar(db: Session, animal_ids: set, user_id: int) -> int:
+    """Apagou venda/morte/transferencia: quem ficou sem nenhuma saida volta ao rebanho."""
+    if not animal_ids:
+        return 0
+    animais = db.query(Animal).filter(Animal.id.in_(animal_ids), Animal.user_id == user_id).all()
+    return sum(1 for a in animais if reativar_se_sem_saida(db, a))
 
 
 @router.get("", response_model=List[MovimentacaoOut])
@@ -46,16 +56,17 @@ def criar_movimentacao(data: MovimentacaoCreate, db: Session = Depends(get_db), 
     if not animal:
         raise HTTPException(status_code=404, detail="Animal não encontrado")
 
-    mov = Movimentacao(**data.model_dump(), user_id=current_user.id)
+    # Venda, morte e transferencia tiram o animal do rebanho — so se ele ainda estiver nele
+    # (app/rebanho.py). Antes dava para vender o mesmo animal duas vezes.
+    if e_saida(data.tipo):
+        exigir_no_rebanho(animal, data.tipo)
+
+    # lote_id gravado ANTES de aplicar_saida tirar o animal do lote (analise por lote, C7)
+    mov = Movimentacao(**data.model_dump(), user_id=current_user.id, lote_id=animal.lote_id)
     db.add(mov)
 
-    # Sincronizar status do animal com a movimentação
-    if data.tipo == TipoMovEnum.venda:
-        animal.status = "vendido"
-        animal.lote_id = None  # Remove do lote ao vender
-    elif data.tipo == TipoMovEnum.morte:
-        animal.status = "morto"
-        animal.lote_id = None  # Remove do lote ao morrer
+    if e_saida(data.tipo):
+        aplicar_saida(animal, data.tipo)
 
     db.commit()
     db.refresh(mov)
@@ -74,10 +85,13 @@ def bulk_delete_movimentacoes(
         Movimentacao.id.in_(data.ids),
         Movimentacao.user_id == current_user.id,
     ).all()
+    com_saida = {m.animal_id for m in movs if e_saida(m.tipo)}
     for m in movs:
         db.delete(m)
+    db.flush()
+    reativados = _reativar(db, com_saida, current_user.id)
     db.commit()
-    return BulkResult(total=len(data.ids), afetados=len(movs))
+    return BulkResult(total=len(data.ids), afetados=len(movs), reativados=reativados)
 
 
 @router.get("/{mov_id}", response_model=MovimentacaoOut)
@@ -93,5 +107,8 @@ def deletar_movimentacao(mov_id: int, db: Session = Depends(get_db), current_use
     mov = db.query(Movimentacao).filter(Movimentacao.id == mov_id, Movimentacao.user_id == current_user.id).first()
     if not mov:
         raise HTTPException(status_code=404, detail="Movimentação não encontrada")
+    com_saida = {mov.animal_id} if e_saida(mov.tipo) else set()
     db.delete(mov)
+    db.flush()
+    _reativar(db, com_saida, current_user.id)
     db.commit()

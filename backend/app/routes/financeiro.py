@@ -14,7 +14,7 @@ from ..models.despesa_fixa import DespesaFixa, CategoriaDespEnum
 from ..auth import get_current_user
 from ..models.user import User
 from ..zootecnia import (
-    referencia_de_ganho, presencas, rebanho_medio, custos_nutricionais_no_periodo,
+    referencia_de_ganho, presencas, cabeca_dias, rebanho_medio, custos_nutricionais_no_periodo,
 )
 
 router = APIRouter()
@@ -26,6 +26,7 @@ class AnaliseFinanceira(BaseModel):
     lote_id: Optional[int] = None
     qtd_cabecas: int                                   # plantel atual (base do desempenho zootecnico)
     cabecas_medias_periodo: Optional[float] = None     # rebanho medio no periodo (divisor dos custos por cabeca)
+    rateio_despesas_pct: Optional[float] = None        # so com lote: % das cabecas-dia da fazenda — parte das despesas fixas que o lote leva
     dias_periodo: int
 
     # Peso
@@ -257,6 +258,18 @@ def analise_financeira(
             else:
                 custo_oper_total += valor_periodo
 
+    # Analise de um lote: despesa fixa e da fazenda inteira — o lote leva a parte dele,
+    # proporcional as cabecas-dia que ocupou. Antes cada lote recebia a despesa INTEIRA
+    # (dois lotes somados custavam o dobro da fazenda).
+    rateio_despesas = None
+    if lote_id:
+        cab_dias_fazenda = cabeca_dias(pres, data_inicio, data_fim)
+        rateio_despesas = (
+            cabeca_dias(pres, data_inicio, data_fim, lote_id) / cab_dias_fazenda if cab_dias_fazenda else 0.0
+        )
+        custo_oper_total *= rateio_despesas
+        impostos_total *= rateio_despesas
+
     custo_oper_total = round(custo_oper_total, 2)
     impostos_total = round(impostos_total, 2)
     custo_oper_por_cab = _por_cabeca(custo_oper_total)
@@ -268,7 +281,9 @@ def analise_financeira(
         Saude.data <= data_fim,
     )
     if lote_id:
-        q_saude = q_saude.filter(Animal.lote_id == lote_id)
+        # Animais do lote no periodo — inclusive os que ja sairam dele (zootecnia.presencas)
+        ids_do_lote = [p.animal_id for p in pres if p.lote_id == lote_id]
+        q_saude = q_saude.filter(Animal.id.in_(ids_do_lote or [0]))
     custo_saude = round(float(q_saude.scalar()), 2)
 
     # ── Custos totais ────────────────────────────────────────────────────────
@@ -291,8 +306,10 @@ def analise_financeira(
         Movimentacao.data <= data_fim,
     )
     if lote_id:
-        # Restringe às movimentações dos animais desse lote, mesmo os já vendidos
-        q_mov = q_mov.join(Animal).filter(Animal.lote_id == lote_id)
+        # Lote gravado na movimentação — a venda tira o animal do lote, então o lote ATUAL
+        # dele não serve (antes a receita da venda do lote sumia). Lançamento antigo, sem lote
+        # gravado, usa o lote atual do animal: o comportamento de antes.
+        q_mov = q_mov.join(Animal).filter(sqlfunc.coalesce(Movimentacao.lote_id, Animal.lote_id) == lote_id)
     movs = q_mov.all()
 
     # Receita de vendas: valor menos desconto concedido
@@ -352,6 +369,7 @@ def analise_financeira(
         lote_id=lote_id,
         qtd_cabecas=qtd_cabecas,
         cabecas_medias_periodo=round(cabecas_medias, 2),
+        rateio_despesas_pct=round(rateio_despesas * 100, 1) if rateio_despesas is not None else None,
         dias_periodo=dias_periodo,
         peso_medio_inicial=peso_medio_inicial,
         peso_medio_final=peso_medio_final,

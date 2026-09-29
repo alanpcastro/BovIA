@@ -7,6 +7,9 @@ import { todayLocal } from '../utils/date'
 import { apiErrorMessage } from '../utils/apiError'
 
 const tipos = ['compra', 'venda', 'transferencia', 'nascimento', 'morte']
+// Tiram o animal do rebanho — só animal ativo pode ter um deles (backend: app/rebanho.py)
+const SAIDAS = ['venda', 'morte', 'transferencia']
+const DICA_TRANSFERENCIA = 'Para outra propriedade: o animal sai do rebanho. Para trocar de lote ou de pasto, use Lotes ou Pastagens.'
 const tipoLabel: Record<string, string> = {
   compra: 'Compra', venda: 'Venda', transferencia: 'Transferência',
   nascimento: 'Nascimento', morte: 'Morte'
@@ -38,8 +41,13 @@ export default function Movimentacoes() {
   const [loteConfirm, setLoteConfirm] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
 
-  useEffect(() => {
+  // Recarregado depois de cada lançamento: venda/morte mudam quem ainda está no rebanho
+  function carregarAnimais() {
     api.get<AnimalLookup[]>('/animais/lookup').then(r => setAnimais(r.data))
+  }
+
+  useEffect(() => {
+    carregarAnimais()
     api.get('/lotes').then(r => setLotes(r.data))
   }, [])
 
@@ -69,6 +77,7 @@ export default function Movimentacoes() {
       setShowModal(false)
       setForm(emptyForm)
       load()
+      carregarAnimais()
       success('Movimentação registrada com sucesso!')
     } catch (err: any) {
       setErro(apiErrorMessage(err, 'Erro ao registrar'))
@@ -94,6 +103,7 @@ export default function Movimentacoes() {
       setShowLoteModal(false)
       setLoteConfirm(false)
       load()
+      carregarAnimais()
       success(`Movimentação registrada para ${res.data.registrados} animais!`)
     } catch (err: any) {
       setErro(apiErrorMessage(err, 'Erro ao registrar em lote'))
@@ -130,9 +140,13 @@ export default function Movimentacoes() {
     setSaving(true)
     try {
       const r = await api.post('/movimentacoes/bulk-delete', { ids })
-      success(`${r.data.afetados} movimentação(ões) excluída(s)`)
+      const voltaram = r.data.reativados
+        ? ` ${r.data.reativados} animal(is) voltaram ao rebanho, sem lote — atribua o lote em Animais.`
+        : ''
+      success(`${r.data.afetados} movimentação(ões) excluída(s).${voltaram}`)
       clearSelection()
       load()
+      carregarAnimais()
     } catch (err: any) {
       toastError(apiErrorMessage(err, 'Erro ao excluir em massa'))
     } finally {
@@ -313,14 +327,26 @@ export default function Movimentacoes() {
               <label className="form-label">Animal *</label>
               <select className="form-select" value={form.animal_id} onChange={e => setForm(f => ({ ...f, animal_id: e.target.value }))} required autoFocus>
                 <option value="">Selecione...</option>
-                {animais.map(a => <option key={a.id} value={a.id}>#{a.brinco}{a.nome ? ` — ${a.nome}` : ''}</option>)}
+                {/* Venda, morte e transferência: só quem ainda está no rebanho */}
+                {animais
+                  .filter(a => !SAIDAS.includes(form.tipo) || a.status === 'ativo')
+                  .map(a => <option key={a.id} value={a.id}>#{a.brinco}{a.nome ? ` — ${a.nome}` : ''}</option>)}
               </select>
             </div>
             <div className="form-group">
               <label className="form-label">Tipo *</label>
-              <select className="form-select" value={form.tipo} onChange={e => setForm(f => ({ ...f, tipo: e.target.value }))} required>
+              <select className="form-select" value={form.tipo} onChange={e => {
+                const tipo = e.target.value
+                setForm(f => {
+                  // Trocou para uma saída com um animal que já saiu do rebanho selecionado: limpa
+                  const escolhido = animais.find(a => String(a.id) === f.animal_id)
+                  const limpar = SAIDAS.includes(tipo) && escolhido && escolhido.status !== 'ativo'
+                  return { ...f, tipo, animal_id: limpar ? '' : f.animal_id }
+                })
+              }} required>
                 {tipos.map(t => <option key={t} value={t}>{tipoLabel[t]}</option>)}
               </select>
+              {form.tipo === 'transferencia' && <div className="form-hint">{DICA_TRANSFERENCIA}</div>}
             </div>
             <div className="form-group">
               <label className="form-label">Data *</label>
@@ -414,6 +440,7 @@ export default function Movimentacoes() {
               <select className="form-select" value={loteForm.tipo} onChange={e => setLoteForm(f => ({ ...f, tipo: e.target.value }))} required>
                 {tipos.map(t => <option key={t} value={t}>{tipoLabel[t]}</option>)}
               </select>
+              {loteForm.tipo === 'transferencia' && <div className="form-hint">{DICA_TRANSFERENCIA}</div>}
             </div>
             <div className="form-group">
               <label className="form-label">Data *</label>

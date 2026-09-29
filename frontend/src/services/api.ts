@@ -201,6 +201,8 @@ export interface Reproducao {
 export interface Movimentacao {
   id: number
   animal_id: number
+  /** Lote do animal no momento do lançamento (null em lançamentos antigos). */
+  lote_id?: number | null
   tipo: string
   data: string
   valor?: number
@@ -246,6 +248,8 @@ export interface AnaliseFinanceira {
   qtd_cabecas: number
   /** Rebanho médio no período — divisor de todos os custos "por cabeça". */
   cabecas_medias_periodo?: number | null
+  /** Só na análise de um lote: % das cabeças-dia da fazenda — a parte das despesas fixas que ele leva. */
+  rateio_despesas_pct?: number | null
   dias_periodo: number
   peso_medio_inicial?: number
   peso_medio_final?: number

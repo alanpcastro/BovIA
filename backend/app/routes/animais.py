@@ -15,6 +15,7 @@ from ..models.movimentacao import Movimentacao, TipoMovEnum
 from ..schemas.animal import AnimalCreate, AnimalUpdate, AnimalOut, AnimalLookup
 from ..schemas.pesagem import PesagemOut
 from ..zootecnia import calcular_gmd
+from ..rebanho import motivo_bloqueio_status, mudar_status
 from ..schemas.saude import SaudeOut
 from ..schemas.reproducao import ReproducaoOut
 from ..schemas.movimentacao import MovimentacaoCreate, MovimentacaoOut
@@ -50,6 +51,8 @@ class BulkDeleteIn(BaseModel):
 class BulkResult(BaseModel):
     total: int
     afetados: int
+    ignorados: int = 0                # status recusado (tem venda/morte/transferencia registrada)
+    mensagem: Optional[str] = None
 
 
 @router.get("", response_model=AnimaisPage)
@@ -157,6 +160,7 @@ def criar_animal(data: AnimalCreate, db: Session = Depends(get_db), current_user
         mov = Movimentacao(
             user_id=current_user.id,
             animal_id=animal.id,
+            lote_id=animal.lote_id,
             tipo=TipoMovEnum.compra,
             data=date.today(),
             peso_kg=data.peso_entrada,
@@ -166,6 +170,7 @@ def criar_animal(data: AnimalCreate, db: Session = Depends(get_db), current_user
         mov = Movimentacao(
             user_id=current_user.id,
             animal_id=animal.id,
+            lote_id=animal.lote_id,
             tipo=TipoMovEnum.nascimento,
             data=date.today(),
             peso_kg=data.peso_entrada,
@@ -192,7 +197,8 @@ def atualizar_animal(animal_id: int, data: AnimalUpdate, db: Session = Depends(g
         raise HTTPException(status_code=404, detail="Animal não encontrado")
 
     updates = data.model_dump(exclude_unset=True)
-    novo_status = updates.get("status")
+    # Status nao e um campo comum: segue as regras de entrada/saida do rebanho (app/rebanho.py)
+    novo_status = updates.pop("status", None)
 
     novo_brinco = updates.get("brinco")
     if novo_brinco and novo_brinco != animal.brinco:
@@ -207,28 +213,12 @@ def atualizar_animal(animal_id: int, data: AnimalUpdate, db: Session = Depends(g
     for field, value in updates.items():
         setattr(animal, field, value)
 
+    # Depois dos outros campos: sair do rebanho tira do lote, mesmo que o form mande o lote.
+    # Se a mudanca for recusada, nada e gravado (o commit nao acontece).
+    if novo_status is not None:
+        mudar_status(db, animal, novo_status, current_user.id)
+
     db.commit()
-
-    # Registrar movimentação automática ao mudar status
-    if novo_status == "vendido":
-        mov = Movimentacao(
-            user_id=current_user.id,
-            animal_id=animal.id,
-            tipo=TipoMovEnum.venda,
-            data=date.today(),
-        )
-        db.add(mov)
-        db.commit()
-    elif novo_status == "morto":
-        mov = Movimentacao(
-            user_id=current_user.id,
-            animal_id=animal.id,
-            tipo=TipoMovEnum.morte,
-            data=date.today(),
-        )
-        db.add(mov)
-        db.commit()
-
     db.refresh(animal)
     return animal
 
@@ -252,28 +242,27 @@ def bulk_update(
 
     hoje = date.today()
     afetados = 0
+    ignorados = 0
     for a in animais:
+        # Mesma regra do PUT individual (app/rebanho.py). Animal bloqueado fica de fora inteiro.
+        if data.status is not None and motivo_bloqueio_status(db, a, data.status):
+            ignorados += 1
+            continue
         if data.lote_id is not None:
             a.lote_id = data.lote_id if data.lote_id > 0 else None
         if data.categoria is not None:
             a.categoria = data.categoria
-        if data.status is not None and a.status != data.status:
-            a.status = data.status
-            # gera movimentacao automatica para vendido/morto, igual ao PUT individual
-            if data.status == StatusEnum.vendido:
-                db.add(Movimentacao(
-                    user_id=current_user.id, animal_id=a.id,
-                    tipo=TipoMovEnum.venda, data=hoje,
-                ))
-            elif data.status == StatusEnum.morto:
-                db.add(Movimentacao(
-                    user_id=current_user.id, animal_id=a.id,
-                    tipo=TipoMovEnum.morte, data=hoje,
-                ))
+        if data.status is not None:
+            mudar_status(db, a, data.status, current_user.id, hoje)
         afetados += 1
 
     db.commit()
-    return BulkResult(total=len(data.ids), afetados=afetados)
+    mensagem = None
+    if ignorados:
+        mensagem = (f"{ignorados} animal(is) não mudaram de status porque têm venda, morte ou "
+                    f"transferência registrada. Para devolvê-los ao rebanho, exclua a movimentação "
+                    f"em Movimentações.")
+    return BulkResult(total=len(data.ids), afetados=afetados, ignorados=ignorados, mensagem=mensagem)
 
 
 @router.post("/bulk-delete", response_model=BulkResult)

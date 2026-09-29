@@ -75,7 +75,7 @@ risco. O Bloco 2 e o que mais rende em credibilidade e o que mais exige cuidado.
   Reproducao. Graficos usa `#{brinco || id}` e `alertas.py` usa `brinco or nome or #id` — o
   rotulo de fallback e inconsistente entre telas. A conta de teste tem 248 de 250 animais sem
   brinco, o que deixa isso muito visivel nela.
-- O seletor de formulario de Movimentacoes lista vendidos (250). E por ali que se vende um
+- ✅ (resolvido no Bloco 4) O seletor de formulario de Movimentacoes lista vendidos (250). E por ali que se vende um
   animal ja vendido — tratado no Bloco 4 (C6).
 
 ---
@@ -534,7 +534,67 @@ e cerca de uma hora de trabalho.
 
 ---
 
-## BLOCO 4 — C6: apagar venda nao devolve o animal ⬜
+## BLOCO 4 — C6: apagar venda nao devolve o animal ✅ (concluido 28/09/2026)
+
+### Resultado
+
+**Regra unica em `app/rebanho.py`**: o status do animal acompanha as movimentacoes. Venda, morte
+e transferencia (para outra propriedade) tiram o animal do rebanho. Eram **quatro caminhos com
+regras diferentes** — agora todos passam pelo mesmo modulo:
+
+| Caminho | Antes | Agora |
+|---|---|---|
+| Formulario de Movimentacoes | vendia animal ja vendido/morto; transferencia nao mudava status | so animal ativo sai; transferencia marca "transferido" e tira do lote |
+| Excluir movimentacao (**em massa** — o unico jeito pela tela) | animal ficava "vendido" para sempre | sem nenhuma saida restante, o animal volta ao rebanho |
+| Venda/morte/transferencia em lote | transferencia nao mudava status | mesma regra do formulario |
+| Editar o animal (ficha) | editar para "vendido" criava venda mas **mantinha o lote**; salvar "vendido" de novo **criava outra venda**; voltar para "ativo" **deixava a venda registrada** (item 4) | venda criada e fora do lote; mesmo status nao faz nada; voltar para ativo e **recusado com o motivo** se ha venda/morte registrada |
+| Alteracao em massa (Animais) | mesmos problemas da edicao | mesma regra; animais recusados sao contados e explicados |
+
+**Decisoes tomadas no caminho**
+- **Voltar para "ativo" pela edicao e recusado quando ha movimentacao de saida.** O caminho e
+  excluir a movimentacao, que devolve o animal sozinho. Alternativa descartada: apagar a venda
+  automaticamente — perderia um registro financeiro sem o produtor perceber. Status de saida SEM
+  movimentacao (dado antigo) pode ser corrigido pela edicao.
+- **Transferencia = saida para outra propriedade.** O formulario agora diz isso ("Para trocar de
+  lote ou de pasto, use Lotes ou Pastagens"). Nao havia transferencias nos dados locais.
+- **Animal reativado volta sem lote**: a movimentacao nao guarda de qual lote ele saiu (mesma raiz
+  do C7). O aviso da exclusao diz isso ao produtor.
+- Se o animal tem duas saidas (inconsistencia antiga) e so uma e apagada, ele **nao** volta.
+
+**Frontend**
+- Movimentacoes: com venda/morte/transferencia, o seletor so mostra animais ativos (e limpa o
+  animal escolhido se ele ja saiu); dica na transferencia (formulario e lote); lista de animais
+  recarregada apos cada lancamento; aviso da exclusao informa quantos voltaram ao rebanho.
+- Ficha do animal: `salvarStatus` nao tratava erro — com a recusa nova, o botao ficaria preso em
+  "salvando" sem mensagem. Agora mostra o motivo.
+- Animais (alteracao em massa): aviso com os animais que nao mudaram e por que.
+- Classe `.form-hint` nova no design system.
+
+**Consulta de conferencia (opcao 2)**: `backend/scripts/diagnostico_status_movimentacoes.sql`.
+So SELECT. Lista os dois sentidos da inconsistencia, com o que fazer em cada caso no cabecalho do
+arquivo. No banco local encontrou exatamente os casos conhecidos:
+
+| Problema | Conta | Animais |
+|---|---|---|
+| A) status de saida sem registro | `apcameloc` | 150 |
+| B) saida registrada com animal ativo | `pedroazm66` | 50 (R$ 206.000) |
+
+> **Pendente — acao sua**: rodar o arquivo no editor SQL do Neon (producao). Vazio encerra o
+> assunto; com resultado, revisar caso a caso.
+
+### Verificacao
+
+- Cenario pelos endpoints (criado e apagado), 16 verificacoes: vender de novo -> 400; morte de
+  animal vendido -> 400; transferencia -> transferido e fora do lote; compra nao mexe no status;
+  exclusao em massa e individual reativam; com outra saida restante NAO reativa; edicao recusada
+  nao grava nada (nem os outros campos); salvar o mesmo status nao duplica venda; ativo->vendido
+  cria venda e tira do lote; dado antigo sem venda pode voltar a ativo; alteracao em massa conta
+  os recusados; transferencia em lote.
+- Navegador (conta de teste criada e apagada): seletor filtra por tipo; dica aparece; exclusao em
+  massa devolveu o animal; ficha mostra o motivo da recusa e o botao nao trava.
+- `pytest` 12 passando; `tsc` e build limpos.
+
+---
 
 **Categoria**: bug de estado · **Complexidade**: media · **Prazo**: meio dia
 
@@ -616,7 +676,78 @@ de receita no Financeiro para animais que continuam no rebanho. Aplicar a mesma 
 
 ---
 
-## C7 — Analise por lote perde tudo de quem saiu do lote ⬜
+## C7 — Analise por lote perde tudo de quem saiu do lote ✅ (concluido 28/09/2026, opcao a)
+
+### Resultado
+
+**Opcao (a)**: a movimentacao grava o lote do animal **no momento do lancamento** — antes de a
+venda tirar o animal do lote. Migration `e4f5a6b7c8d9` (`movimentacoes.lote_id`, FK com
+`ON DELETE SET NULL`), testada em ida e volta; `alembic check` sem diferencas.
+
+**Sem backfill, e sem regressao**: nao ha como saber de qual lote saiu um animal ja vendido.
+Lancamento antigo (sem lote gravado) continua usando o lote atual do animal — exatamente o
+comportamento de antes. Sem essa regra, as compras antigas de animais ativos sumiriam da analise.
+
+**O que mudou na analise por lote** (`financeiro.py`):
+- movimentacoes pelo lote gravado (`COALESCE(movimentacao.lote_id, animal.lote_id)`);
+- racao e vacina dos animais que sairam contam no lote de onde sairam (`zootecnia.presencas` le o
+  lote da movimentacao de saida);
+- **despesas fixas e impostos rateados** pela participacao do lote nas cabecas-dia da fazenda
+  (novo campo `rateio_despesas_pct`, mostrado no cabecalho do Financeiro). Antes cada lote
+  recebia a despesa inteira.
+- Efeito tambem na fazenda inteira: custo nutricional **de um lote especifico** passa a contar os
+  animais que sairam daquele lote.
+
+**Os 6 lugares que criam movimentacao gravam o lote**: formulario, lote, cadastro de animal
+(compra/nascimento), edicao/alteracao em massa (`rebanho.mudar_status`) e dados de demonstracao.
+Excluir um lote desvincula as movimentacoes dele (mesmo padrao dos animais).
+
+### Verificacao
+
+Cenario pela API real (criado e apagado): L1 com 10 animais, 4 vendidos em marco; L2 com 5.
+
+| Jan-jun | L1 antes | L1 depois | L2 | L1 + L2 | Fazenda |
+|---|---|---|---|---|---|
+| Receita | 0 | **20.000** | 0 | 20.000 | 20.000 |
+| Compras | 18.300 | **30.500** | 10.250 | 40.750 | 40.750 |
+| Racao | 11.073,60 | **14.768** | 9.050 | 23.818 | 23.818 |
+| Vacina | 120 | **200** | 100 | 300 | 300 |
+| Despesa fixa | 18.100 (inteira) | **11.132,54** (61,5%) | 6.967,46 | 18.100 | 18.100 |
+| Lucro liquido | -49.403,60 | **-37.713,79** | -27.064,21 | -64.778,00 | -64.778,00 |
+
+**Os lotes somados agora dao exatamente a fazenda.** Todos os valores conferem com o calculo a mao.
+
+- **Regressao contra o codigo em producao** (mesmo banco, 18 analises: fazenda e cada lote, 3
+  periodos, 2 contas reais): unica diferenca e o campo novo `rateio_despesas_pct`.
+- Backup: exportar/importar remapeia o lote da movimentacao para o lote novo da conta.
+- Bloco 4 (16 verificacoes) e pytest (12) continuam passando; `tsc` e build limpos; Financeiro
+  mostra o rateio ao escolher um lote.
+
+### 🔴 Achado de seguranca no caminho — corrigido
+
+**A importacao de backup aceitava ids de outra conta.** Quando um id de animal/lote/pasto nao
+vinha no proprio arquivo, era mantido como estava (`.get(id, id)` em `backup.py`). Medido no
+**codigo que esta em producao hoje**:
+
+| Backup adulterado | Producao | Corrigido |
+|---|---|---|
+| pesagem + vacina apontando para animal de outra conta | aparecem **na tela da vitima** (3 -> 4 pesagens, 0 -> 1 vacina, que viraria alerta) | recusadas |
+| animal apontando para lote de outra conta | contagem do lote da vitima 50 -> **51** | fica sem lote |
+
+Nao permite **ler** dados alheios; permite **sujar** os dados de outros produtores (GMD, alertas,
+reproducao). Exige so uma conta gratis e chutar ids, que sao sequenciais. A auditoria de
+multi-tenancy do item 0.1 do `MELHORIAS.md` cobriu os endpoints HTTP, mas nao esse caminho.
+
+Correcao: id que o backup nao trouxe so e aceito se o registro for **da propria conta**; senao
+fica vazio (e o registro que exige o vinculo e descartado). Mais uma camada: a contagem de animais
+do lote (`_lote_out`) passou a filtrar pelo dono do lote.
+
+> **Pendente — acao sua**:
+> 1. **Subir esta correcao logo** — o problema esta em producao.
+> 2. Rodar `backend/scripts/diagnostico_vinculos_entre_contas.sql` no editor SQL do Neon. So
+>    SELECT. Vazio = ninguem usou isso. Testado: acusa pesagem e animal intrusos (com ROLLBACK).
+
+---
 
 **Categoria**: logica financeira · **Complexidade**: media · **Descoberto no Bloco 2**
 
@@ -670,8 +801,8 @@ ver — e o app mostra receita zero.
 | C3 | Custo nutricional com rebanho de hoje | media | nao | ✅ |
 | C4 | "Lucro Liq. s/ Agil" errado | baixa | nao | ✅ |
 | C2 | Vacina atrasada desaparece | media | nao | ✅ |
-| C6 | Apagar venda nao reverte status | media | nao | ⬜ |
-| C7 | Analise por lote perde quem saiu do lote | media | **sim** | ⬜ |
+| C6 | Apagar venda nao reverte status | media | nao | ✅ |
+| C7 | Analise por lote perde quem saiu do lote | media | **sim** | ✅ |
 
 **Total estimado**: 3 a 4 dias. Nenhum depende de decidir publico-alvo — por isso vem antes
 do mapa de pastos e da Fase 4.

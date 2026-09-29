@@ -85,10 +85,20 @@ async def import_backup(
         "pesagens": [("animal_id", "animais")],
         "saude": [("animal_id", "animais")],
         "reproducao": [("animal_id", "animais")],
-        "movimentacoes": [("animal_id", "animais")],
+        "movimentacoes": [("animal_id", "animais"), ("lote_id", "lotes")],
         "custos_nutricionais": [("lote_id", "lotes")],
         "historico_ocupacao": [("pasto_id", "pastos"), ("lote_id", "lotes")],
     }
+
+    modelos = dict(EXPORT_MODELS)
+
+    def _fk_desta_conta(target: str, old_id: int):
+        """Id que o proprio backup nao trouxe: so vale se o registro for DESTA conta.
+        Antes o id era mantido como veio — um arquivo adulterado ligava animais e movimentacoes
+        ao lote de outra conta."""
+        M = modelos[target]
+        existe = db.query(M.id).filter(M.id == old_id, M.user_id == current_user.id).first()
+        return old_id if existe else None
 
     for name, Model in EXPORT_MODELS:
         rows = payload.get(name, []) or []
@@ -98,7 +108,8 @@ async def import_backup(
             data = {k: v for k, v in row.items() if k not in ("id", "user_id")}
             for fk, target in fk_map.get(name, []):
                 if data.get(fk) is not None:
-                    data[fk] = id_maps[target].get(data[fk], data[fk])
+                    novo = id_maps[target].get(data[fk])
+                    data[fk] = novo if novo is not None else _fk_desta_conta(target, data[fk])
             data["user_id"] = current_user.id
             sp = db.begin_nested()
             try:

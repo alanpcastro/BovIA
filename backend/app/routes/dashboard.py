@@ -79,7 +79,8 @@ def gerar_dados_demo(db: Session = Depends(get_db), current_user: User = Depends
 
         # Movimentacao de entrada
         mov = Movimentacao(
-            user_id=uid, animal_id=a.id, tipo=TipoMovEnum.nascimento if a.origem == "nascido" else TipoMovEnum.compra,
+            user_id=uid, animal_id=a.id, lote_id=a.lote_id,
+            tipo=TipoMovEnum.nascimento if a.origem == "nascido" else TipoMovEnum.compra,
             data=a.data_nascimento or (hoje - timedelta(days=100)),
             valor=0 if a.origem == "nascido" else 3500.0,
             peso_kg=a.peso_entrada

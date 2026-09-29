@@ -19,6 +19,9 @@ class Movimentacao(Base):
     id = Column(Integer, primary_key=True, index=True)
     animal_id = Column(Integer, ForeignKey("animais.id"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    # Lote do animal NO MOMENTO do lancamento. A venda tira o animal do lote; sem isto, a
+    # analise por lote perdia a receita da propria venda (C7). NULL em lancamentos antigos.
+    lote_id = Column(Integer, ForeignKey("lotes.id", ondelete="SET NULL"), nullable=True)
 
     tipo = Column(Enum(TipoMovEnum), nullable=False)
     data = Column(Date, nullable=False)
